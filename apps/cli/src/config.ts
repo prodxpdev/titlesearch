@@ -1,0 +1,52 @@
+// config.json in the config directory. Optional; every field has a default.
+// No secrets live here (invariant 6): registrar keys come from the
+// environment or the OS keychain.
+
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import * as z from "zod";
+
+export const CliConfig = z
+  .object({
+    providers: z
+      .object({
+        godaddy: z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
+      })
+      .default({ godaddy: { enabled: true } }),
+    whois: z
+      .object({
+        /** Extensions to enable beyond the defaults, such as "de". See ADR 8. */
+        enable: z.array(z.string()).default([]),
+      })
+      .default({ enable: [] }),
+    cache: z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
+  })
+  .strict();
+export type CliConfig = z.infer<typeof CliConfig>;
+
+export class ConfigError extends Error {
+  override readonly name = "ConfigError";
+}
+
+export async function loadConfig(configDir: string): Promise<CliConfig> {
+  const path = join(configDir, "config.json");
+  let text: string;
+  try {
+    text = await readFile(path, "utf8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return CliConfig.parse({});
+    throw new ConfigError(`Couldn't read ${path}.`);
+  }
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new ConfigError(`${path} isn't valid JSON.`);
+  }
+  const parsed = CliConfig.safeParse(json);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    throw new ConfigError(`${path}: ${issue?.path.join(".") || "(root)"}: ${issue?.message}`);
+  }
+  return parsed.data;
+}

@@ -138,10 +138,26 @@ export const Assessment = z.object({
 });
 export type Assessment = z.infer<typeof Assessment>;
 
+export const ReconcileReason = z.enum([
+  "agreed",
+  "registry_only_not_found",
+  "registry_only_registered",
+  "registrar_only",
+  "registry_free_registrar_taken",
+  "registry_taken_registrar_free",
+  "registrars_disagree",
+  "registries_disagree",
+  "invalid_source_state",
+  "no_answer",
+]);
+export type ReconcileReason = z.infer<typeof ReconcileReason>;
+
 export const DomainResult = z.object({
   /** Punycode-normalized and lowercase. */
   domain: z.string(),
   availability: Availability,
+  /** Which reconciliation rule produced `availability`. */
+  availabilityReason: ReconcileReason.optional(),
   /** Every source consulted, always returned. */
   sources: z.array(SourceResult),
   presence: PresenceEvidence.optional(),

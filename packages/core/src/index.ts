@@ -1,3 +1,18 @@
+export {
+  availabilityTtl,
+  type CacheStore,
+  cacheKeys,
+  normalizeMarket,
+  TTL,
+} from "./cache.js";
+export {
+  type CheckOptions,
+  checkDomains,
+  expandCandidates,
+  MAX_DOMAINS_PER_CALL,
+  MAX_NAMES_PER_CALL,
+  RequestLimitError,
+} from "./check.js";
 export { DomainError, domainFor, normalizeDomain, normalizeTld, topLevelLabel } from "./domain.js";
 export {
   createRedactor,
@@ -17,6 +32,7 @@ export {
   PageFields,
   PresenceEvidence,
   Price,
+  ReconcileReason,
   SourceError,
   SourceResult,
   toUntrustedSiteText,
@@ -32,9 +48,14 @@ export {
   type TokenBucketOptions,
   unlimited,
 } from "./rate-limit.js";
+export { REGISTRY_SOURCES, type Reconciliation, reconcile } from "./reconcile.js";
 export {
-  REGISTRY_SOURCES,
-  type ReconcileReason,
-  type Reconciliation,
-  reconcile,
-} from "./reconcile.js";
+  DEFAULT_TLDS,
+  generateVariants,
+  PREFIXES,
+  SUFFIXES,
+  seedLabel,
+  VARIANT_STRATEGIES,
+  type Variant,
+  type VariantStrategy,
+} from "./variants.js";

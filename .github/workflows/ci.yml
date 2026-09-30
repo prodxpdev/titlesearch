@@ -71,6 +71,10 @@ jobs:
         run: |
           bun build --compile packages/cache/scripts/compile-smoke.ts --outfile "$RUNNER_TEMP/smoke"
           "$RUNNER_TEMP/smoke"
+      - name: Build the CLI binary
+        run: |
+          bun build --compile apps/cli/src/main.ts --outfile "$RUNNER_TEMP/titlesearch"
+          "$RUNNER_TEMP/titlesearch" --version
 
   test-workers:
     name: Test (Workers, Miniflare)

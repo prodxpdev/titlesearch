@@ -1,16 +1,7 @@
 // The cache contract. Every store (memory, sqlite, d1, firestore, dynamodb)
 // passes test/conformance.ts, which pins down the behavior below.
 
-export interface CacheStore {
-  /** Returns the value, or undefined if it's missing or expired. */
-  get<T>(key: string): Promise<T | undefined>;
-  /**
-   * Stores a JSON-serializable value for `ttlSeconds` (a positive, finite
-   * number). Replaces any existing value and TTL. Values round-trip through
-   * JSON, so what `get` returns is a copy.
-   */
-  set<T>(key: string, value: T, ttlSeconds: number): Promise<void>;
-}
+export type { CacheStore } from "@titlesearch/core";
 
 /** Options every store accepts. */
 export interface StoreOptions {

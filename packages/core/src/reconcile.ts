@@ -3,29 +3,12 @@
 // one source over another: when sources disagree the answer is
 // "unconfirmed", and the caller reports every source.
 
-import type { Availability, SourceResult } from "./model.js";
+import type { Availability, ReconcileReason, SourceResult } from "./model.js";
+
+export type { ReconcileReason };
 
 /** Source ids that speak for the registry rather than a registrar. */
 export const REGISTRY_SOURCES: ReadonlySet<string> = new Set(["rdap", "whois"]);
-
-export type ReconcileReason =
-  /** Registry and registrar(s) agree. */
-  | "agreed"
-  /** Only the registry answered, and it said not found. */
-  | "registry_only_not_found"
-  /** Only the registry answered, and it said registered. */
-  | "registry_only_registered"
-  /** The registry errored or was absent; the registrar answer stands. */
-  | "registrar_only"
-  /** Registry says not found, registrar says it can't be bought: reserved, blocked, or just registered. */
-  | "registry_free_registrar_taken"
-  /** Registry says registered, registrar says it can be bought: possibly pending delete. */
-  | "registry_taken_registrar_free"
-  | "registrars_disagree"
-  | "registries_disagree"
-  /** A source reported a state it isn't allowed to report, such as a registry claiming "available". */
-  | "invalid_source_state"
-  | "no_answer";
 
 export interface Reconciliation {
   availability: Availability;
