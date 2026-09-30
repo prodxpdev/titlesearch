@@ -1,5 +1,5 @@
+import { MemoryStore } from "@titlesearch/cache";
 import { describe, expect, it } from "vitest";
-import { memoryCache } from "../src/cache.js";
 import { type BootstrapFile, parseBootstrap } from "../src/rdap/bootstrap.js";
 import { RdapProvider } from "../src/rdap/rdap-provider.js";
 import { parseRetryAfter } from "../src/retry.js";
@@ -188,7 +188,7 @@ describe("RdapProvider", () => {
   });
 
   it("caches the bootstrap", async () => {
-    const cache = memoryCache();
+    const cache = new MemoryStore();
     const transport = rdapTransport({
       "https://rdap.verisign.com/com/v1/domain/google.com": () =>
         rdapFixture("verisign-com-registered"),

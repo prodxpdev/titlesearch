@@ -1,4 +1,3 @@
-export { type CacheLike, memoryCache } from "./cache.js";
 export { mapLimit } from "./concurrency.js";
 export {
   GODADDY_CHECK_TOOL,

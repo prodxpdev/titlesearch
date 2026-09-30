@@ -2,6 +2,7 @@
 // (unregistered_at_registry, never "available"), 200 is "registered". Falls
 // back to WHOIS for extensions with no HTTPS RDAP service.
 
+import { type CacheStore, MemoryStore } from "@titlesearch/cache";
 import {
   type AvailabilityProvider,
   createOriginFetch,
@@ -12,7 +13,6 @@ import {
   type Transport,
   topLevelLabel,
 } from "@titlesearch/core";
-import { type CacheLike, memoryCache } from "../cache.js";
 import { mapLimit } from "../concurrency.js";
 import { type RetryOptions, withRetries } from "../retry.js";
 import { WHOIS_MAX_BYTES, WHOIS_TIMEOUT_MS, type WhoisConnector } from "../whois/connector.js";
@@ -23,7 +23,7 @@ import { parseRdapDomain } from "./parse.js";
 
 export interface RdapProviderOptions {
   /** Stores the bootstrap for 24 hours. Defaults to an in-process cache. */
-  cache?: CacheLike;
+  cache?: CacheStore;
   transport?: Transport;
   retry?: RetryOptions;
   /** Requests in flight at once across all RDAP servers. */
@@ -46,7 +46,7 @@ export class RdapProvider implements AvailabilityProvider {
   constructor(options: RdapProviderOptions = {}) {
     this.#options = options;
     this.#loadBootstrap = createBootstrapLoader({
-      cache: options.cache ?? memoryCache(),
+      cache: options.cache ?? new MemoryStore(),
       ...(options.transport ? { transport: options.transport } : {}),
     });
     this.#whoisServers = options.whois ? activeWhoisServers(options.whois.enable) : new Map();

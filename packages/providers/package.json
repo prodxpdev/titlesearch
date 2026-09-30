@@ -16,6 +16,7 @@
     "test:canary": "vitest run --config vitest.canary.config.ts"
   },
   "dependencies": {
+    "@titlesearch/cache": "workspace:*",
     "@titlesearch/core": "workspace:*",
     "zod": "4.6.5"
   },

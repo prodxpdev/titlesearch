@@ -66,6 +66,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Run the same Vitest suites with Bun as the runtime.
       - run: pnpm -r --workspace-concurrency=1 exec bun --bun vitest run --passWithNoTests
+      # The CLI ships as a `bun build --compile` binary; prove SQLite works inside one.
+      - name: Compiled SQLite smoke test
+        run: |
+          bun build --compile packages/cache/scripts/compile-smoke.ts --outfile "$RUNNER_TEMP/smoke"
+          "$RUNNER_TEMP/smoke"
 
   test-workers:
     name: Test (Workers, Miniflare)

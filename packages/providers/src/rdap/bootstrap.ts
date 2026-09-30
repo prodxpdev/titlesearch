@@ -2,12 +2,12 @@
 // HTTPS service URLs are used; a TLD with only HTTP URLs is treated as having
 // no RDAP service and falls back to WHOIS.
 
+import { type CacheStore, TTL } from "@titlesearch/cache";
 import { createOriginFetch, type Transport } from "@titlesearch/core";
 import * as z from "zod";
-import type { CacheLike } from "../cache.js";
 
 export const IANA_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
-export const BOOTSTRAP_TTL_SECONDS = 24 * 60 * 60;
+export const BOOTSTRAP_TTL_SECONDS = TTL.rdapBootstrap;
 const CACHE_KEY = "rdap:bootstrap:dns:v1";
 
 export const BootstrapSchema = z.object({
@@ -43,7 +43,7 @@ export function parseBootstrap(file: BootstrapFile): Bootstrap {
 }
 
 export interface BootstrapLoaderOptions {
-  cache: CacheLike;
+  cache: CacheStore;
   transport?: Transport;
 }
 

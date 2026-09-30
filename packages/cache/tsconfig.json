@@ -4,5 +4,6 @@
     "lib": ["ES2023", "WebWorker"],
     "types": []
   },
-  "include": ["src", "test"]
+  "include": ["src"],
+  "exclude": ["src/sqlite-node.ts"]
 }
