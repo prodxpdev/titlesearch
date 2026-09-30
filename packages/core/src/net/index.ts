@@ -33,6 +33,8 @@ export {
 export type { Resolver } from "./resolver.js";
 // readSafeFetchBody is deliberately not exported: only core/extract reads bodies.
 export {
+  isAllowedPort,
+  resolvePublicAddress,
   SAFE_FETCH_MAX_BYTES,
   SAFE_FETCH_MAX_REDIRECTS,
   SAFE_FETCH_TIMEOUT_MS,

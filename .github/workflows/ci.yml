@@ -49,6 +49,11 @@ jobs:
         with:
           node-version: lts/*
           cache: pnpm
+      - name: Let Chrome's sandbox run on Ubuntu 24.04
+        # The renderer isolation suite drives a real Chrome. Ubuntu 24.04
+        # restricts unprivileged user namespaces, which Chrome's sandbox needs.
+        # Lifting that is better than running Chrome with --no-sandbox.
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 
@@ -63,6 +68,11 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - name: Let Chrome's sandbox run on Ubuntu 24.04
+        # The renderer isolation suite drives a real Chrome. Ubuntu 24.04
+        # restricts unprivileged user namespaces, which Chrome's sandbox needs.
+        # Lifting that is better than running Chrome with --no-sandbox.
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: pnpm install --frozen-lockfile
       # Run the same Vitest suites with Bun as the runtime.
       - run: pnpm -r --workspace-concurrency=1 exec bun --bun vitest run --passWithNoTests

@@ -1,0 +1,24 @@
+{
+  "name": "@titlesearch/render",
+  "version": "0.0.0",
+  "description": "Site previews: the egress proxy, the local-chromium renderer, and image handling.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@titlesearch/core": "workspace:*",
+    "puppeteer-core": "25.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
+  }
+}

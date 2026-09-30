@@ -195,9 +195,24 @@ async function validateDestination(
   signal: AbortSignal,
   chain: SafeFetchHop[],
 ): Promise<string> {
-  // URL parsing has already canonicalized IPv4 shorthand, octal, hex, and
-  // decimal forms to dotted quads, and IPv6 to its compressed form.
-  const host = url.hostname;
+  return resolvePublicAddress(url.hostname, resolver, signal, chain);
+}
+
+/**
+ * The address rules for every outbound connection to a user-derived host,
+ * shared by safeFetch and the renderer's egress proxy (invariants 2 and 8).
+ * `hostname` must already be canonical, as URL parsing produces: IPv4
+ * shorthand, octal, hex, and decimal forms become dotted quads, and IPv6 is
+ * bracketed and compressed. Returns the validated address to connect to, or
+ * throws SafeFetchError.
+ */
+export async function resolvePublicAddress(
+  hostname: string,
+  resolver: Resolver,
+  signal?: AbortSignal,
+  chain: SafeFetchHop[] = [],
+): Promise<string> {
+  const host = hostname.toLowerCase();
 
   if (host.startsWith("[")) {
     const literal = host.slice(1, -1);
@@ -218,7 +233,7 @@ async function validateDestination(
   try {
     addresses = await resolver.resolveHost(name, signal);
   } catch (err) {
-    if (signal.aborted) throw err;
+    if (signal?.aborted) throw err;
     throw new SafeFetchError("dns_failed", `Couldn't resolve ${name}.`, chain);
   }
   if (addresses.length === 0) {
@@ -229,6 +244,11 @@ async function validateDestination(
   for (const a of addresses) checkAddress(a, chain);
   // Prefer IPv4 for the pinned connection; it's the family every runtime supports.
   return addresses.find((a) => parseIPv4(a)) ?? (addresses[0] as string);
+}
+
+/** Ports safeFetch and the egress proxy allow. */
+export function isAllowedPort(port: number): boolean {
+  return port === 80 || port === 443;
 }
 
 function checkAddress(address: string, chain: SafeFetchHop[]): string {
