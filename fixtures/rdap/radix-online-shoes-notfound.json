@@ -1,0 +1,22 @@
+{
+  "recordedFrom": "https://rdap.radix.host/rdap/domain/shoes.online",
+  "recordedAt": "2026-09-30T14:53:27Z",
+  "status": 404,
+  "headers": {
+    "content-type": "application/rdap+json; charset=UTF-8"
+  },
+  "body": {
+    "rdapConformance": [
+      "rdap_level_0",
+      "icann_rdap_response_profile_1",
+      "icann_rdap_technical_implementation_guide_1",
+      "redacted"
+    ],
+    "errorCode": 404,
+    "title": "Not Found",
+    "description": [
+      "Domain shoes.online is available for registration",
+      "Please visit https://rdap.radix.host/registrars/ for a list of accredited registrars"
+    ]
+  }
+}

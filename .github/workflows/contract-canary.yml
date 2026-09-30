@@ -1,0 +1,47 @@
+name: Contract canary
+
+# Live checks against GoDaddy's MCP server and the IANA RDAP bootstrap.
+# Runs nightly and on demand, never on pull requests. On failure it opens (or
+# comments on) an issue labeled contract-canary.
+
+on:
+  schedule:
+    - cron: "23 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    name: Contract canary
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run canary
+        id: canary
+        run: pnpm --filter @titlesearch/providers test:canary 2>&1 | tee canary.log
+        shell: bash -o pipefail {0}
+      - name: Open or update an issue on failure
+        if: failure() && steps.canary.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create contract-canary --color B60205 --description "Live contract drift" 2>/dev/null || true
+          body="$(printf 'The nightly contract canary failed: %s\n\n```\n%s\n```\n' "$RUN_URL" "$(tail -n 80 canary.log)")"
+          existing="$(gh issue list --label contract-canary --state open --json number --jq '.[0].number')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "Contract canary: upstream response drift" --label contract-canary --body "$body"
+          fi

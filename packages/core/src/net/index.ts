@@ -15,6 +15,7 @@ export {
   parseIPv4,
   parseIPv6,
 } from "./ip.js";
+export { JsonMessagesError, parseEventStream, readJsonMessages } from "./json-messages.js";
 export {
   createOriginFetch,
   type OriginFetch,

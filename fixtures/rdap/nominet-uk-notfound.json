@@ -1,0 +1,12 @@
+{
+  "recordedFrom": "https://rdap.nominet.uk/uk/domain/titlesearch-nx-7c41e9.co.uk",
+  "recordedAt": "2026-09-30T14:51:04Z",
+  "status": 404,
+  "headers": {
+    "content-type": "application/json;charset=utf-8"
+  },
+  "body": {
+    "errorCode": 404,
+    "title": "Domain titlesearch-nx-7c41e9.co.uk not found"
+  }
+}

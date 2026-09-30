@@ -2,8 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2023", "WebWorker"],
-    "types": []
+    "types": ["node"]
   },
-  "include": ["src"],
-  "exclude": ["src/whois/node.ts"]
+  "include": ["src/whois/node.ts", "test", "test-canary", "*.config.ts"]
 }

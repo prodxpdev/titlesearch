@@ -6,13 +6,22 @@
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./whois/node": "./src/whois/node.ts",
+    "./whois/workers": "./src/whois/workers.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --passWithNoTests"
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "test": "vitest run",
+    "test:canary": "vitest run --config vitest.canary.config.ts"
   },
   "dependencies": {
-    "@titlesearch/core": "workspace:*"
+    "@titlesearch/core": "workspace:*",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
   }
 }

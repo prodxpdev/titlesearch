@@ -16,6 +16,9 @@
     "test:workers": {
       "dependsOn": ["^build"],
       "outputs": []
+    },
+    "test:canary": {
+      "cache": false
     }
   }
 }

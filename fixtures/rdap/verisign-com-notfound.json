@@ -1,0 +1,9 @@
+{
+  "recordedFrom": "https://rdap.verisign.com/com/v1/domain/titlesearch-nx-7c41e9.com",
+  "recordedAt": "2026-09-30T14:51:01Z",
+  "status": 404,
+  "headers": {
+    "content-type": "application/rdap+json"
+  },
+  "body": ""
+}
