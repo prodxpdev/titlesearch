@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+.turbo/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+.wrangler/
+playwright-report/
+test-results/
+apps/desktop/src-tauri/target/

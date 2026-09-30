@@ -1,0 +1,19 @@
+// Invariant 2: every outbound request goes through the fetch wrappers in
+// packages/core/src/net (safeFetch for user-derived hosts, pinned-host fetch
+// for fixed, config-defined origins). Any other reference to the global
+// `fetch`, called or passed as a value, is an error.
+language js
+
+or {
+  `$obj.fetch` where {
+    $obj <: or {
+      `globalThis`,
+      `self`,
+      `window`
+    }
+  },
+  JsReferenceIdentifier() as $id where { $id <: r"^fetch$", $id <: not within TsTypeofType() },
+  JsIdentifierExpression() as $id where { $id <: r"^fetch$" }
+} as $hit where {
+  register_diagnostic(span=$hit, message="Invariant 2: don't use the global fetch here. Use safeFetch (user-derived hosts) or the pinned-host fetch from @titlesearch/core/net (fixed origins).", severity="error")
+}

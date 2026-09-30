@@ -1,0 +1,18 @@
+{
+  "name": "@titlesearch/assess",
+  "version": "0.0.0",
+  "description": "ConflictClassifier interface and the Anthropic implementation.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@titlesearch/core": "workspace:*"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@titlesearch/server",
+  "version": "0.0.0",
+  "description": "Hono app: REST routes, /mcp, auth middleware, and static UI hosting.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@titlesearch/core": "workspace:*",
+    "@titlesearch/mcp": "workspace:*"
+  }
+}

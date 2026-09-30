@@ -1,0 +1,18 @@
+{
+  "name": "@titlesearch/mcp",
+  "version": "0.0.0",
+  "description": "Transport-agnostic MCP tool and prompt definitions over core.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@titlesearch/core": "workspace:*"
+  }
+}

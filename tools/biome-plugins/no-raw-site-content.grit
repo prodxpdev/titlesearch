@@ -1,0 +1,18 @@
+// Invariant 3: raw response bodies are read only inside
+// packages/core/src/net (capped reads) and packages/core/src/extract (field
+// extraction). Everywhere else sees extracted fields, never raw text or HTML.
+language js
+
+or {
+  `$_.text()`,
+  `$_.arrayBuffer()`,
+  `$_.bytes()`,
+  `$_.blob()`,
+  `$_.formData()`,
+  `$_.body.getReader()`,
+  `$_.body.pipeTo($_)`,
+  `$_.body.pipeThrough($_)`,
+  `$_.html($_)`
+} as $hit where {
+  register_diagnostic(span=$hit, message="Invariant 3: raw bodies and raw HTML stay inside core/net and core/extract. Return extracted fields, with site text in untrustedSiteText.", severity="error")
+}

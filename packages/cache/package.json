@@ -1,0 +1,15 @@
+{
+  "name": "@titlesearch/cache",
+  "version": "0.0.0",
+  "description": "CacheStore interface and its sqlite, D1, Firestore, DynamoDB, and memory implementations.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  }
+}

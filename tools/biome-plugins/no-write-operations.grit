@@ -1,0 +1,26 @@
+// Invariant 1: nothing may register, renew, transfer, or modify a domain or
+// DNS record. This flags identifiers and string literals (upstream tool names,
+// REST paths) that name such an operation. It's a tripwire, not a proof; the
+// type-level guard on AvailabilityProvider and the upstream allowlist are the
+// real enforcement.
+//
+// GritQL treats regex capture groups as variable bindings, and a plugin that
+// errors at runtime is reported only as an info. Use (?:...) groups only.
+// tools/test/invariants.test.ts fails if this rule stops firing.
+language js
+
+or {
+  JsIdentifierBinding(),
+  JsLiteralMemberName(),
+  JsReferenceIdentifier(),
+  JsName(),
+  JsStringLiteralExpression(),
+  JsTemplateChunkElement()
+} as $n where {
+  $n <: or {
+    r"(?is).*(?:register|renew|transfer|purchase|buy|checkout)[_/.\-]*(?:domain|dns|record|nameserver|zone|contact|cart).*",
+    r"(?is).*(?:create|update|delete|edit|modify)[_/.\-]*(?:dns|record|nameserver|zone|forwarding).*",
+    r"(?is).*(?:domains?|dns|records?|nameservers?|zones?)[_/.\-]+(?:register|renew|transfer|purchase|buy|checkout|order|create|update|edit|modify|delete|remove|lock|unlock).*"
+  },
+  register_diagnostic(span=$n, message="Invariant 1: Titlesearch is read-only. Nothing may register, renew, transfer, purchase, or modify a domain or DNS record.", severity="error")
+}

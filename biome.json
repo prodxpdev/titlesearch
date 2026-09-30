@@ -1,0 +1,83 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": ["**", "!**/fixtures", "!docs/design", "!**/src-tauri/target"]
+  },
+  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
+  "javascript": { "formatter": { "quoteStyle": "double" } },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "suspicious": { "noExplicitAny": "error", "noConsole": "error" },
+      "style": { "useImportType": "error", "useNodejsImportProtocol": "error" }
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "packages/**/*.ts",
+        "apps/**/*.ts",
+        "apps/**/*.tsx",
+        "deploy/**/*.ts",
+        "!packages/core/src/net/**"
+      ],
+      "plugins": ["./tools/biome-plugins/no-direct-fetch.grit"]
+    },
+    {
+      "includes": [
+        "packages/**/*.ts",
+        "apps/**/*.ts",
+        "apps/**/*.tsx",
+        "deploy/**/*.ts",
+        "!packages/core/src/net/**",
+        "!packages/core/src/extract/**",
+        "!packages/server/src/static/**",
+        "!**/test/**"
+      ],
+      "plugins": ["./tools/biome-plugins/no-raw-site-content.grit"]
+    },
+    {
+      "includes": ["packages/**/*.ts", "apps/cli/**/*.ts", "deploy/**/*.ts", "!**/test/**"],
+      "plugins": ["./tools/biome-plugins/no-write-operations.grit"]
+    },
+    {
+      "includes": ["packages/core/**/*.ts"],
+      "linter": {
+        "rules": {
+          "correctness": { "noNodejsModules": "error" },
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["node:*", "bun", "bun:*", "cloudflare:*", "@types/node"],
+                    "message": "packages/core is runtime-agnostic: use fetch, Web Crypto, URL, and injected interfaces only."
+                  }
+                ]
+              }
+            },
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "process": "packages/core is runtime-agnostic. Inject config instead of reading process.",
+                  "Buffer": "Use Uint8Array and TextEncoder/TextDecoder.",
+                  "require": "ESM only.",
+                  "__dirname": "No file system in core.",
+                  "__filename": "No file system in core.",
+                  "Bun": "packages/core is runtime-agnostic.",
+                  "Deno": "packages/core is runtime-agnostic.",
+                  "setImmediate": "Use setTimeout or queueMicrotask."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
