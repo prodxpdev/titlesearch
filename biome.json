@@ -1,18 +1,54 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "includes": ["**", "!**/fixtures", "!docs/design", "!**/src-tauri/target"]
   },
-  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
-  "javascript": { "formatter": { "quoteStyle": "double" } },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
       "preset": "recommended",
-      "suspicious": { "noExplicitAny": "error", "noConsole": "error" },
-      "style": { "useImportType": "error", "useNodejsImportProtocol": "error" }
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noConsole": "error"
+      },
+      "style": {
+        "useImportType": "error",
+        "useNodejsImportProtocol": "error",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "zod": {
+                "importNames": ["z"],
+                "message": "Use `import * as z from \"zod\"`. The `z` re-export is undefined under Vitest on Bun; see docs/decisions/0005-core-foundations.md."
+              }
+            }
+          }
+        }
+      }
     }
   },
   "overrides": [
@@ -47,7 +83,9 @@
       "includes": ["packages/core/**/*.ts"],
       "linter": {
         "rules": {
-          "correctness": { "noNodejsModules": "error" },
+          "correctness": {
+            "noNodejsModules": "error"
+          },
           "style": {
             "noRestrictedImports": {
               "level": "error",
@@ -57,7 +95,13 @@
                     "group": ["node:*", "bun", "bun:*", "cloudflare:*", "@types/node"],
                     "message": "packages/core is runtime-agnostic: use fetch, Web Crypto, URL, and injected interfaces only."
                   }
-                ]
+                ],
+                "paths": {
+                  "zod": {
+                    "importNames": ["z"],
+                    "message": "Use `import * as z from \"zod\"`. The `z` re-export is undefined under Vitest on Bun; see docs/decisions/0005-core-foundations.md."
+                  }
+                }
               }
             },
             "noRestrictedGlobals": {

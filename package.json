@@ -14,13 +14,14 @@
     "lint": "biome ci . && node scripts/check-invariants.mjs",
     "format": "biome format --write .",
     "check": "pnpm lint && pnpm typecheck && pnpm test",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "test:workers": "turbo run test:workers"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@changesets/cli": "3.0.3",
     "turbo": "2.11.5",
     "typescript": "7.0.2",
-    "vitest": "5.0.2"
+    "vitest": "4.1.11"
   }
 }

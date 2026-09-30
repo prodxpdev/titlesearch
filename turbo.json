@@ -12,6 +12,10 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": []
+    },
+    "test:workers": {
+      "dependsOn": ["^build"],
+      "outputs": []
     }
   }
 }
