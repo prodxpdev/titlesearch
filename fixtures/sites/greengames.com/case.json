@@ -1,0 +1,44 @@
+{
+  "domain": "greengames.com",
+  "recordedAt": "2026-09-30T18:13:12.174Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "15.197.142.173",
+      "3.33.152.147"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns01.domaincontrol.com.",
+      "ns02.domaincontrol.com."
+    ],
+    "MX": [
+      "10 mailstore1.secureserver.net.",
+      "0 smtp.secureserver.net."
+    ]
+  },
+  "hops": [
+    {
+      "url": "https://greengames.com/",
+      "error": "UND_ERR_CONNECT_TIMEOUT"
+    },
+    {
+      "url": "http://greengames.com/",
+      "status": 301,
+      "contentType": "text/html; charset=utf-8",
+      "location": "http://www.greentoys.com"
+    },
+    {
+      "url": "http://www.greentoys.com/",
+      "status": 301,
+      "contentType": "text/html; charset=UTF-8",
+      "location": "https://www.greentoys.com/"
+    },
+    {
+      "url": "https://www.greentoys.com/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "truncated": false
+    }
+  ]
+}

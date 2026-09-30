@@ -1,0 +1,32 @@
+{
+  "domain": "blueshoes.com",
+  "recordedAt": "2026-09-30T18:12:58.898Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "172.239.194.227",
+      "172.239.194.117",
+      "172.238.172.116"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns1.parklogic.com.",
+      "ns2.parklogic.com."
+    ],
+    "MX": [
+      "20 mx156.hostedmxserver.com."
+    ]
+  },
+  "hops": [
+    {
+      "url": "https://blueshoes.com/",
+      "error": "UNABLE_TO_GET_ISSUER_CERT_LOCALLY"
+    },
+    {
+      "url": "http://blueshoes.com/",
+      "status": 200,
+      "contentType": "text/html",
+      "truncated": false
+    }
+  ]
+}

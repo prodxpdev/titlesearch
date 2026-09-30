@@ -4,7 +4,7 @@ Titlesearch checks whether a name is free across domain extensions and reports w
 
 It will run as a CLI, a local web app, a desktop app, and a self-hosted service, and every form exposes the same MCP server so Claude can check and suggest names.
 
-**Status:** early development. The core domain model, reconciliation, SSRF-safe fetching, DNS over HTTPS, the RDAP, WHOIS, and GoDaddy availability providers, the memory and SQLite caches, the MCP tools, and the CLI are in place. Checking availability works end to end; site inspection and assessment don't exist yet.
+**Status:** early development. The core domain model, reconciliation, SSRF-safe fetching, DNS over HTTPS, the RDAP, WHOIS, and GoDaddy availability providers, the memory and SQLite caches, the presence probe, the MCP tools, and the CLI are in place. Checking availability and inspecting taken domains work end to end; market-overlap assessment doesn't exist yet.
 
 ## Try it
 
@@ -43,7 +43,7 @@ Claude Code:
 claude mcp add titlesearch -- /absolute/path/to/titlesearch mcp
 ```
 
-The tools are `check_domains` and `generate_variants`. Site inspection and market-overlap assessment come next.
+The tools are `check_domains`, `generate_variants`, and `inspect_domain`, which reports what's on a taken domain: a real site, a parked page, or a for-sale listing. Market-overlap assessment comes next.
 
 Titlesearch is read-only. It never registers, renews, transfers, or modifies a domain or DNS record. It's also not a trademark search.
 

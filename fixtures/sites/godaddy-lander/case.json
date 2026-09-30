@@ -1,0 +1,33 @@
+{
+  "domain": "bluewidget.com",
+  "recordedAt": "2026-09-30T18:13:13.023Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "76.223.54.146",
+      "13.248.169.48"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns1.afternic.com.",
+      "ns2.afternic.com."
+    ],
+    "MX": [
+      "0 ."
+    ]
+  },
+  "hops": [
+    {
+      "url": "https://bluewidget.com/lander",
+      "status": 307,
+      "contentType": "text/html; charset=utf-8",
+      "location": "https://forsale.godaddy.com/forsale/bluewidget.com?utm_source=TDFS_BINNS2&utm_medium=parkedpages&utm_campaign=x_corp_tdfs-binns2_base&traffic_type=TDFS_BINNS2&traffic_id=binns2&"
+    },
+    {
+      "url": "https://forsale.godaddy.com/forsale/bluewidget.com?utm_source=TDFS_BINNS2&utm_medium=parkedpages&utm_campaign=x_corp_tdfs-binns2_base&traffic_type=TDFS_BINNS2&traffic_id=binns2&",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "truncated": false
+    }
+  ]
+}

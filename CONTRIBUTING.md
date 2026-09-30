@@ -48,7 +48,7 @@ If you change a rule, update `tools/test/invariants.test.ts`, and add cases for 
 
 Parking detection reads versioned data from `packages/core/signatures/parking.json`. Every signature you add needs:
 
-1. At least one real page that it matches, saved under `fixtures/sites/`. Strip anything personal and keep only what the signature needs.
+1. At least one real page that it matches, recorded with `node tools/record-site-fixture.mjs <domain>` into `fixtures/sites/`, and listed in the signature's `fixtures`. Strip anything personal and keep only what the signature needs.
 2. A test showing the signature matches that fixture.
 3. A check that it doesn't match an existing non-parked fixture.
 

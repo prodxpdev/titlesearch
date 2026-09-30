@@ -1,0 +1,25 @@
+{
+  "domain": "bluecandles.com",
+  "recordedAt": "2026-09-30T18:12:50.736Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "13.248.169.48",
+      "76.223.54.146"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns1.namefind.com.",
+      "ns2.namefind.com."
+    ],
+    "MX": []
+  },
+  "hops": [
+    {
+      "url": "https://bluecandles.com/",
+      "status": 200,
+      "contentType": "text/html",
+      "truncated": false
+    }
+  ]
+}

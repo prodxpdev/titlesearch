@@ -1,0 +1,37 @@
+{
+  "domain": "silvercoffee.com",
+  "recordedAt": "2026-09-30T18:12:52.401Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "54.243.117.197",
+      "13.223.25.84"
+    ],
+    "AAAA": [
+      "2600:1f18:4ae:c605:dd5d:b838:5816:d7fb",
+      "2600:1f18:4ae:c606:78d4:4260:db4e:aeee"
+    ],
+    "NS": [
+      "domain-for-sale.hugedomainsdns.com.",
+      "forsale.hugedomainsdns.com."
+    ],
+    "MX": []
+  },
+  "hops": [
+    {
+      "url": "https://silvercoffee.com/",
+      "error": "ECONNRESET"
+    },
+    {
+      "url": "http://silvercoffee.com/",
+      "status": 302,
+      "location": "https://www.hugedomains.com/domain_profile.cfm?d=silvercoffee.com"
+    },
+    {
+      "url": "https://www.hugedomains.com/domain_profile.cfm?d=silvercoffee.com",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "truncated": false
+    }
+  ]
+}

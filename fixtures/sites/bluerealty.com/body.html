@@ -1,0 +1,2615 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="dpiApp">
+
+<head>
+
+
+
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification"
+        content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>
+         Blue Realty Team - Real Estate Web Site with active MLS Listings - Blue Realty Team
+    </title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-pap0P6p6z+zDlZ7+2Mxd6c2/RbT+pkkHp/0VJ6cZq1a5v3xYxXQkYTZKghxFN3XfPt1nLkD+q61V+0rJ0T6Uzg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+
+
+
+    <link rel="icon" type="image/png" href="https://www.bluerealty.com/themes/7085/images/favicon.png"
+        sizes="64x64">
+<script src="https://kit.fontawesome.com/0372972d6b.js" crossorigin="anonymous"></script>
+    <meta name="description"
+        content="Search the MLS for Properties for Sale and for Rent plus New Developments with floor plans.
+Now it’s easy to search the MLS for active Properties for Sale, for Rent, and view New Developments with floor plans. All active listings with photos and details. - Blue Realty Team" />
+    <meta property="og:title"
+        content="Blue Realty Team - Real Estate Web Site with active MLS Listings" />
+    <meta property="og:description"
+        content="Search the MLS for Properties for Sale and for Rent plus New Developments with floor plans.
+Now it’s easy to search the MLS for active Properties for Sale, for Rent, and view New Developments with floor plans. All active listings with photos and details." />
+    <meta property="og:type" content="website" />
+
+<script src="https://kit.fontawesome.com/0372972d6b.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+        <meta property="og:image"
+        content="https://www.bluerealty.com/uploads/default_template/772863669.jpg" />
+        <meta property="og:url" content="" />
+    <meta itemprop="description"
+        content="Search the MLS for Properties for Sale and for Rent plus New Developments with floor plans.
+Now it’s easy to search the MLS for active Properties for Sale, for Rent, and view New Developments with floor plans. All active listings with photos and details.">
+    <!-- Bootstrap -->
+    <link href="https://www.bluerealty.com/themes/public-common-files/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css"
+        href="https://www.bluerealty.com/themes/7085/css/animate.min.css" />
+    <link rel="stylesheet" type="text/css"
+        href="https://www.bluerealty.com/themes/7085/css/overlay.css" />
+    <link rel="stylesheet" type="text/css"
+        href="https://www.bluerealty.com/themes/7085/css/swiper-bundle.min.css" />
+    <link rel="stylesheet" type="text/css"
+        href="https://www.bluerealty.com/themes/7085/css/lightslider.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-utilities@4.1.3/bootstrap-utilities.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" type="text/css"
+        href="https://www.bluerealty.com/themes/7085/css/jquery-ui-1.12.1.css" />
+    <link rel="stylesheet" type="text/css"
+        href="https://www.bluerealty.com/themes/7085/css/chosen-1.4.2.css" />
+    <link rel="stylesheet" type="text/css"
+        href="https://www.bluerealty.com/themes/7085/css/owl.carousel.min.css" />
+    <link rel="stylesheet" type="text/css"
+        href="https://www.bluerealty.com/themes/7085/css/owl.theme.default.min.css" />
+
+
+   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+         <script src="https://kit.fontawesome.com/0372972d6b.js" crossorigin="anonymous"></script>
+      <script src="https://www.bluerealty.com/themes/public-common-files/js/main.js"></script>
+      <script src="https://www.bluerealty.com/themes/public-common-files/js/modernizr.js"></script>
+      <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <link href="https://www.bluerealty.com/themes/7085/css/jquery.mCustomScrollbar.css"
+        rel="stylesheet">
+    <link rel='stylesheet' href='https://www.bluerealty.com/themes/7085/css/loading-bar.min.css'
+        type='text/css' media='all' />
+    <!-- menu extra items -->
+    <link href="https://www.bluerealty.com/themes/7085/css/tutorial.css" rel="stylesheet">
+    <link href="https://www.bluerealty.com/themes/7085/css/style.css?v=1775718994" rel="stylesheet">
+<script src="https://maps.googleapis.com/maps/api/js?key=REDACTED_GOOGLE_API_KEY&libraries=drawing&callback=Function.prototype&v=3.64"></script><link href="https://www.bluerealty.com/themes/7085/css/search-page-style.css?v=1775718994" rel="stylesheet">    <link href="https://www.bluerealty.com/themes/7085/css/dev.css" rel="stylesheet">
+    <link href="https://www.bluerealty.com/themes/7085/css/responsive.css" rel="stylesheet">
+<link href="https://www.bluerealty.com/themes/7085/css/aistyle.css?v=1709649869" rel="stylesheet"><link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/modernizr.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <script>
+        var base_url = 'https://www.bluerealty.com';
+        var current_theme = '7085';
+var html_version = "1790791979";
+                            var mls_ids = "[1,2]";        var uri_prefix = '/';
+        var user_id = '7085';
+        var theme_image_url = '/../dpi_beta/uploads/';
+    </script>
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+            <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+            <![endif]-->
+    <base href="https://www.bluerealty.com/">
+    <!-- $uri_prefix made in Admin\Masters\ThemePreviewController -->
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r;
+            i[r] = i[r] || function () {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+    </script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<script src="https://use.fontawesome.com/8ef1806ee0.js"></script>
+<script>
+    window.addEventListener('load', function() {
+        console.log('Checking URL parameters for auth token...');
+        
+        // Use URLSearchParams to extract query parameters directly
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        const token = urlParams.get('auth_token');
+        const userInfo = urlParams.get('usr_info');
+        // Edit params
+        const saveSearchEditing = urlParams.get('save_search_editing');
+        const saveSearchId = urlParams.get('save_search_id');
+        const polygonLatLongForSavedSearch = urlParams.get('polygon_lat_long_for_saved_search');
+        const ngStorageSearchParams = urlParams.get('ngStorage-search_params');
+        const hitSavedSearch = urlParams.get('hit_saved_search');
+        
+        console.log('Token from URL:', token);
+
+        if (token) {
+            console.log('will run after 3sec');
+            
+            // setTimeout(() => {
+                console.log('Storing auth token and user info in localStorage...');
+                localStorage.setItem('access_token', token);
+                if (userInfo) localStorage.setItem('usr_info', userInfo);
+
+                // Clean URL
+                const cleanUrl = window.location.pathname + window.location.hash;
+                window.history.replaceState({}, document.title, cleanUrl);
+                localStorage.setItem('save_search_editing', saveSearchEditing);
+                localStorage.setItem('save_search_id', saveSearchId);
+                localStorage.setItem('polygon_lat_long_for_saved_search', polygonLatLongForSavedSearch);
+                console.log('typeof localStorage.getItem(ngStorage-search_params)- ', typeof localStorage.getItem('ngStorage-search_params'));
+                console.log('typeof localStorage.getItem(ngStorage-search_params) !== undefined ', typeof localStorage.getItem('ngStorage-search_params') !== 'undefined');
+                
+                console.log('localStorage.getItem(ngStorage-search_params)', localStorage.getItem('ngStorage-search_params'));
+                
+                console.log('ngStorageSearchParams  -', ngStorageSearchParams);
+                
+                if (typeof localStorage.getItem('ngStorage-search_params') !== 'undefined') {
+                    console.log('ngstorage search setting');
+                    
+                    localStorage.setItem('ngStorage-search_params', ngStorageSearchParams);
+                    localStorage.setItem('hit_saved_search', hitSavedSearch);
+                    console.log('localStorage.getItem(ngStorage-search_params)222', localStorage.getItem('ngStorage-search_params'));
+                }
+                if (angular) {
+                    console.log('Setting in to AngularJS');
+                    angular.element(document).ready(function () {
+                        var scope = angular.element(document.querySelector('[ng-app]')).scope();
+                        scope.$apply(function() {
+                            scope.is_front_logged = 1;  // Update the variable in AngularJS scope
+                        });
+                        if (ngStorageSearchParams) {
+                            console.log('Setting ngStorage.search_params...');
+                            var $localStorage = angular.element(document.querySelector('[ng-app]')).injector().get('$localStorage');
+                            $localStorage.search_params = ngStorageSearchParams;
+                        }
+                    });
+                } else {
+                    console.log('AngularJS not found, cannot update scope variable.');
+                }
+
+                
+            // }, 10000);
+        }
+    });
+
+    function updateCrmLink(el) {
+        var encodedId = encodeURIComponent(
+            btoa(unescape(encodeURIComponent(user_id)))
+        );
+
+        el.href = 'https://crm.dpirealtywebsites.com/login?member_id=' + encodedId;
+    }
+
+</script>  
+
+                        <link rel="stylesheet"  href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
+                        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script async src="https://tag.clear2target.com/ldc.js?pid=1e5ea6e8a66cd782712ea0a5b8766c57&aid=16de03f2"></script>
+
+                    </head></head>
+
+<body ng-controller='indexcontroller' ng-cloak ng-show="show_body">
+    <div id="page">
+        <div id="fb-root"></div>
+        <!--<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.3&appId=295624401368296&autoLogAppEvents=1"></script>-->
+        <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_GB/sdk.js?version=v10.0">
+        </script>
+        <!-- Dynamic Header Start -->
+    
+
+
+
+
+
+
+
+
+
+
+<style>
+.jr-floating-translator{
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 6px;
+  background: rgba(0,0,0,.85);
+  border: 1px solid rgba(201,169,106,.35);
+  border-left: 0;
+  border-radius: 0 22px 22px 0;
+  box-shadow: 0 10px 25px rgba(0,0,0,.25);
+}
+
+.jr-lang-btn{
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jr-lang-btn img{
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.jr-lang-btn:hover,
+.jr-lang-btn.active{
+  background: #00a0e3;
+}
+
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+.goog-logo-link,
+.goog-te-gadget span{
+  display:none !important;
+}
+
+.skiptranslate{
+  display:none !important;
+}
+
+body{
+  top:0 !important;
+}
+:root{
+    --lux-gold:#00a0e3;
+    --lux-gold-light:#e6f4fa;
+    --lux-gold-dark:#046f9b;
+}
+/* BODY */
+body{
+    font-family:'Montserrat', sans-serif;
+    font-size:16px;
+    font-weight:400;
+    line-height:1.8;
+    color:#555;
+}
+
+/* PARAGRAPHS */
+p{
+    font-family:'Montserrat', sans-serif;
+}
+
+/* NAVIGATION */
+.ks-navmenu ul li a,
+.ks-mobile-panel a{
+    font-family:'Montserrat', sans-serif;
+    font-weight:600;
+    letter-spacing:2px;
+    text-transform:uppercase;
+}
+
+/* BUTTONS */
+.et-about-btn,
+.et-btn-view-all,
+.et-listing-btn,
+.et-search-btn{
+    font-family:'Montserrat', sans-serif;
+    font-weight:600;
+    letter-spacing:2px;
+}
+
+/* SECTION KICKERS */
+.et-kicker,
+.et-blog-kicker,
+.et-services-kicker,
+.et-neighborhood-kicker{
+    font-family:'Montserrat', sans-serif;
+}
+.ks-hero-btn.primary{
+    background:linear-gradient(
+        135deg,
+        #D4AF37,
+        #B8860B
+    );
+    color:#fff !important;
+}
+
+.ks-hero-btn.primary:hover{
+    background:#fff;
+    color:#111 !important;
+}
+
+/* LARGE HEADINGS */
+h1,
+h2,
+h3,
+.ks-hero-title,
+.et-section-heading h2{
+    font-family:'Playfair Display', serif;
+
+
+}
+.ks-hero-subtitle{
+    color:var(--lux-gold);
+    letter-spacing:3px;
+}
+/* =========================
+   KS CUSTOM GLASS HEADER
+========================= */
+
+/* FIX DROPDOWN */
+
+.ks-navmenu .ks-dropdown{
+    position:relative;
+}
+
+.ks-navmenu .ks-dropdown-menu{
+    position:absolute;
+    top:100%;
+    left:0;
+
+    display:block !important;
+    min-width:280px;
+
+    opacity:0;
+    visibility:hidden;
+
+    transform:translateY(15px);
+
+    background:rgba(45,45,55,.95);
+    backdrop-filter:blur(18px);
+
+    border-radius:16px;
+    padding:12px;
+
+    transition:.25s ease;
+
+    z-index:9999;
+}
+
+.ks-navmenu .ks-dropdown:hover .ks-dropdown-menu{
+    opacity:1;
+    visibility:visible;
+    transform:translateY(0);
+}
+
+/* IMPORTANT */
+
+.ks-navmenu .ks-dropdown-menu{
+    flex-direction:column !important;
+    gap:0 !important;
+}
+
+.ks-navmenu .ks-dropdown-menu li{
+    width:100%;
+}
+
+.ks-navmenu .ks-dropdown-menu li a{
+    display:block;
+    width:100%;
+
+    padding:14px 18px;
+
+    font-size:12px;
+    letter-spacing:2px;
+
+    border-radius:10px;
+}
+
+.ks-navmenu .ks-dropdown-menu li a:hover{
+    background:rgba(255,255,255,.08);
+}
+
+.ks-header{
+    position:fixed;
+    top:20px;
+    left:0;
+    width:100%;
+    z-index:9999;
+    padding:0 35px;
+    background:transparent !important;
+    transition:all .35s ease;
+}
+
+.ks-header.scrolled{
+    top:10px;
+}
+
+.ks-header-main{
+    width:100%;
+  background:rgba(45,45,55,.35);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+
+    border-radius:18px;
+    padding:18px 30px;
+
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.ks-header.scrolled .ks-header-main{
+    background:rgba(17,17,17,.92);
+}
+
+.ks-logo{
+    position:relative;
+}
+
+.ks-logo:after{
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:-8px;
+    width:60px;
+    height:2px;
+  
+}
+.ks-logo img{
+    width:auto;
+    max-width:230px;
+    max-height:75px;
+}
+
+.ks-navmenu > ul{
+    display:flex;
+    align-items:center;
+    gap:36px;
+}
+
+.ks-dropdown-menu{
+    display:flex;
+    flex-direction:column !important;
+}
+
+.ks-navmenu ul li{
+    position:relative;
+    list-style:none;
+}
+
+.ks-navmenu ul li a{
+   color: #fff !important;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  transition: .3s ease;
+}
+
+.ks-navmenu ul li a:hover{
+color:#a9a9a9  !important;
+    opacity:1;
+}
+
+/* DROPDOWN */
+.ks-dropdown-menu{
+    display:block;
+    opacity:0;
+    visibility:hidden;
+    position:absolute;
+    top:100%;
+    left:50%;
+    transform:translate(-50%,15px);
+    min-width:280px;
+    background:rgba(15,15,15,.95);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:18px;
+    padding:12px;
+    box-shadow:0 20px 60px rgba(0,0,0,.30);
+    transition:.25s ease;
+}
+
+.ks-dropdown:hover .ks-dropdown-menu{
+    opacity:1;
+    visibility:visible;
+    transform:translate(-50%,0);
+}
+
+.ks-dropdown-menu li a{
+    display:block;
+    padding:14px 18px;
+    border-radius:10px;
+    font-size:12px;
+    letter-spacing:1px;
+    white-space:nowrap;
+}
+
+.ks-dropdown-menu li a:hover{
+    background:rgba(255,255,255,.08);
+}
+
+/* PHONE BUTTON */
+.ks-phone{
+    margin-left:10px;
+}
+
+.ks-phone a{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+
+    height:50px;
+    padding:0 24px;
+
+    border-radius:50px;
+
+    background:linear-gradient(
+        135deg,
+        #b0e0f4 0%,
+        #00a0e3 50%,
+        #03648d 100%
+    );
+
+    color:#fff !important;
+
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    text-decoration:none !important;
+
+    border:1px solid rgba(255,255,255,.12);
+
+    box-shadow:
+        0 12px 30px rgba(255,255,255,.30),
+        0 3px 10px rgba(0,0,0,.15);
+
+    transition:all .35s ease;
+}
+
+.ks-phone a i{
+    font-size:13px;
+}
+
+.ks-phone a:hover{
+    transform:translateY(-2px);
+
+    background:linear-gradient(
+        135deg,
+        #b0e0f4 0%,
+        #00a0e3 50%,
+        #03648d 100%
+    );
+
+    color:#fff !important;
+
+    box-shadow:
+        0 18px 40px rgba(212,175,55,.45),
+        0 8px 20px rgba(0,0,0,.20);
+}
+
+.ks-phone a:focus,
+.ks-phone a:active{
+    color:#fff !important;
+    text-decoration:none !important;
+}
+
+/* MOBILE */
+
+@media(max-width:1199px){
+
+    .ks-phone{
+        display:none;
+    }
+
+}
+
+/* MOBILE BUTTON */
+.ks-mobile-trigger{
+    display:none;
+    width:50px;
+    height:50px;
+    border-radius:12px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(212,175,55,.25);
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:4px;
+    cursor:pointer;
+}
+
+.ks-mobile-trigger span{
+    width:20px;
+    height:2px;
+    background:var(--lux-gold);
+    display:block;
+}
+
+/* MOBILE MENU */
+.ks-mobile-panel{
+    display:none;
+    position:fixed;
+    top:105px;
+    left:16px;
+    right:16px;
+    z-index:9998;
+    background:rgba(10,10,10,.96);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:18px;
+    padding:22px;
+    box-shadow:0 25px 70px rgba(0,0,0,.35);
+}
+
+.ks-mobile-panel.open{
+    display:block;
+}
+
+.ks-mobile-panel a{
+    display:block;
+    color:#fff !important;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    font-size:12px;
+    padding:14px 0;
+    border-bottom:1px solid rgba(255,255,255,.12);
+    text-decoration:none;
+}
+
+.ks-mobile-submenu{
+    display:none;
+    padding-left:14px;
+}
+
+.ks-mobile-submenu.open{
+    display:block;
+}
+
+body.ks-menu-open{
+    overflow:hidden;
+}
+
+@media(max-width:1199px){
+    .ks-header{
+        top:12px;
+        padding:0 16px;
+    }
+
+    .ks-navmenu{
+        display:none;
+    }
+
+    .ks-mobile-trigger{
+        display:flex;
+    }
+
+    .ks-logo img{
+        max-width:200px;
+        max-height:65px;
+    }
+}
+
+@media(max-width:767px){
+    .ks-header{
+        top:10px;
+        padding:0 10px;
+    }
+
+    .ks-header-main{
+        padding:14px 18px;
+        border-radius:14px;
+    }
+
+    .ks-logo img{
+        max-width:170px;
+        max-height:55px;
+    }
+
+    .ks-mobile-panel{
+        top:90px;
+        left:10px;
+        right:10px;
+    }
+}
+</style>
+
+<!-- FLOATING LEFT TRANSLATOR -->
+<div class="jr-floating-translator">
+  <button class="jr-lang-btn active" data-lang="en" aria-label="Translate to English">
+    <img src="https://flagcdn.com/w40/us.png" alt="English">
+  </button>
+
+  <button class="jr-lang-btn" data-lang="es" aria-label="Translate to Spanish">
+    <img src="https://flagcdn.com/w40/es.png" alt="Spanish">
+  </button>
+
+ <button class="jr-lang-btn" data-lang="pt" aria-label="Translate to Portuguese">
+    <img src="https://flagcdn.com/w40/br.png" alt="Portuguese">
+  </button>
+
+</div>
+<header id="ks-header" class="ks-header">
+    <div class="container-fluid">
+        <div class="ks-header-main">
+
+            <a href="https://www.bluerealty.com/" class="ks-logo">
+                <img src="https://www.bluerealty.com/themes/7085/images/Blue-Realty-Team-logo.png" alt="Logo">
+            </a>
+
+            <nav class="ks-navmenu">
+                <ul>
+
+                    <li>
+                        <a href="https://www.bluerealty.com/">Home</a>
+                    </li>
+
+
+
+<li class="ks-dropdown">
+                        <a href="#">About Us <i class="fa fa-angle-down"></i></a>
+                        <ul class="ks-dropdown-menu">
+                            <li>
+                        <a href="https://www.bluerealty.com/9/about/9">Meet Our Brokers</a>
+                    </li>
+                            <li>
+                        <a href="https://www.bluerealty.com/15/about_us/15">Meet Our Team</a>
+                    </li>
+                        </ul>
+                    </li>
+
+
+
+                    
+
+                    <li class="ks-dropdown">
+                        <a href="#">Search <i class="fa fa-angle-down"></i></a>
+                        <ul class="ks-dropdown-menu">
+                            <li><a href="https://www.bluerealty.com/for_sale">For Sale</a></li>
+                            <li><a href="https://www.bluerealty.com/for_rent">For Rent</a></li>
+                            <li><a href="https://www.bluerealty.com/our_listings">Our Listings</a></li>
+                            
+                            <li><a href="https://www.bluerealty.com/11/search/11">Property Search</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="ks-dropdown">
+                        <a href="#">Developments <i class="fa fa-angle-down"></i></a>
+                        <ul class="ks-dropdown-menu">
+                            <li><a href="https://www.bluerealty.com/new_developments">New Developments</a></li>
+                            <li><a href="https://www.bluerealty.com/existing_developments">Existing Developments</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="ks-dropdown">
+                        <a href="#">Resources <i class="fa fa-angle-down"></i></a>
+                        <ul class="ks-dropdown-menu">
+                            <li><a href="https://www.bluerealty.com/195/free_home_evaluation/278">Free Home Evaluation</a></li>
+                            <li><a href="https://www.bluerealty.com/dream-home-finder">Dream Home Finder</a></li>
+                            <li><a href="https://www.bluerealty.com/median-home-values">AI Median Home Values</a></li>
+                            <li><a href="https://www.bluerealty.com/mortage-calculator">Mortgage Calculator</a></li>
+                        </ul>
+                    </li>
+
+
+ <li>
+                        <a href="https://www.bluerealty.com/blog">Blog</a>
+                    </li>
+
+
+                    <li>
+                        <a href="https://omegatitlegroup.com/"  target="_blank">Omega National Title
+</a>
+                    </li>
+
+
+ <li>
+                        <a href="https://lending-haus.com/about/meet-our-team/david-armas/"  target="_blank">Lending Haus</a>
+                    </li>
+
+                    <li>
+                        <a href="https://www.bluerealty.com/17/contact/17">Contact</a>
+                    </li>
+
+                    
+                </ul>
+            </nav>
+
+            <button class="ks-mobile-trigger" type="button" id="ksMobileToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+
+
+
+
+        </div>
+    </div>
+</header>
+
+<div class="ks-mobile-panel" id="ksMobilePanel">
+
+    <a href="https://www.bluerealty.com/">Home</a>
+    <a href="https://www.bluerealty.com/9/about/9">About</a>
+
+    <a href="#" class="ksMobileDropdownToggle" data-target="#ksMobileSearch">Search <i class="fa fa-angle-down"></i></a>
+    <div class="ks-mobile-submenu" id="ksMobileSearch">
+        <a href="https://www.bluerealty.com/for_sale">For Sale</a>
+        <a href="https://www.bluerealty.com/for_rent">For Rent</a>
+        <a href="https://www.bluerealty.com/our_listings">Office Listings</a>
+        <a href="https://www.bluerealty.com/11/search/11">Property Search</a>
+    </div>
+
+    <a href="#" class="ksMobileDropdownToggle" data-target="#ksMobileDevelopments">Developments <i class="fa fa-chevron-down"></i></a>
+    <div class="ks-mobile-submenu" id="ksMobileDevelopments">
+        <a href="https://www.bluerealty.com/new_developments">New Developments</a>
+        <a href="https://www.bluerealty.com/existing_developments">Existing Developments</a>
+    </div>
+
+    <a href="#" class="ksMobileDropdownToggle" data-target="#ksMobileResources">Resources <i class="fa fa-angle-down"></i></a>
+    <div class="ks-mobile-submenu" id="ksMobileResources">
+        <a href="https://www.bluerealty.com/195/free_home_evaluation/278">Free Home Evaluation</a>
+        <a href="https://www.bluerealty.com/dream-home-finder">Dream Home Finder</a>
+        <a href="https://www.bluerealty.com/median-home-values">AI Median Home Values</a>
+        <a href="https://www.bluerealty.com/mortage-calculator">Mortgage Calculator</a>
+    </div>
+
+    <a href="https://www.bluerealty.com/blog">Blog</a>
+    <a href="https://www.bluerealty.com/17/contact/17">Contact</a>
+    
+</div>
+
+
+
+
+
+
+
+        <!--/.site-header -->
+        <!-- Dynamic Header End -->
+        <!-- This is the place where the dynamic html will be placed start -->
+        <div ng-if="is_maintain==1" class="text-center">
+            <img class="img-responsive" ng-src="https://www.bluerealty.com/backend/images/underconstruction.png"
+                style="display: inline-block;">
+            <h4>{{status_msg}}</h4>
+        </div>
+        <ng-view ng-if="is_maintain==0" autoscroll="true">
+        </ng-view>
+        <!-- This is the place where the dynamic html will be placed end -->
+
+<style>
+
+
+.modern-footer {
+background: radial-gradient(#111, #2d2d37);
+  color: #ffffff;
+  padding: 60px 0 0 0;
+  font-size: 15px;
+}
+
+.modern-footer .footer-logo img {
+  max-width: 220px;
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.modern-footer .footer-text {
+  color: rgba(255,255,255,0.75);
+  line-height: 26px;
+  margin-bottom: 25px;
+}
+
+.modern-footer .footer-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.modern-footer .footer-contact-list,
+.modern-footer .footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.modern-footer .footer-contact-list li,
+.modern-footer .footer-links li {
+  margin-bottom: 12px;
+  color: rgba(255,255,255,0.82);
+  line-height: 24px;
+}
+
+.modern-footer .footer-links a,
+.modern-footer .footer-contact-list a,
+.modern-footer .footer-bottom a {
+  color: #00a0e3;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.modern-footer .footer-links a:hover,
+.modern-footer .footer-contact-list a:hover,
+.modern-footer .footer-bottom a:hover {
+  color: #00a0e3;
+  text-decoration: none;
+}
+
+.modern-footer .social-icons {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.modern-footer .social-icons li {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.modern-footer .social-icons a {
+ width: 42px;
+  height: 42px;
+  color: #00a0e3;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.04);
+  transition: all 0.3s ease;
+  font-size: 15px;
+}
+
+.modern-footer .social-icons a:hover {
+  background: #e1e1e1;
+  border-color: #e1e1e1;
+  transform: translateY(-2px);
+}
+
+.modern-footer .social-icons svg {
+  width: 18px;
+  height: 18px;
+  fill: #ffffff;
+}
+
+.modern-footer .contact-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 10px;
+  line-height: 30px;
+}
+
+.modern-footer .footer-divider {
+  border-top: 1px solid rgba(255,255,255,0.10);
+  margin-top: 35px;
+}
+
+.modern-footer .footer-bottom {
+  padding: 20px 0;
+  font-size: 13px;
+  color: rgba(255,255,255,0.70);
+}
+
+.modern-footer .footer-bottom-left {
+  display: flex;
+  align-items: flex-start;
+}
+
+.modern-footer .footer-bottom-left img {
+  max-height: 52px;
+  width: auto;
+  margin-right: 12px;
+  margin-top: 2px;
+}
+
+.modern-footer .footer-bottom p {
+  margin-bottom: 0;
+  line-height: 22px;
+}
+
+.modern-footer .powered-by {
+  text-align: right;
+}
+
+.modern-footer .icon-inline {
+  width: 18px;
+  display: inline-block;
+  text-align: center;
+  margin-right: 8px;
+}
+
+@media (max-width: 991px) {
+  .modern-footer {
+    padding-top: 45px;
+  }
+
+  .modern-footer .footer-col {
+    margin-bottom: 35px;
+  }
+
+  .modern-footer .powered-by {
+    text-align: left;
+    margin-top: 15px;
+  }
+
+  .modern-footer .footer-bottom-left {
+    margin-bottom: 15px;
+  }
+}
+</style>
+
+<footer class="modern-footer">
+  <div class="container">
+    <div class="row">
+
+      <!-- Column 1 -->
+      <div class="col-lg-4 col-md-6 footer-col">
+        <div class="footer-logo">
+          
+
+ <img src="https://www.bluerealty.com/themes/7085/images/Blue-Realty-Team-logo.png" alt="Logo">
+        </div>
+
+        <p class="footer-text">
+          Real estate guidance, local expertise, and personalized service to help you buy, sell, or invest with confidence.
+        </p>
+
+       <ul class="social-icons">
+
+    <li ng-if="agentDetails.fb_url!=''">
+        <a href="{{ agentDetails.fb_url | httpCheck }}" target="_blank" aria-label="Facebook">
+            <i class="bi bi-facebook"></i>
+        </a>
+    </li>
+
+    <li ng-if="agentDetails.instagram_url!=''">
+        <a href="{{ agentDetails.instagram_url | httpCheck }}" target="_blank" aria-label="Instagram">
+            <i class="bi bi-instagram"></i>
+        </a>
+    </li>
+
+    <li ng-if="agentDetails.linkedin_url!=''">
+        <a href="{{ agentDetails.linkedin_url | httpCheck }}" target="_blank" aria-label="LinkedIn">
+            <i class="bi bi-linkedin"></i>
+        </a>
+    </li>
+
+    <li ng-if="agentDetails.twitter_url!=''">
+        <a href="{{ agentDetails.twitter_url | httpCheck }}" target="_blank" aria-label="X">
+            <i class="bi bi-twitter-x"></i>
+        </a>
+    </li>
+
+    <li ng-if="agentDetails.youtube_url!=''">
+        <a href="{{ agentDetails.youtube_url | httpCheck }}" target="_blank" aria-label="YouTube">
+            <i class="bi bi-youtube"></i>
+        </a>
+    </li>
+
+    <li ng-if="agentDetails.google_url!=''">
+        <a href="{{ agentDetails.google_url | httpCheck }}" target="_blank" aria-label="Google">
+            <i class="bi bi-google"></i>
+        </a>
+    </li>
+
+</ul>
+      </div>
+
+      <!-- Column 2 -->
+      <div class="col-lg-4 col-md-6 footer-col">
+        <h5 class="footer-title">Contact</h5>
+
+        <div class="contact-name">
+          {{agentDetails.company}}
+        </div>
+
+        <ul class="footer-contact-list">
+          
+          <li>
+            {{ agentDetails.address1 ? agentDetails.address1 : '' }}{{ agentDetails.address2 ? ', ' + agentDetails.address2 : '' }}<br>
+            {{ agentDetails.city_name ? agentDetails.city_name : '' }}{{ agentDetails.state_code ? ', ' + agentDetails.state_code : '' }}{{ agentDetails.zip ? ', ' + agentDetails.zip : '' }}
+          </li>
+          <li>
+            <span class="icon-inline"><i class="fa fa-phone"></i></span>
+            <a href="tel:{{ agentDetails.offc_phone }}">{{ agentDetails.offc_phone }}</a>
+          </li>
+          <li>
+            <span class="icon-inline"><i class="fa fa-envelope"></i></span>
+            <a href="mailto:{{ agentDetails.account_email }}">{{ agentDetails.account_email }}</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Column 3 -->
+      <div class="col-lg-4 col-md-12 footer-col">
+        <h5 class="footer-title">Quick Links</h5>
+
+        <ul class="footer-links">
+          <li>
+            <a href="https://www.bluerealty.com/107/privacy_policy/766">Privacy Policy</a>
+          </li>
+          <li>
+            <a href="#" onclick="updateCrmLink(this);" target="_blank">Agent Login</a>
+          </li>
+          <li ng-hide="is_front_logged!=0">
+            <a href="javascript:void(0)" ng-click="showClientLoginPopup()">Guest Login</a>
+          </li>
+          <li ng-show="is_front_logged!=0">
+            <a href="javascript:void(0)" ng-click="logout()">Logout</a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="footer-divider"></div>
+
+    <div class="row footer-bottom">
+      <div class="col-lg-8">
+        <div class="footer-bottom-left">
+          <img src="https://www.bluerealty.com/themes/7085/images/whiteR.png" alt="Equal Housing Logo">
+          <p>
+            ADA Compliance: In concurrence with the National Association of Realtors guidelines,
+            Steve  Boyette is committed to providing an accessible website. If you have
+            difficulty accessing content, difficulty viewing a file on the website, or notice any
+            accessibility problems, please contact me at 954-871-1687 to specify the nature
+            of the issue and any assistive technology you use.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-lg-4 powered-by">
+        <p>
+          Powered by
+          <a href="http://dpishowcase.com/" target="_blank">DPI Realty Websites</a><br>
+          &copy; 2026 DPI Realty Websites. All Rights Reserved.
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+    <!-- Dyanamic Footer For Preview Page End-->
+    </div>
+    <!--/#page-->
+
+
+<a href="#" data-toggle="modal" data-target="#myModal"> <img src="https://www.bluerealty.com/themes/7085/images/ADA.png" alt="Floating Icon" class="floating-left"></a> <style> .floating-left { position: fixed; bottom: 20px; /* distance from bottom */ left: 20px; /* distance from left */ width: 50px; /* adjust size */ height: auto; z-index: 9999; /* keep it above other content */ cursor: pointer; } /* Optional: add hover effect */ .floating-left:hover { opacity: 0.8; transform: scale(1.05); transition: all 0.2s ease-in-out; } </style>
+   
+
+
+<div class="floating-contact">
+
+  <a href="tel:{{ agentDetails.offc_phone }}" 
+     class="contact-btn" 
+     aria-label="Call Agent">
+
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+      viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 
+      19.79 19.79 0 0 1-8.63-3.07 
+      19.5 19.5 0 0 1-6-6 
+      19.79 19.79 0 0 1-3.07-8.67 
+      A2 2 0 0 1 4.11 2h3 
+      a2 2 0 0 1 2 1.72 
+      12.84 12.84 0 0 0 .7 2.81 
+      2 2 0 0 1-.45 2.11L8.09 9.91 
+      a16 16 0 0 0 6 6l1.27-1.27 
+      a2 2 0 0 1 2.11-.45 
+      12.84 12.84 0 0 0 2.81.7 
+      A2 2 0 0 1 22 16.92z"></path>
+    </svg>
+
+  </a>
+
+  <span class="ping"></span>
+
+</div>
+
+
+
+
+    <!-- start ada modal -->
+    <div class="modal fade" id="myModal" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Accessibility Widget</h4>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered">
+                        <thead>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <button id="bigtext" type="button" class="btn btn-primary" onclick="bigSize()">
+                                        Bigger Text
+                                    </button>
+                                    <div id="progress"></div>
+                                </td>
+                                <td>
+                                    <button id="stext" type="button" class="btn btn-primary" onclick="speechtext()">
+                                        Speechd Text
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end ada modal -->
+
+
+
+
+
+
+    <!-- Bower js -->
+    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular/angular.min.js"></script>
+<script src="https://www.bluerealty.com/themes/public-common-files/js/angular-ui-router.min.js"></script>    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/bootstrap/dist/js/bootstrap.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-animate/angular-animate.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-cookies/angular-cookies.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-resource/angular-resource.min.js">
+</script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-route/angular-route.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-sanitize/angular-sanitize.min.js">
+</script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-touch/angular-touch.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-update-meta/dist/update-meta.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/marker_cluster/src/markerclusterer.js">
+</script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/ng-idle/angular-idle.min.js">
+</script>
+    <script type="text/javascript" src="https://www.bluerealty.com/themes/public-common-files/js/lodash.min-2.4.1.js">
+</script>
+    <script type="text/javascript" src="https://www.bluerealty.com/themes/public-common-files/js/angular-highlightjs.js">
+</script>
+    <script type="text/javascript" src="https://www.bluerealty.com/themes/public-common-files/js/ui-bootstrap-tpls-1.0.0.js">
+</script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/bootstrap/js/bootstrap-hover-dropdown.min.js">
+</script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/moment/moment.js"></script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js">
+</script>
+    <script type="text/javascript" src="https://www.bluerealty.com/themes/public-common-files/js/swiper-bundle.min.js">
+</script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/jquery-ui/jquery-ui.min.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/oclazyload/dist/ocLazyLoad.min.js">
+</script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/odometer/odometer.min.js"></script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-odometer/dist/angular-odometer.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-messages/angular-messages.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-validation-match/dist/angular-validation-match.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-loading-bar/build/loading-bar.min.js">
+</script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-aria/angular-aria.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-material/angular-material.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-payments/lib/angular-payments.min.js">
+</script>
+    <script
+    src="https://www.bluerealty.com/themes/public-common-files/bower_components/angular-tablesort/js/angular-tablesort.js">
+</script>
+    <!-- Bower js -->
+    <!-- Public js -->
+    <script type='text/javascript' src="https://www.bluerealty.com/themes/public-common-files/js/loading-bar.min.js">
+</script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/angular-validator.min.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/jquery.flexslider.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/imgLiquid-min.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/jquery.simpleWeather.min.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/lightslider.min.js" type="text/javascript">
+</script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/jquery.mCustomScrollbar.concat.min.js"
+    type="text/javascript"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/chosen.jquery.min-1.4.2.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/angular-chosen.min.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/jquery.sticky-kit.min.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/ngStorage-0.3.6.min.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/ng-infinite-scroll.min.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/owl.carousel.js"></script>
+    <!-- extra menu items js -->
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/tutorial.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/isotope.pkgd.min.js"></script>
+    <script src="https://www.bluerealty.com/themes/public-common-files/js/init.js"></script>
+    <!-- Public js -->
+    <!-- Angular Scripts -->
+    <script src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/config/angularconfig.js"></script>
+    <script src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/config/config-service.js"></script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/app.js?v=1790759615">
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/shared/agent-register-modal.js?v=1782392222">
+</script>
+<script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/recentlysoldpropertycontroller.js?v=1789109828">
+</script>    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/homecontroller.js?v=1785409119">
+</script>
+<script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/ourlistingscontroller.js?v=1789109828">
+</script><script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/mylistingscontroller.js?v=1789109828">
+</script><script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/resetpasswordcontroller.js?v=1782392222">
+</script>    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/idxcontroller.js?v=1786709036">
+</script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/databasepoweredcontroller.js?v=1782392222">
+</script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/criteriacontroller.js?v=1782392222">
+</script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/searchpropertycontroller.js?v=1790759615">
+</script>
+<script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/propertylistcriteriacontroller.js?v=1789109828">
+</script>    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/projectcontroller.js?v=1782392222">
+</script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/resourcescontroller.js?v=1784007458">
+</script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/staticcontroller.js?v=1782392222">
+</script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/registercontroller.js?v=1782392222">
+</script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/listingcontroller.js?v=1782392222">
+</script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/recentsalelistingcontroller.js?v=1782392222">
+</script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/recentlyclosedsearchpropertycontroller.js?v=1782392222">
+</script>
+    <script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/commercialsearchcontroller.js?v=1785490177">
+</script>
+
+      <script src="https://www.bluerealty.com/themes/public-common-files/js/main.js"></script>
+    
+    <!-- Code provided by Google -->
+    <div id="google_translate_element" style='display:none'></div>
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" type="text/javascript">
+    </script>
+    <!-- Flag click handler -->
+    <script type="text/javascript">
+        $('.translation-links a').click(function () {
+            let sel_html = $(this)[0].outerHTML;
+            console.log('sel_html', sel_html);
+            var lang = $(this).data('lang');
+            var $frame = $('.goog-te-menu-frame:first');
+            if (!$frame.size()) {
+                alert("Error: Could not find Google translate frame.");
+                return false;
+            }
+            $frame.contents().find('.goog-te-menu2-item span.text:contains(' + lang + ')').get(0).click();
+            $('.select-language').html(sel_html);
+            return false;
+        });
+
+        $(document).ready(function () {
+            $("#dpionloadloader").css("display", "block");
+        });
+    </script>
+
+    <script type="text/javascript">
+        // New Translation Element Init
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: "en",
+                autoDisplay: false
+            },
+                "google_translate_element"
+            ); //remove the layout
+        }
+        // New Translation Element Init
+        // Flag click handler 
+        $(".translation-links a").click(function () {
+            var lang = $(this).data("lang");
+            var $frame = $(".goog-te-menu-frame:first");
+            if (!$frame.size()) {
+                alert("Error: Could not find Google translate frame.");
+                return false;
+            }
+            $frame.contents().find(".goog-te-menu2-item span.text:contains(" + lang + ")").get(0).click();
+            return false;
+        });
+        // New Translation code
+        $(document).ready(function () {
+            setTimeout(() => {
+                googleTranslateElementInit();
+                var lang = "English";
+                $("#google_translate_element select option").each(function () {
+                    if ($(this).text().indexOf(lang) > -1) {
+                        $(this).parent().val($(this).val());
+                        var container = document.getElementById(
+                            "google_translate_element"
+                        );
+                        var select = container.getElementsByTagName("select")[0];
+                        triggerHtmlEvent(select, "change");
+                    }
+                });
+                console.log("Translation reset");
+                // Hide the translation bar
+                $(".skiptranslate").hide();
+            }, 900);
+        });
+        function triggerHtmlEvent(element, eventName) {
+            var event;
+            if (document.createEvent) {
+                event = document.createEvent("HTMLEvents");
+                event.initEvent(eventName, true, true);
+                element.dispatchEvent(event);
+            } else {
+                event = document.createEventObject();
+                event.eventType = eventName;
+                element.fireEvent("on" + event.eventType, event);
+            }
+        }
+        // Flag click handler
+        $(".translation-links a").off("click").click(function (e) {
+            e.preventDefault();
+            console.log("Flag clicked");
+            var lang = $(this).data("lang");
+            $("#google_translate_element select option").each(function () {
+                if ($(this).text().indexOf(lang) > -1) {
+                    $(this).parent().val($(this).val());
+                    var container = document.getElementById(
+                        "google_translate_element"
+                    );
+                    var select = container.getElementsByTagName("select")[0];
+                    triggerHtmlEvent(select, "change");
+                }
+            });
+
+            // Hide the translation bar
+            $(".skiptranslate").hide();
+        });
+        // New Translation code
+    </script>
+    <!--start ada js -->
+    <script>
+        bcount = 0;
+
+        function bigSize() {
+            bcount++;
+            if (bcount == 1) {
+                document.getElementById("bigtext").innerHTML = 'Bigger Text <span class="glyphicon glyphicon-ok"></span>';
+                document.getElementById("progress").innerHTML =
+                    '<span class="glyphicon glyphicon-minus"></span><span class="glyphicon glyphicon-minus"></span>';
+                document.body.style.fontSize = "20px";
+            }
+            if (bcount == 2) {
+                document.getElementById("bigtext").innerHTML = 'Bigger Text <span class="glyphicon glyphicon-ok"></span>';
+                document.getElementById("progress").innerHTML =
+                    '<span class="glyphicon glyphicon-minus"></span><span class="glyphicon glyphicon-minus"></span><span class="glyphicon glyphicon-minus"></span>';
+                document.body.style.fontSize = "25px";
+            }
+            if (bcount == 3) {
+                document.getElementById("bigtext").innerHTML = 'Bigger Text <span class="glyphicon glyphicon-ok"></span>';
+                document.getElementById("progress").innerHTML =
+                    '<span class="glyphicon glyphicon-minus"></span><span class="glyphicon glyphicon-minus"></span><span class="glyphicon glyphicon-minus"></span><span class="glyphicon glyphicon-minus"></span>';
+                document.body.style.fontSize = "30px";
+            }
+            if (bcount >= 4) {
+                document.getElementById("bigtext").innerHTML = 'Bigger Text';
+                document.getElementById("progress").innerHTML = '';
+                document.body.style.fontSize = null;
+                bcount = 0;
+            }
+        }
+
+        function speech(speechmsg) {
+            var synth = window.speechSynthesis;
+            synth.cancel();
+            var utterance1 = new SpeechSynthesisUtterance(speechmsg);
+            synth.speak(utterance1);
+            speechmsg = '';
+        }
+
+        function myFunction(e) {
+            speech(e.target.innerText)
+        }
+        var count = 0;
+
+        function speechtext() {
+            count++;
+            if (count == 1) {
+                speech('Screen reader enable');
+                document.getElementById("stext").innerHTML =
+                    'Speech Text <span class="glyphicon glyphicon-volume-up"></span>';
+                document.addEventListener("click", myFunction);
+            } else {
+                speech('Screen reader disable');
+                document.getElementById("stext").innerHTML = 'Speech Text';
+                document.removeEventListener("click", myFunction);
+                count = 0;
+            }
+        }
+    </script>
+    <!--end ada js -->
+    <script src="https://apis.google.com/js/api:client.js"></script>
+    <script>
+        const modal_pic = '428402940.png';
+        const gm_api_key = 'REDACTED_GOOGLE_API_KEY';
+    </script>
+    <div ng-controller="agentregistermodalcontroller">
+        <modal></modal>
+    </div>
+    <!-- start ada css -->
+    <style type="text/css">
+        .modal-dialog {
+            /*width: 350px;*/
+            /*height: auto;*/
+        }
+
+        .modal-backdrop {
+            background-color: transparent;
+        }
+    </style>
+    <!-- end ada css -->
+
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-hcaptcha"></script>
+
+                                <script>
+                                    $(document).ready(function() {
+                                        $(".main-menu ul li").has("ul").append("<span class='subToggle'></span>");
+
+                                        $(".subToggle").click(function() {
+                                            $(this).prev("ul").slideToggle(0);
+                                            $(this).toggleClass("active");
+                                        });
+
+                                        $(".menu-open-btn").click(function() {
+                                            $(".header-left").addClass("show");
+                                            $("body").addClass("overflow");
+                                            $(".page-overlay").show(0);
+                                        });
+
+                                        $(".page-overlay,.menu-close-btn").click(function() {
+                                            $(".header-left").removeClass("show");
+                                            $("body").removeClass("overflow");
+                                            $(".page-overlay").hide(0);
+                                        });
+
+                                        $(".main-header .main-menu ul li a").click(function() {
+                                            $(".header-left").removeClass("show");
+                                            $("body").removeClass("overflow");
+                                            $(".page-overlay").hide(0);
+                                        });
+
+                                        $(window).resize(function() {
+                                            if ($(window).width() > 1200) {
+                                                $(".header-left").removeClass("show");
+                                                $("body").removeClass("overflow");
+                                                $(".page-overlay").hide(0);
+                                                $(".subToggle").removeClass("active");
+                                                $(".main-menu").find("ul").removeAttr("style");
+                                            }
+                                        });
+                                    });
+                                </script>
+
+
+
+
+<script>
+  document.getElementById('agentIcon').addEventListener('click', function () {
+    document.getElementById('agentPopup').style.display = 'block';
+  });
+
+  document.getElementById('closePopup').addEventListener('click', function () {
+    document.getElementById('agentPopup').style.display = 'none';
+  });
+
+  // Optional: Click outside to close
+  document.addEventListener('click', function (event) {
+    const popup = document.getElementById('agentPopup');
+    const icon = document.getElementById('agentIcon');
+    if (!popup.contains(event.target) && !icon.contains(event.target)) {
+      popup.style.display = 'none';
+    }
+  });
+</script>
+
+
+<script
+    src="https://www.bluerealty.com/resources/assets/themes/asset-common-files/controllers/commercialsearchcontroller.js?v=1785490177">
+</script>
+
+
+<script>
+window.addEventListener('scroll', function(){
+    var header = document.getElementById('ks-header');
+
+    if(header){
+        if(window.scrollY > 50){
+            header.classList.add('scrolled');
+        }else{
+            header.classList.remove('scrolled');
+        }
+    }
+});
+
+$(document).ready(function(){
+
+    $(document).off('click', '#ksMobileToggle').on('click', '#ksMobileToggle', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+
+        $('#ksMobilePanel').toggleClass('open');
+        $('body').toggleClass('ks-menu-open');
+    });
+
+    $(document).off('click', '.ksMobileDropdownToggle').on('click', '.ksMobileDropdownToggle', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+
+        var target = $(this).data('target');
+        $(target).toggleClass('open');
+    });
+
+    $(document).on('click', function(e){
+        if(!$(e.target).closest('#ks-header, #ksMobilePanel').length){
+            $('#ksMobilePanel').removeClass('open');
+            $('.ks-mobile-submenu').removeClass('open');
+            $('body').removeClass('ks-menu-open');
+        }
+    });
+
+});
+</script>
+<style>
+/* =========================================
+   EVELYN CLEAN GOLD POPUP MODALS
+========================================= */
+
+.et-clean-modal .modal-dialog{
+    max-width:620px !important;
+    width:calc(100% - 30px);
+    margin:60px auto;
+}
+
+.et-clean-modal .modal-content{
+    border:0;
+    border-radius:28px;
+    overflow:hidden;
+    background:#fff;
+    box-shadow:0 35px 100px rgba(0,0,0,.28);
+    position:relative;
+}
+
+.et-clean-close{
+    position:absolute;
+    top:18px;
+    right:18px;
+    z-index:20;
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:50%;
+    background:#fff;
+    color:#111;
+    font-size:24px;
+    line-height:1;
+    box-shadow:0 12px 35px rgba(0,0,0,.18);
+    cursor:pointer;
+}
+
+.et-clean-hero{
+    min-height:190px;
+    background:
+        linear-gradient(135deg, rgba(0,0,0,.72), rgba(0,0,0,.28)),
+        url('https://www.bluerealty.com/themes/7085/images/KB-Side1.jpg') center 28%;
+    background-size:cover;
+    padding:38px;
+    display:flex;
+    align-items:flex-end;
+}
+
+.et-clean-hero-content{
+    color:#fff;
+    max-width:420px;
+}
+
+.et-clean-kicker{
+    display:block;
+    color:#d4af37;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.30em;
+    text-transform:uppercase;
+    margin-bottom:10px;
+}
+
+.et-clean-hero h3{
+    color:#fff;
+    font-family:var(--heading-font);
+    font-size:40px;
+    line-height:1;
+    font-weight:300;
+    margin:0;
+}
+
+.et-clean-body{
+    padding:38px;
+}
+
+.et-clean-body p{
+    color:#666;
+    font-size:15px;
+    line-height:1.7;
+    margin:0 0 24px;
+}
+
+.et-clean-social{
+    display:flex;
+    gap:12px;
+    margin-bottom:24px;
+}
+
+.et-clean-social-btn{
+    flex:1;
+    height:50px;
+    border:1px solid #e6e6e6;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    color:#111 !important;
+    font-size:13px;
+    font-weight:600;
+    text-decoration:none !important;
+    background:#fff;
+    transition:.3s ease;
+}
+
+.et-clean-social-btn:hover{
+    background:#111;
+    color:#fff !important;
+}
+
+.et-clean-divider{
+    position:relative;
+    text-align:center;
+    margin:6px 0 24px;
+}
+
+.et-clean-divider:before{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    top:50%;
+    height:1px;
+    background:#eee;
+}
+
+.et-clean-divider span{
+    position:relative;
+    background:#fff;
+    padding:0 16px;
+    color:#999;
+    font-size:10px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+}
+
+.et-clean-form .row{
+    margin-left:-8px;
+    margin-right:-8px;
+}
+
+.et-clean-form [class*="col-"]{
+    padding-left:8px;
+    padding-right:8px;
+}
+
+.et-clean-form-group{
+    margin-bottom:16px;
+}
+
+.et-clean-form-group label{
+    display:block;
+    color:#555;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    margin-bottom:7px;
+}
+
+.et-clean-form-group sup{
+    color:#b50000;
+}
+
+.et-clean-form .form-control{
+    height:52px;
+    border:1px solid #ddd;
+    border-radius:14px;
+    background:#fff;
+    box-shadow:none !important;
+    padding:0 16px;
+    color:#111;
+    font-size:14px;
+}
+
+.et-clean-form .form-control:focus{
+    border-color:#d4af37;
+}
+
+.et-clean-submit{
+    width:100%;
+    height:56px;
+    border:0;
+    border-radius:14px;
+    background:linear-gradient(135deg,#d4af37,#b8860b);
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    margin-top:8px;
+    transition:.3s ease;
+}
+
+.et-clean-submit:hover{
+    background:#111;
+    color:#fff;
+}
+
+.et-clean-bottom-link{
+    text-align:center;
+    margin:22px 0 0;
+    color:#666;
+    font-size:14px;
+}
+
+.et-clean-bottom-link a{
+    color:#111;
+    font-weight:700;
+    text-decoration:none;
+}
+
+.et-clean-bottom-link a:hover{
+    color:#b8860b;
+}
+
+.et-clean-error{
+    color:#c0392b;
+    font-size:12px;
+    margin-top:5px;
+}
+
+@media(max-width:767px){
+    .et-clean-modal .modal-dialog{
+        margin:20px auto;
+    }
+
+    .et-clean-hero{
+        min-height:160px;
+        padding:28px;
+    }
+
+    .et-clean-hero h3{
+        font-size:32px;
+    }
+
+    .et-clean-body{
+        padding:28px 22px;
+    }
+
+    .et-clean-social{
+        display:block;
+    }
+
+    .et-clean-social-btn{
+        margin-bottom:10px;
+    }
+}
+</style>
+
+<!-- CLIENT REGISTRATION MODAL -->
+<div class="modal fade register-modal et-clean-modal" tabindex="-1" role="dialog" id="clientRegistrationModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <button type="button" class="et-clean-close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+
+            <div class="et-clean-hero">
+                <div class="et-clean-hero-content">
+                    <span class="et-clean-kicker">Exclusive Access</span>
+                    <h3>Create Your Account</h3>
+                </div>
+            </div>
+
+            <div class="et-clean-body">
+
+                <p>
+                    Save properties, receive listing alerts, and stay connected with the South Florida market.
+                </p>
+
+                <div class="et-clean-social">
+
+                    <a class="et-clean-social-btn"
+                       onclick="fblogin()"
+                       ng-show="agentDetails.facebook_app_id && agentDetails.facebook_app_id != 'null'">
+                        <img src="{{ base_url }}/uploads/index_files/icons/facebook-login.svg" width="10">
+                        Facebook
+                    </a>
+
+                    <a class="et-clean-social-btn" ng-click="loginWithGoogle()">
+                        <img src="{{ base_url }}/uploads/index_files/icons/google-login.svg" width="17">
+                        Google
+                    </a>
+
+                </div>
+
+                <div class="et-clean-divider">
+                    <span>or sign up with email</span>
+                </div>
+
+                <form class="et-clean-form"
+                      angular-validator-submit="submitClientRegistration()"
+                      name="agentForm"
+                      angular-validator
+                      novalidate>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+                            <div class="et-clean-form-group">
+                                <label>Name <sup>*</sup></label>
+                                <input type="text"
+                                       class="form-control"
+                                       name="name"
+                                       id="name"
+                                       ng-model="agentform.name"
+                                       required>
+
+                                <div ng-show="agentForm.$submitted">
+                                    <div ng-show="agentForm.name.$error.required" class="et-clean-error">
+                                        Name field is required
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="et-clean-form-group">
+                                <label>Email <sup>*</sup></label>
+                                <input type="email"
+                                       class="form-control"
+                                       name="agent_email"
+                                       id="agent_email"
+                                       ng-model="agentform.email"
+                                       required>
+
+                                <div ng-show="agentForm.$submitted">
+                                    <div ng-show="agentForm.agent_email.$error.required" class="et-clean-error">
+                                        Email field is required
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="et-clean-form-group">
+                                <label>Mobile <sup>*</sup></label>
+                                <input type="text"
+                                       class="form-control"
+                                       name="primary_phone"
+                                       id="primary_phone"
+                                       ng-model="agentform.primary_phone"
+                                       required>
+
+                                <div ng-show="agentForm.$submitted">
+                                    <div ng-show="agentForm.primary_phone.$error.required" class="et-clean-error">
+                                        Mobile number is required
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="et-clean-form-group">
+                                <label>Zip Code</label>
+                                <input type="text"
+                                       class="form-control"
+                                       name="zip_code"
+                                       id="zip_code"
+                                       ng-model="agentform.zip_code">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="et-clean-form-group">
+                        <custom-captcha model="agentform.captcha"></custom-captcha>
+                    </div>
+
+                    <button type="submit" class="et-clean-submit">
+                        Register
+                    </button>
+
+                </form>
+
+                <p class="et-clean-bottom-link">
+                    Already have an account?
+                    <a ng-click="showClientLoginPopup()" style="cursor:pointer">Sign In</a>
+                </p>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- CLIENT LOGIN MODAL -->
+<div class="modal fade register-modal et-clean-modal" tabindex="-1" role="dialog" id="clientLoginModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <button type="button" class="et-clean-close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+
+            <div class="et-clean-hero">
+                <div class="et-clean-hero-content">
+                    <span class="et-clean-kicker">Client Portal</span>
+                    <h3>Welcome Back</h3>
+                </div>
+            </div>
+
+            <div class="et-clean-body">
+
+                <p>
+                    Sign in to access your saved searches, favorite listings, and personalized property alerts.
+                </p>
+
+                <div class="et-clean-social">
+
+                    <a class="et-clean-social-btn"
+                       onclick="fblogin()"
+                       ng-show="agentDetails.facebook_app_id && agentDetails.facebook_app_id != 'null'">
+                        <img src="{{ base_url }}/uploads/index_files/icons/facebook-login.svg" width="10">
+                        Facebook
+                    </a>
+
+                    <a class="et-clean-social-btn" ng-click="loginWithGoogle()">
+                        <img src="{{ base_url }}/uploads/index_files/icons/google-login.svg" width="17">
+                        Google
+                    </a>
+
+                </div>
+
+                <div class="et-clean-divider">
+                    <span>or sign in with email</span>
+                </div>
+
+                <form class="et-clean-form"
+                      angular-validator-submit="submitClientLogin()"
+                      name="agentForm"
+                      angular-validator
+                      novalidate>
+
+                    <div class="et-clean-form-group">
+                        <label>Email Address <sup>*</sup></label>
+                        <input type="email"
+                               class="form-control"
+                               name="agent_email"
+                               id="agent_email"
+                               ng-model="agentform.email"
+                               required>
+
+                        <div ng-show="agentForm.$submitted">
+                            <div ng-show="agentForm.agent_email.$error.required" class="et-clean-error">
+                                Email field is required
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="et-clean-form-group">
+                        <label>Password <sup>*</sup></label>
+                        <input type="password"
+                               class="form-control"
+                               name="password"
+                               id="password"
+                               ng-model="agentform.password"
+                               required>
+
+                        <div ng-show="agentForm.$submitted">
+                            <div ng-show="agentForm.password.$error.required" class="et-clean-error">
+                                Password is required
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="et-clean-form-group">
+                        <custom-captcha model="agentform.captcha"></custom-captcha>
+                    </div>
+
+                    <button type="submit" class="et-clean-submit">
+                        Login
+                    </button>
+
+                </form>
+
+                <p class="et-clean-bottom-link">
+                    Don’t have an account?
+                    <a style="cursor:pointer;" ng-click="showClientRegistrationPopup()">Sign Up</a>
+                </p>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+<div class="modal fade register-modal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+    id="updateProfileModal">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content p-5">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="register-content-heading-block">
+                        <h3 class="headingText">Complete the registration</h3>
+                        <p class="sub-headingText">Complete the registration to receive updates</p>
+                    </div>
+                    <form angular-validator-submit="updateProfile()" name="agentForm" angular-validator novalidate>
+                        <div class="form-area text-left">
+                            <div class="form-group">
+                                <label class="control-label">Mobile Number <sup class="text-danger">*</sup></label>
+                                <input type="text" class="form-control" name="primary_phone" id="primary_phone"
+                                    ng-model="agentform.primary_phone" required>
+                                <div ng-show="agentForm.$submitted">
+                                    <div ng-show="agentForm.primary_phone.$error.required" style="color:red">
+                                        Mobile
+                                        Number field is required</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">What Zip Code Are You Interested In</label>
+                                <input type="text" class="form-control" name="zip_code" id="zip_code"
+                                    ng-model="agentform.zip_code">
+                            </div>
+                            <div class="form-btn-holder">
+                                <button type="submit" class="btn btn-comn-regal-blue btn-center">Update</button>
+                            </div>
+                        </div>
+                    </form>
+                </div> <!-- end register-content-col -->
+            </div> <!-- end register-modal-row -->
+            <br>
+        </div>
+    </div>
+
+<div id="google_translate_element" style="display:none;"></div>
+
+<script>
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    includedLanguages: 'en,es,pt,iw',
+    autoDisplay: false
+  }, 'google_translate_element');
+}
+</script>
+
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script>
+function dpiTriggerTranslate(lang) {
+  var select = document.querySelector('.goog-te-combo');
+
+  if (!select) {
+    setTimeout(function(){
+      dpiTriggerTranslate(lang);
+    }, 500);
+    return;
+  }
+
+  select.value = lang;
+  select.dispatchEvent(new Event('change'));
+
+  document.querySelectorAll('.jr-lang-btn').forEach(function(btn){
+    btn.classList.remove('active');
+
+    if (btn.getAttribute('data-lang') === lang) {
+      btn.classList.add('active');
+    }
+  });
+}
+
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.jr-lang-btn');
+
+  if (!btn) return;
+
+  e.preventDefault();
+  dpiTriggerTranslate(btn.getAttribute('data-lang'));
+});
+</script>
+
+
+
+
+</div>                            
+<script>
+    let responseData = {};
+    let clientEmail = "";
+    responseData.booking_info = {};
+
+    function setupChatbotBooking(apiData, contact) {
+        var injector = angular.element(document.body).injector();
+        var BookingService = injector.get("BookingService");
+        BookingService.setInitialData({
+            member_id: user_id
+        });
+        BookingService.setAfterContact(apiData);
+        return BookingService.isBookingLinkVisible();
+    }
+
+    function onCrmChatReady(api) {
+        api.on('lead_captured', function(lead) {
+            console.log('lead_captured', lead);
+            clientEmail = lead.email;
+            responseData.booking_info.client_id = lead.client_id;
+            responseData.booking_info.member_id = lead.member.id;
+            responseData.booking_info.client_email = clientEmail;
+
+            // Member info
+            responseData.booking_info.member_details = lead.member;
+
+            // Login here
+            const payload = {
+                page: "search",
+                member_id: String(responseData.booking_info.member_id),
+                client_id: lead.client_id
+            };
+            const loginUrl = base_url + "/firstclient/client-login";
+            fetch(loginUrl, {
+                    method: "POST",
+                    credentials: "include", // Remove if not needed
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(async (response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    // Login the user
+                    const loginData = data.login_data;
+                    if (loginData) {
+                        localStorage.setItem('access_token', loginData.token);
+                        localStorage.setItem('usr_info', loginData.encripted_usr_info);
+                        var injector = angular.element(document.querySelector('[ng-app]')).injector();
+                        var $rootScope = injector.get('$rootScope');
+
+                        $rootScope.$applyAsync(function() {
+                            $rootScope.is_front_logged = 1;
+                            $rootScope.refreshLoggedUser();
+                        });
+                        console.log("User logged in successfully");
+                    }
+                })
+                .catch((error) => {
+                    console.error("Save Search Error:", error);
+                });
+
+            setupChatbotBooking(responseData, lead);
+        });
+        api.on('save_search', function(lead) {
+            console.log(lead);
+            // return;
+
+            // Saving the search
+            // {
+            //     "page": "search",
+            //     "parsed_data": "{\"property_type\":\"\",\"property_types\":[\"Single Family\"],\"bedroom\":0,\"bathroom\":0,\"min_price\":100000,\"max_price\":1000000,\"search_listing_sort\":\"listprice_desc\",\"search_listing_date_sort\":\"listdate_\",\"image_category\":\"\",\"limit\":20,\"page\":1,\"advance_search\":\"{\\\"city\\\":[\\\"Miami\\\"],\\\"bedrooms\\\":0,\\\"bathrooms\\\":0}\",\"advance_search_updated\":\"{\\\"city\\\":[\\\"Miami\\\"]}\",\"agentid\":\"1150\",\"all_bound\":\"{}\",\"menu_id\":null,\"criteria_id\":null,\"page_name\":null}",
+            //     "member_id": "1150"
+            // }
+
+
+            // const lead = {
+            //     budget: "100000-2000000",
+            //     client_id: 96522,
+            //     email: "redacted@example.com",
+            //     full_name: "Wasim Kabir",
+            //     location: "Miami",
+            //     member_id: 1150,
+            //     move_time: "Next month",
+            //     primary_phone: "9087654321",
+            //     property_type: "Single Family",
+            // }
+
+
+
+            // Parse budget
+            let minPrice = null;
+            let maxPrice = null;
+
+            if (lead.budget) {
+                const budget = lead.budget.split("-").map(Number);
+                if (budget.length === 1) {
+                    // min 20% below budget, max 20% above budget
+                    minPrice = Math.floor(budget[0] * 0.8);
+                    maxPrice = Math.ceil(budget[0] * 1.2);
+                } else if (budget.length > 1) {
+                    minPrice = budget[0];
+                    maxPrice = budget[1];
+                }
+            }
+            // else {
+            //     minPrice = budget[0] || null;
+            //     maxPrice = budget.length > 1 ? budget[1] : null;
+            // }
+            let advanceSearch = {};
+            let advanceSearchUpdated = {};
+
+            if (lead.zip_code != null && lead.zip_code != '') {
+                // Advance search objects
+                advanceSearch = {
+                    zip_code: [lead.zip_code],
+                    bedrooms: 0,
+                    bathrooms: 0
+                };
+
+                advanceSearchUpdated = {
+                    zip_code: [lead.zip_code],
+                };
+            } else {
+                // Advance search objects
+                advanceSearch = {
+                    // city: [lead.location],
+                    city: [lead.city],
+                    bedrooms: 0,
+                    bathrooms: 0
+                };
+
+                advanceSearchUpdated = {
+                    // city: [lead.location]
+                    city: [lead.city]
+                };
+            }
+
+
+            // Build parsed_data
+            const parsedData = {
+                property_type: "",
+                // property_types: [lead.property_type],
+                property_types: [],
+                bedroom: 0,
+                bathroom: 0,
+                min_price: minPrice,
+                ...(maxPrice !== null && {
+                    max_price: maxPrice
+                }),
+                search_listing_sort: "listprice_desc",
+                search_listing_date_sort: "listdate_",
+                image_category: "",
+                limit: 20,
+                page: 1,
+                advance_search: JSON.stringify(advanceSearch),
+                advance_search_updated: JSON.stringify(advanceSearchUpdated),
+                agentid: String(lead.member.id),
+                all_bound: "{}",
+                menu_id: null,
+                criteria_id: null,
+                page_name: null
+            };
+
+            // Final payload
+            const payload = {
+                page: "search",
+                parsed_data: JSON.stringify(parsedData),
+                member_id: String(responseData.booking_info.member_id),
+                client_id: lead.client_id
+            };
+            // const saveSearchUrl = base_url + "/firstclient/save-search-and-login";
+            const saveSearchUrl = base_url + "/firstclient/save-search";
+            fetch(saveSearchUrl, {
+                    method: "POST",
+                    credentials: "include", // Remove if not needed
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(async (response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log("Save Search Success:", data);
+                    // // Login the user
+                    // const loginData = data.login_data;
+                    // if(loginData) {
+                    //     localStorage.setItem('access_token', loginData.token);
+                    //     localStorage.setItem('usr_info', loginData.encripted_usr_info);
+                    //     var injector = angular.element(document.querySelector('[ng-app]')).injector();
+                    //     var $rootScope = injector.get('$rootScope');
+
+                    //     $rootScope.$applyAsync(function () {
+                    //         $rootScope.is_front_logged = 1;
+                    //         $rootScope.refreshLoggedUser();
+                    //     });
+                    //     console.log("User logged in successfully");
+                    // }
+                })
+                .catch((error) => {
+                    console.error("Save Search Error:", error);
+                });
+            console.log(lead);
+        });
+        api.on('schedule_calendar_booking', function(data) {
+            console.log(responseData);
+
+            console.log("Minimize the chat");
+            api.minimize();
+
+            console.log('schedule_calendar_booking', data);
+            var injector = angular.element(document.body).injector();
+
+            if (!injector) {
+                console.error('AngularJS injector not found.');
+                return;
+            }
+
+            injector.invoke(function(
+                $compile,
+                $rootScope,
+                $timeout,
+                BookingService
+            ) {
+
+                BookingService.setInitialData({
+                    member_id: responseData.booking_info.member_details.id
+                });
+
+                BookingService.setAfterContact(responseData);
+
+                // Create a child scope
+                var chatbotScope = $rootScope.$new();
+
+                // Give the directive its own member_details
+                chatbotScope.chatbotMemberDetails = responseData.booking_info.member_details;
+
+                // Remove previous instance
+                angular.element("#chatbot-slot-booking").remove();
+                // Hide any modal-backdrop divs that might be present
+                // <div class="modal-backdrop fade in"></div>
+                // Remove the fade and in classes to prevent the backdrop from blocking interaction
+                // $(".modal-backdrop").removeClass("fade in");
+                $('.slotBookingModal').on('hidden.bs.modal', function() {
+                    // 1. Remove the backdrop element from the DOM
+                    $('.modal-backdrop').remove();
+
+                    // 2. Restore scrolling to the main page body
+                    $('body').removeClass('modal-open');
+                });
+
+                var el = angular.element(
+                    '<div id="chatbot-slot-booking">' +
+                    '<slot-booking ' +
+                    'member-details="chatbotMemberDetails" ' +
+                    'chatbot-mode="true">' +
+                    '</slot-booking>' +
+                    '</div>'
+                );
+
+                angular.element(document.body).append(el);
+
+                $compile(el)(chatbotScope);
+                chatbotScope.$digest();
+
+                $timeout(function() {
+                    $rootScope.$broadcast("slotBooking:open");
+                });
+            });
+
+            document.addEventListener('bookingCompleted', (event) => {
+                console.log(event.detail.booking_info);
+                let bookingId = event.detail.booking_info.data.meeting_id;
+                // Minimize the booking calendar
+                $('.slotBookingModal').hide();
+
+                api.open();
+                api.confirmBooking(bookingId);
+            });
+        });
+    }
+</script>
+<script src="https://chatbot.dpirealtywebsites.com/embed/chatbot-loader.js" data-member-id="7085"
+    data-title="Chat with us" data-primary-color="#0d6efd"
+    data-booking-url="https://new-crm.dpirealtywebsites.com/book?member_id=7085"
+    data-callback="onCrmChatReady" defer></script>
+</body>
+
+</html>

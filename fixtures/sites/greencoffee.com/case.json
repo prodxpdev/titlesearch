@@ -1,0 +1,32 @@
+{
+  "domain": "greencoffee.com",
+  "recordedAt": "2026-09-30T18:12:53.664Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "86.105.245.69"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns2.eftydns.com.",
+      "ns1.eftydns.com."
+    ],
+    "MX": []
+  },
+  "hops": [
+    {
+      "url": "https://greencoffee.com/",
+      "error": "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
+    },
+    {
+      "url": "http://greencoffee.com/",
+      "status": 301,
+      "contentType": "text/html",
+      "location": "https://greencoffee.com/"
+    },
+    {
+      "url": "https://greencoffee.com/",
+      "error": "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
+    }
+  ]
+}

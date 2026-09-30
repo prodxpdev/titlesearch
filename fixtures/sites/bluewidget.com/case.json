@@ -1,0 +1,27 @@
+{
+  "domain": "bluewidget.com",
+  "recordedAt": "2026-09-30T18:12:50.396Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "76.223.54.146",
+      "13.248.169.48"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns1.afternic.com.",
+      "ns2.afternic.com."
+    ],
+    "MX": [
+      "0 ."
+    ]
+  },
+  "hops": [
+    {
+      "url": "https://bluewidget.com/",
+      "status": 200,
+      "contentType": "text/html",
+      "truncated": false
+    }
+  ]
+}

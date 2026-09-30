@@ -38,6 +38,8 @@ export interface SafeFetchHop {
   status: number;
   /** The validated address for this hop. */
   address: string;
+  /** For redirects, the Location header as sent. */
+  location?: string;
 }
 
 export class SafeFetchError extends Error {
@@ -114,11 +116,11 @@ export async function safeFetch(
         if (signal.aborted) throw err;
         throw new SafeFetchError("network", `Request to ${url.host} failed.`, chain);
       }
-      chain.push({ url: url.href, status: res.status, address });
+      const location = REDIRECT_STATUSES.has(res.status) ? res.headers.get("location") : null;
+      chain.push({ url: url.href, status: res.status, address, ...(location ? { location } : {}) });
 
       if (REDIRECT_STATUSES.has(res.status)) {
         await res.body?.cancel().catch(() => {});
-        const location = res.headers.get("location");
         if (!location) {
           throw new SafeFetchError(
             "invalid_redirect",

@@ -33,7 +33,11 @@ describe.runIf(isBun)("titlesearch mcp over stdio", () => {
     try {
       expect(client.getServerVersion()?.name).toBe("titlesearch");
       const { tools } = await client.listTools();
-      expect(tools.map((t) => t.name).sort()).toEqual(["check_domains", "generate_variants"]);
+      expect(tools.map((t) => t.name).sort()).toEqual([
+        "check_domains",
+        "generate_variants",
+        "inspect_domain",
+      ]);
       const res = await client.callTool({
         name: "generate_variants",
         arguments: { seed: "acme", strategies: ["tld"], tlds: ["com", "io"] },

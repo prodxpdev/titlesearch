@@ -123,9 +123,15 @@ export const PresenceEvidence = z.object({
   contentConfidence: z.enum(["normal", "low"]),
   /** Ids of the parking signatures that matched. */
   parkingSignals: z.array(z.string()),
-  /** Present only when the page itself states a price. */
+  /** Redirects the page asks for in a meta refresh or script. Recorded, never followed. */
+  clientRedirects: z.array(z.string()),
+  /** Steps of the probe that failed, such as HTTPS or DNS. */
+  probeErrors: z.array(
+    z.object({ stage: z.enum(["dns", "https", "http"]), code: z.string(), message: z.string() }),
+  ),
+  /** Present only when a for-sale page states a price. The currency is as the page shows it. */
   askingPrice: z
-    .object({ amount: z.number().nonnegative(), currency: z.string(), source: z.literal("page") })
+    .object({ amount: z.number().positive(), currency: z.string(), source: z.literal("page") })
     .optional(),
 });
 export type PresenceEvidence = z.infer<typeof PresenceEvidence>;

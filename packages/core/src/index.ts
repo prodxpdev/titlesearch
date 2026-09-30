@@ -14,6 +14,14 @@ export {
   RequestLimitError,
 } from "./check.js";
 export { DomainError, domainFor, normalizeDomain, normalizeTld, topLevelLabel } from "./domain.js";
+export { decodeBody, type ExtractedPage, extractPage, sniffCharset } from "./extract/extract.js";
+export {
+  type InspectOptions,
+  inspectDomain,
+  type PresenceProbe,
+  shouldProbe,
+  withPresence,
+} from "./inspect.js";
 export {
   createRedactor,
   type LogFields,
@@ -40,6 +48,24 @@ export {
   UntrustedSiteText,
 } from "./model.js";
 export * from "./net/index.js";
+export {
+  extractAskingPrice,
+  matchSignals,
+  PARKING_SIGNATURES,
+  type Signal,
+  type SignalInput,
+  type Signature,
+  SignatureFileSchema,
+  SignatureSchema,
+} from "./parking.js";
+export {
+  type DnsClient,
+  LOW_CONTENT_CHARS,
+  type ProbeOptions,
+  type ProbeResult,
+  probePresence,
+  USER_AGENT,
+} from "./presence.js";
 export { type AvailabilityProvider, type ProviderContext, sourceError } from "./provider.js";
 export {
   abortableSleep,

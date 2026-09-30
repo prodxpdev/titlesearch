@@ -1,0 +1,26 @@
+{
+  "domain": "blueworks.com",
+  "recordedAt": "2026-09-30T18:12:51.801Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "64.190.63.222"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns2.sedoparking.com.",
+      "ns1.sedoparking.com."
+    ],
+    "MX": [
+      "0 localhost."
+    ]
+  },
+  "hops": [
+    {
+      "url": "https://blueworks.com/",
+      "status": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "truncated": false
+    }
+  ]
+}

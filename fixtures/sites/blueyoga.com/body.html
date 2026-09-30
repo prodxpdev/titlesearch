@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="preconnect" href="https://ob.sd559908.js.brandsmat.com">
+    <title>blueyoga.com</title>
+    <script type="text/javascript">
+        window.cheqRequestId = null;
+        window.__resolveCheq = null;
+
+        window.onCheqResponse = function (data, requestId) {
+            if (typeof requestId === "string" && requestId.length > 0) {
+                window.cheqRequestId = requestId;
+            }
+
+            if (typeof window.__resolveCheq === "function") {
+                window.__resolveCheq();
+            }
+        };
+    </script>
+    <script async
+            src='https://ob.sd559908.js.brandsmat.com/i/c59f6651af12b5efb3ef9693abae15af.js'
+            data-ch='blueyoga.com' class='ct_clicktrue_94292' data-jsonp="onCheqResponse">
+    </script>
+    <script type="text/javascript">
+		// Validate the user
+        const REDIRECT_URL = 'http://blueyoga.com/?tr_uuid=20261001-0412-559b-935b-a57285654361&';
+        const TIMEOUT_MS = 2500;
+
+        let redirected = false;
+
+        const payload = {
+            fp: '-7',
+            cheq: null,
+        };
+
+        const buildQuery = () =>
+            Object.entries(payload)
+                .filter(([, v]) => typeof v === 'string' && v.length > 0)
+                .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+                .join('&');
+
+        const redirect = () => {
+            if (redirected) return;
+            redirected = true;
+
+            if (typeof window.cheqRequestId === "string" && window.cheqRequestId.length > 0) {
+                payload.cheq = window.cheqRequestId;
+            }
+
+            const qs = buildQuery();
+            const url = qs ? REDIRECT_URL + qs : REDIRECT_URL;
+            window.location.replace(url);
+        };
+
+        const timeout = setTimeout(redirect, TIMEOUT_MS);
+
+        const cheqPromise = new Promise(resolve => {
+            window.__resolveCheq = resolve;
+
+            if (window.cheqRequestId !== null) {
+                resolve();
+            }
+        });
+
+        const promises = [];
+
+        if (window.cheqRequestId === null) {
+            promises.push(cheqPromise);
+        }
+
+        Promise.allSettled(promises).then(() => {
+            clearTimeout(timeout);
+            redirect();
+        });
+    </script>
+    <style> body { background:#101c36 } </style>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+<div style='display: none;'><a href='http://blueyoga.com/?tr_uuid=20261001-0412-559b-935b-a57285654361&fp=-3'>Click here to enter</a></div>
+<noscript>
+    <iframe src='https://obs.sd559908.js.brandsmat.com/ns/c59f6651af12b5efb3ef9693abae15af.html?ch=blueyoga.com' width='0' height='0' style='display:none'></iframe>
+</noscript>
+<noscript><meta http-equiv="refresh" content="0; URL=http://blueyoga.com/?tr_uuid=20261001-0412-559b-935b-a57285654361&fp=-5"></noscript>
+</body>
+</html>

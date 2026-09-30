@@ -1,0 +1,26 @@
+{
+  "domain": "blueyoga.com",
+  "recordedAt": "2026-09-30T18:12:55.991Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "103.224.182.244"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns1.abovedomains.com.",
+      "ns2.abovedomains.com."
+    ],
+    "MX": [
+      "10 park-mx.above.com."
+    ]
+  },
+  "hops": [
+    {
+      "url": "https://blueyoga.com/",
+      "status": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "truncated": false
+    }
+  ]
+}

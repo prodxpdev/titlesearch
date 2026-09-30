@@ -1,0 +1,30 @@
+{
+  "domain": "quickcoffee.com",
+  "recordedAt": "2026-09-30T18:12:54.716Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "52.20.84.62"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns1.atom.com.",
+      "ns2.atom.com."
+    ],
+    "MX": []
+  },
+  "hops": [
+    {
+      "url": "https://quickcoffee.com/",
+      "status": 302,
+      "contentType": "text/html",
+      "location": "https://www.atom.com/name/QuickCoffee"
+    },
+    {
+      "url": "https://www.atom.com/name/QuickCoffee",
+      "status": 403,
+      "contentType": "text/html; charset=UTF-8",
+      "truncated": false
+    }
+  ]
+}

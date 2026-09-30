@@ -1,0 +1,30 @@
+{
+  "domain": "smarthub.com",
+  "recordedAt": "2026-09-30T18:12:55.399Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "13.56.33.8"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns1.brandbucket.com.",
+      "ns2.brandbucket.com."
+    ],
+    "MX": []
+  },
+  "hops": [
+    {
+      "url": "https://smarthub.com/",
+      "status": 301,
+      "contentType": "text/html",
+      "location": "https://www.brandbucket.com/names/smarthub"
+    },
+    {
+      "url": "https://www.brandbucket.com/names/smarthub",
+      "status": 403,
+      "contentType": "text/html; charset=UTF-8",
+      "truncated": false
+    }
+  ]
+}

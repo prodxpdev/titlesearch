@@ -3,7 +3,15 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { type SqliteDriver, SqliteStore } from "@titlesearch/cache";
-import type { AvailabilityProvider, CacheStore, Logger, ProviderContext } from "@titlesearch/core";
+import {
+  type AvailabilityProvider,
+  type CacheStore,
+  DohResolver,
+  type Logger,
+  type PresenceProbe,
+  type ProviderContext,
+  probePresence,
+} from "@titlesearch/core";
 import type { TitlesearchServices } from "@titlesearch/mcp";
 import {
   builtInMappings,
@@ -64,8 +72,11 @@ export async function createServices(options: RuntimeOptions): Promise<Titlesear
   }
 
   const rateLimiter = createDefaultRateLimiter();
+  const dns = new DohResolver();
+  const probe: PresenceProbe = (domain, signal) => probePresence(domain, { dns, signal });
   return {
     providers,
+    probe,
     ...(cache ? { cache } : {}),
     context: (signal: AbortSignal): ProviderContext => ({ signal, rateLimiter, logger }),
   };

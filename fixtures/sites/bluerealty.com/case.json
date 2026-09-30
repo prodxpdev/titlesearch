@@ -1,0 +1,32 @@
+{
+  "domain": "bluerealty.com",
+  "recordedAt": "2026-09-30T18:13:00.982Z",
+  "userAgent": "Mozilla/5.0 (compatible; Titlesearch/0.1)",
+  "dns": {
+    "A": [
+      "104.196.159.128"
+    ],
+    "AAAA": [],
+    "NS": [
+      "ns68.domaincontrol.com.",
+      "ns67.domaincontrol.com."
+    ],
+    "MX": [
+      "0 bluerealty-com.mail.protection.outlook.com."
+    ]
+  },
+  "hops": [
+    {
+      "url": "https://bluerealty.com/",
+      "status": 301,
+      "contentType": "text/html",
+      "location": "https://www.bluerealty.com/"
+    },
+    {
+      "url": "https://www.bluerealty.com/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "truncated": false
+    }
+  ]
+}

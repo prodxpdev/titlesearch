@@ -53,10 +53,17 @@ export const GenerateVariantsOutput = {
   ),
 };
 
+export const InspectDomainInput = {
+  domain: z.string().min(1).max(253).describe('One domain, such as "acme.io".'),
+};
+
+export const InspectDomainOutput = DomainResult;
+
 /** JSON Schema for every tool input, for docs and non-MCP clients. */
 export function toolInputJsonSchemas(): Record<string, unknown> {
   return {
     check_domains: z.toJSONSchema(z.object(CheckDomainsInput)),
     generate_variants: z.toJSONSchema(z.object(GenerateVariantsInput)),
+    inspect_domain: z.toJSONSchema(z.object(InspectDomainInput)),
   };
 }

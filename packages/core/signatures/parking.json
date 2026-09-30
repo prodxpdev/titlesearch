@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "updated": "2026-09-30",
+  "signatures": [
+    {
+      "id": "ns-afternic",
+      "kind": "nameserver",
+      "suffix": "afternic.com",
+      "verdict": "for_sale",
+      "description": "Nameservers of Afternic, GoDaddy's aftermarket.",
+      "fixtures": ["bluewidget.com", "godaddy-lander"]
+    },
+    {
+      "id": "ns-namefind",
+      "kind": "nameserver",
+      "suffix": "namefind.com",
+      "verdict": "for_sale",
+      "description": "Nameservers of NameFind, a domain portfolio sold through GoDaddy.",
+      "fixtures": ["bluecandles.com"]
+    },
+    {
+      "id": "ns-hugedomains",
+      "kind": "nameserver",
+      "suffix": "hugedomainsdns.com",
+      "verdict": "for_sale",
+      "description": "Nameservers of HugeDomains, a domain marketplace.",
+      "fixtures": ["silvercoffee.com"]
+    },
+    {
+      "id": "ns-efty",
+      "kind": "nameserver",
+      "suffix": "eftydns.com",
+      "verdict": "for_sale",
+      "description": "Nameservers of Efty, a domain sales platform.",
+      "fixtures": ["greencoffee.com"]
+    },
+    {
+      "id": "ns-atom",
+      "kind": "nameserver",
+      "suffix": "atom.com",
+      "verdict": "for_sale",
+      "description": "Nameservers of Atom, a domain marketplace.",
+      "fixtures": ["quickcoffee.com"]
+    },
+    {
+      "id": "ns-brandbucket",
+      "kind": "nameserver",
+      "suffix": "brandbucket.com",
+      "verdict": "for_sale",
+      "description": "Nameservers of BrandBucket, a domain marketplace.",
+      "fixtures": ["smarthub.com"]
+    },
+    {
+      "id": "ns-sedoparking",
+      "kind": "nameserver",
+      "suffix": "sedoparking.com",
+      "verdict": "parked",
+      "description": "Nameservers of Sedo's parking service.",
+      "fixtures": ["blueworks.com"]
+    },
+    {
+      "id": "ns-abovedomains",
+      "kind": "nameserver",
+      "suffix": "abovedomains.com",
+      "verdict": "parked",
+      "description": "Nameservers of Above.com's parking service.",
+      "fixtures": ["blueyoga.com"]
+    },
+    {
+      "id": "ns-parklogic",
+      "kind": "nameserver",
+      "suffix": "parklogic.com",
+      "verdict": "parked",
+      "description": "Nameservers of ParkLogic's parking service.",
+      "fixtures": ["blueshoes.com"]
+    },
+    {
+      "id": "lander-godaddy",
+      "kind": "client_redirect",
+      "path": "^/lander/?$",
+      "verdict": "parked",
+      "description": "A script redirect to /lander on the same host: GoDaddy's parked-page lander.",
+      "fixtures": ["bluewidget.com", "bluecandles.com"]
+    },
+    {
+      "id": "redirect-godaddy-forsale",
+      "kind": "redirect_host",
+      "host": "forsale.godaddy.com",
+      "verdict": "for_sale",
+      "description": "Redirects to GoDaddy's for-sale page.",
+      "fixtures": ["godaddy-lander"]
+    },
+    {
+      "id": "redirect-hugedomains",
+      "kind": "redirect_host",
+      "host": "hugedomains.com",
+      "verdict": "for_sale",
+      "description": "Redirects to a HugeDomains listing.",
+      "fixtures": ["silvercoffee.com"]
+    },
+    {
+      "id": "redirect-atom",
+      "kind": "redirect_host",
+      "host": "atom.com",
+      "verdict": "for_sale",
+      "description": "Redirects to an Atom listing.",
+      "fixtures": ["quickcoffee.com"]
+    },
+    {
+      "id": "redirect-brandbucket",
+      "kind": "redirect_host",
+      "host": "brandbucket.com",
+      "verdict": "for_sale",
+      "description": "Redirects to a BrandBucket listing.",
+      "fixtures": ["smarthub.com"]
+    },
+    {
+      "id": "text-for-sale",
+      "kind": "text",
+      "pattern": "(?:\\bthis (?:domain(?: name)?|website|site)|{domain}) (?:is|may be) for sale\\b",
+      "verdict": "for_sale",
+      "description": "The page says this domain or website is for sale.",
+      "fixtures": ["blueworks.com", "silvercoffee.com", "godaddy-lander"]
+    }
+  ]
+}
