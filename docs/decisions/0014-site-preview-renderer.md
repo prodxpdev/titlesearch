@@ -1,6 +1,6 @@
 # 14. Site-preview renderer and its egress proxy
 
-- Status: accepted (in progress: image storage, the preview route, and the Chromium download come next)
+- Status: accepted
 - Date: 2026-09-30
 
 ## Context
@@ -67,12 +67,44 @@ Every attempt is blocked at the proxy, every capture finishes or fails cleanly, 
 
 **CI note:** Ubuntu 24.04 restricts unprivileged user namespaces, which Chrome's sandbox needs. CI lifts that with `sysctl` rather than running Chrome with `--no-sandbox`. The code never disables the sandbox.
 
-## Still to do in step 8
+### Images: capture, storage, and serving
 
-- Image storage by content hash (a blob variant of the cache store).
-- Rendered text feeding extraction (`contentConfidence: "high"`).
-- The `/api/preview/:hash` handler.
-- `inspect_domain`'s `includePreview`.
-- The share-image fallback, re-encoded to WebP.
-- The one-time, checksum-verified Chromium download.
-- The container sidecar and Cloudflare Browser Rendering belong with the deploy targets (step 11).
+- **Captured through CDP directly.** The screenshots use CDP's `Page.captureScreenshot`, not puppeteer's `page.screenshot`. With `captureBeyondViewport: false`, puppeteer silently ignores `clip.scale`, so "thumbnails" came out 1280 by 800. The bug was found by looking at a live capture. The isolation suite now checks real pixel dimensions from the WebP header, not the dimensions the renderer claims.
+- **Stored by SHA-256** in a new `BlobStore`, implemented by the memory and SQLite stores and pinned by a blob conformance suite: exact bytes, copies, TTL, and a 1 MB cap. Images live as long as the presence evidence (6 hours).
+- **Served** by `previewImageResponse(blobs, hash)`, which the server mounts at `/api/preview/:hash` in step 9. It accepts only a 64-character hex hash, only serves WebP, and sets `nosniff`, `default-src 'none'; sandbox`, `same-origin` resource policy, and an immutable private cache.
+
+### Error pages aren't previews
+
+GoDaddy's for-sale page answers headless Chrome with an Akamai "Access Denied" page. Taken at face value, that page's text replaced the site's with `contentConfidence: "high"`, and its screenshot became the preview. The renderer now reports the final top-level document's status, following script redirects. The previewer treats 400 and above as a failed capture: the fetched text stands, and the share-image fallback applies. The domain's occupancy doesn't depend on the capture: it was still "for sale" from its nameservers and redirects.
+
+### Rendered text feeds extraction
+
+A successful capture's text replaces the fetched page's text for signatures and `untrustedSiteText`, and `contentConfidence` becomes `"high"`. Its final URL counts as a redirect for signatures. That's how `bluewidget.com`, whose fetched page is only a script redirect to `/lander`, now also matches `redirect-godaddy-forsale`.
+
+### Share-image fallback
+
+When capture is off or fails, the page's `og:image` (or `twitter:image`) is fetched through `safeFetch` and re-encoded to WebP with the jsquash WASM codecs. The encoder's WASM loader is injectable: the compiled CLI embeds the files with Bun's `with { type: "file" }` imports.
+
+- Image type comes from the file's first bytes, not its headers.
+- SVG is refused, since it can carry script.
+- PNG, JPEG, and WebP only. GIF and ICO give no fallback image.
+- **Decompression bombs:** dimensions are read from the file header, and anything over 4 megapixels is refused before decoding.
+
+### MCP
+
+`inspect_domain` accepts `includePreview`. The 480 by 300 thumbnail comes back as an image block, after a text block saying it's third-party content, not instructions. The full-size image is never sent.
+
+### The one-time Chromium download
+
+- **The build:** a pinned `chrome-headless-shell` from Chrome for Testing, 95 to 115 MB, for all five release platforms (Chrome for Testing covers Linux arm64). It's the right artifact for screenshots.
+- **Checksums are ours:** Chrome for Testing publishes none, so `tools/pin-chromium.mjs` downloads each archive and records its SHA-256 and size in `packages/render/src/chromium-manifest.json`.
+- **Verified before anything touches disk:** `fetchVerified` in `core/net` fetches from the manifest URL's origin only and returns bytes only if size and hash match. It's then unpacked with the OS's own `unzip`, or `tar` on Windows.
+- **`titlesearch browser install` and `titlesearch browser status`** are the CLI's form of "offers a download". The desktop app and web UI will offer it as a button. The renderer uses an installed Chrome or Edge first, then the verified download.
+- **Checked for real:** the real macOS arm64 build was downloaded and verified. The whole isolation suite then passed against it, with zero canary connections.
+- **Headless shell difference:** `Notification.requestPermission()` never settles in headless shell. The hardening script now removes `Notification` and `PushManager` entirely, so both browsers behave the same.
+
+## Deferred to the deploy targets (step 11)
+
+- The container sidecar, with its own egress policy.
+- The `cloudflare-browser-rendering` renderer, and verifying whether its traffic can be forced through an egress proxy.
+- WASM loading on Workers.

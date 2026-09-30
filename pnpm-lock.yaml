@@ -26,6 +26,15 @@ importers:
 
   apps/cli:
     dependencies:
+      '@jsquash/jpeg':
+        specifier: 1.6.0
+        version: 1.6.0
+      '@jsquash/png':
+        specifier: 3.1.1
+        version: 3.1.1
+      '@jsquash/webp':
+        specifier: 1.5.0
+        version: 1.5.0
       '@modelcontextprotocol/sdk':
         specifier: 1.31.0
         version: 1.31.0(zod@4.6.5)
@@ -44,6 +53,9 @@ importers:
       '@titlesearch/providers':
         specifier: workspace:*
         version: link:../../packages/providers
+      '@titlesearch/render':
+        specifier: workspace:*
+        version: link:../../packages/render
       zod:
         specifier: 4.6.5
         version: 4.6.5
@@ -121,6 +133,9 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
     devDependencies:
+      '@titlesearch/cache':
+        specifier: workspace:*
+        version: link:../cache
       '@types/node':
         specifier: 24.19.0
         version: 24.19.0
@@ -155,6 +170,18 @@ importers:
 
   packages/render:
     dependencies:
+      '@jsquash/jpeg':
+        specifier: 1.6.0
+        version: 1.6.0
+      '@jsquash/png':
+        specifier: 3.1.1
+        version: 3.1.1
+      '@jsquash/webp':
+        specifier: 1.5.0
+        version: 1.5.0
+      '@titlesearch/cache':
+        specifier: workspace:*
+        version: link:../cache
       '@titlesearch/core':
         specifier: workspace:*
         version: link:../core
@@ -743,6 +770,15 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
+
+  '@jsquash/jpeg@1.6.0':
+    resolution: {integrity: sha512-zwN46Awh1VM6gXlIcALwb5WzqK5H2e6+Awcs1QP8AvS8ohsK/sbE4esvmH4jhlhW7+CgiUUww66vg0aTnlSIMA==}
+
+  '@jsquash/png@3.1.1':
+    resolution: {integrity: sha512-C10pc+0H6j0h8fENOfnGOvkXCmvpSQTDGlfGd0sHphZhPSGTyLjIrHba0FaZZdsKqA/wlmhYicUHb92vfZphaw==}
+
+  '@jsquash/webp@1.5.0':
+    resolution: {integrity: sha512-KggLoj2MnRSfIqTeKe1EmbljTX2vuV7mh79k89PCL1pyqiDULcPM1L47twxXt0hkb68F70bXiL31MxsuoZtKFw==}
 
   '@manypkg/find-root@3.1.0':
     resolution: {integrity: sha512-BcSqCyKhBVZ5YkSzOiheMCV41kqAFptW6xGqYSTjkVTl9XQpr+pqHhwgGCOHQtjDCv7Is6EFyA14Sm5GVbVABA==}
@@ -1870,6 +1906,9 @@ packages:
       jsdom:
         optional: true
 
+  wasm-feature-detect@1.9.0:
+    resolution: {integrity: sha512-zonE+xlIIYtxPy++L24ow0hAD8CICb4+FgPyROd3buyXIqsJvUEDkBgfCCoXOd1Hu3DUr0GOfnPIdcGV+YpNaA==}
+
   webdriver-bidi-protocol@0.4.3:
     resolution: {integrity: sha512-uuN0goWfxP22B7J/uAgBpOYNPttC+XVseYE+rSY5+rQ+YBeVz/VORw8WbmLVcqW78zNg5A4qnjNXYUWR3il2ig==}
 
@@ -2371,6 +2410,14 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  '@jsquash/jpeg@1.6.0': {}
+
+  '@jsquash/png@3.1.1': {}
+
+  '@jsquash/webp@1.5.0':
+    dependencies:
+      wasm-feature-detect: 1.9.0
 
   '@manypkg/find-root@3.1.0':
     dependencies:
@@ -3387,6 +3434,8 @@ snapshots:
       '@types/node': 24.19.0
     transitivePeerDependencies:
       - msw
+
+  wasm-feature-detect@1.9.0: {}
 
   webdriver-bidi-protocol@0.4.3: {}
 

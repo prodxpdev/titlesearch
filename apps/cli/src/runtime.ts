@@ -3,10 +3,9 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { AnthropicClassifier, type AssessmentMode } from "@titlesearch/assess";
-import { type SqliteDriver, SqliteStore } from "@titlesearch/cache";
+import { MemoryStore, type SqliteDriver, SqliteStore } from "@titlesearch/cache";
 import {
   type AvailabilityProvider,
-  type CacheStore,
   DohResolver,
   type Logger,
   type PresenceProbe,
@@ -22,11 +21,21 @@ import {
   UpstreamMcpProvider,
 } from "@titlesearch/providers";
 import { nodeWhoisConnector } from "@titlesearch/providers/whois/node";
+import {
+  createPreviewer,
+  createWebpEncoder,
+  findBrowser,
+  installedChromium,
+  LocalChromiumRenderer,
+  nodeWasmLoader,
+  type WasmLoader,
+} from "@titlesearch/render";
 import { type CliConfig, ConfigError } from "./config.js";
 
 export interface RuntimeOptions {
   config: CliConfig;
   cacheDir: string;
+  dataDir: string;
   logger: Logger;
   /** Overrides from command-line flags. */
   noCache?: boolean;
@@ -50,7 +59,7 @@ export function resolveAssessmentMode(
 
 const isBun = typeof (globalThis as { Bun?: unknown }).Bun !== "undefined";
 
-async function openCache(cacheDir: string, logger: Logger): Promise<CacheStore | undefined> {
+async function openCache(cacheDir: string, logger: Logger): Promise<SqliteStore | undefined> {
   try {
     mkdirSync(cacheDir, { recursive: true, mode: 0o700 });
     const path = join(cacheDir, "cache.db");
@@ -70,7 +79,19 @@ async function openCache(cacheDir: string, logger: Logger): Promise<CacheStore |
   }
 }
 
-export async function createServices(options: RuntimeOptions): Promise<TitlesearchServices> {
+export interface Runtime {
+  services: TitlesearchServices;
+  /** Stops the preview browser, if one started. */
+  close(): Promise<void>;
+}
+
+async function wasmLoader(): Promise<WasmLoader> {
+  if (!isBun) return nodeWasmLoader;
+  const { bunWasmLoader } = await import("./wasm-bun.js");
+  return bunWasmLoader;
+}
+
+export async function createServices(options: RuntimeOptions): Promise<Runtime> {
   const { config, logger } = options;
   const cache =
     options.noCache || !config.cache.enabled
@@ -89,7 +110,27 @@ export async function createServices(options: RuntimeOptions): Promise<Titlesear
 
   const rateLimiter = createDefaultRateLimiter();
   const dns = new DohResolver();
-  const probe: PresenceProbe = (domain, signal) => probePresence(domain, { dns, signal });
+  // Preview images share the cache's SQLite file, or memory when caching is off.
+  const blobs = cache ?? new MemoryStore();
+  let renderer: LocalChromiumRenderer | undefined;
+  if (config.previews.mode === "local") {
+    // An installed Chrome or Edge first, then the verified download from `titlesearch browser install`.
+    const executablePath = findBrowser() ?? (await installedChromium(options.dataDir));
+    if (executablePath)
+      renderer = new LocalChromiumRenderer({ executablePath, resolver: dns, logger });
+    else
+      logger.info(
+        "No Chrome or Edge found, so previews use share images. Run `titlesearch browser install` for screenshots.",
+      );
+  }
+  const previewer = createPreviewer({
+    blobs,
+    ...(renderer ? { renderer } : {}),
+    shareImage: { encoder: createWebpEncoder(await wasmLoader()), resolver: dns },
+    logger,
+  });
+  const probe: PresenceProbe = (domain, signal) =>
+    probePresence(domain, { dns, signal, previewer });
   const mode = resolveAssessmentMode(
     config.assessment.mode,
     options.command,
@@ -110,10 +151,16 @@ export async function createServices(options: RuntimeOptions): Promise<Titlesear
   }
 
   return {
-    providers,
-    probe,
-    assessment: { mode, ...(classifier ? { classifier } : {}) },
-    ...(cache ? { cache } : {}),
-    context: (signal: AbortSignal): ProviderContext => ({ signal, rateLimiter, logger }),
+    services: {
+      providers,
+      probe,
+      blobs,
+      assessment: { mode, ...(classifier ? { classifier } : {}) },
+      ...(cache ? { cache } : {}),
+      context: (signal: AbortSignal): ProviderContext => ({ signal, rateLimiter, logger }),
+    },
+    close: async () => {
+      await renderer?.close();
+    },
   };
 }

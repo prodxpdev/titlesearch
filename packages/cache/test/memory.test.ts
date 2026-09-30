@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { MemoryStore } from "../src/memory.js";
-import { cacheConformance } from "./conformance.js";
+import { blobConformance, cacheConformance } from "./conformance.js";
 
 cacheConformance("memory", (now) => ({ store: new MemoryStore({ now }) }));
+blobConformance("memory", (now) => ({ store: new MemoryStore({ now }) }));
 
 describe("MemoryStore", () => {
   it("evicts the oldest writes beyond maxEntries", async () => {

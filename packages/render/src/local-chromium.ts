@@ -85,7 +85,7 @@ const HARDEN_PAGE = `(() => {
   drop(Navigator.prototype, "geolocation");
   drop(Navigator.prototype, "mediaDevices");
   drop(Navigator.prototype, "clipboard");
-  for (const k of ["RTCPeerConnection", "webkitRTCPeerConnection", "RTCDataChannel"]) drop(window, k);
+  for (const k of ["RTCPeerConnection", "webkitRTCPeerConnection", "RTCDataChannel", "Notification", "PushManager"]) drop(window, k);
 })();`;
 
 async function readRenderedText(cdp: CDPSession): Promise<string> {
@@ -193,6 +193,13 @@ export class LocalChromiumRenderer implements PreviewRenderer {
       const cdp = await page.createCDPSession();
       await this.#harden(page, cdp, browser);
 
+      // The status of the last top-level document, following script redirects too.
+      let status: number | undefined;
+      page.on("response", (r) => {
+        if (r.request().isNavigationRequest() && r.frame() === page.mainFrame())
+          status = r.status();
+      });
+
       const url = `http://${domain}/`;
       try {
         await page.goto(url, { waitUntil: "networkidle2", timeout: NETWORK_IDLE_CAP_MS });
@@ -207,23 +214,22 @@ export class LocalChromiumRenderer implements PreviewRenderer {
       }
       signal.throwIfAborted();
 
-      const fullBytes = await page.screenshot({
-        type: "webp",
-        quality: 80,
-        clip: { x: 0, y: 0, ...VIEWPORT },
-        captureBeyondViewport: false,
-      });
-      const thumbBytes = await page.screenshot({
-        type: "webp",
-        quality: 75,
-        clip: { x: 0, y: 0, ...VIEWPORT, scale: THUMBNAIL.width / VIEWPORT.width },
-        captureBeyondViewport: false,
-      });
+      // CDP directly: puppeteer ignores clip.scale when captureBeyondViewport is
+      // false, which silently produced full-size "thumbnails".
+      const shoot = async (scale: number, quality: number) => {
+        const { data } = await cdp.send("Page.captureScreenshot", {
+          format: "webp",
+          quality,
+          clip: { x: 0, y: 0, ...VIEWPORT, scale },
+          captureBeyondViewport: false,
+        });
+        return Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+      };
+      const full = await shoot(1, 80);
+      const thumb = await shoot(THUMBNAIL.width / VIEWPORT.width, 75);
       // Read text in an isolated world: it shares the DOM but not the page's
       // JavaScript, so page scripts can't patch the getters used here.
       const renderedText = await readRenderedText(cdp);
-      const full = new Uint8Array(fullBytes);
-      const thumb = new Uint8Array(thumbBytes);
       return {
         full: { bytes: full, contentHash: await sha256Hex(full), ...VIEWPORT, format: "webp" },
         thumbnail: {
@@ -233,6 +239,7 @@ export class LocalChromiumRenderer implements PreviewRenderer {
           format: "webp",
         },
         finalUrl: page.url(),
+        status,
         renderedText,
         capturedAt: new Date().toISOString(),
         renderer: this.id,

@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { type SqliteDriver, SqliteStore } from "../src/sqlite.js";
 import { openNodeSqlite } from "../src/sqlite-node.js";
-import { cacheConformance } from "./conformance.js";
+import { blobConformance, cacheConformance } from "./conformance.js";
 
 const isBun = typeof (globalThis as { Bun?: unknown }).Bun !== "undefined";
 
@@ -16,7 +16,17 @@ cacheConformance("sqlite via node:sqlite", (now) => {
   return { store: new SqliteStore(db, { now }), close: () => db.close() };
 });
 
+blobConformance("sqlite via node:sqlite", (now) => {
+  const db = openNodeSqlite(":memory:");
+  return { store: new SqliteStore(db, { now }), close: () => db.close() };
+});
+
 if (isBun) {
+  blobConformance("sqlite via bun:sqlite", async (now) => {
+    const { openBunSqlite } = await import("../src/sqlite-bun.js");
+    const db = openBunSqlite(":memory:");
+    return { store: new SqliteStore(db, { now }), close: () => db.close() };
+  });
   cacheConformance("sqlite via bun:sqlite", async (now) => {
     const { openBunSqlite } = await import("../src/sqlite-bun.js");
     const db = openBunSqlite(":memory:");

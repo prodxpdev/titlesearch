@@ -108,6 +108,14 @@ export const PageFields = z.object({
 });
 export type PageFields = z.infer<typeof PageFields>;
 
+export const PreviewImageRef = z.object({
+  /** Hex SHA-256 of the WebP bytes; the image is served from /api/preview/:hash. */
+  hash: z.string().regex(/^[0-9a-f]{64}$/),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+});
+export type PreviewImageRef = z.infer<typeof PreviewImageRef>;
+
 export const PresenceEvidence = z.object({
   domain: z.string(),
   dns: DnsSummary,
@@ -137,12 +145,30 @@ export const PresenceEvidence = z.object({
   probeErrors: z.array(
     z.object({ stage: z.enum(["dns", "https", "http"]), code: z.string(), message: z.string() }),
   ),
+  /**
+   * A picture of the site, served only from Titlesearch's own origin by
+   * content hash. "capture" is a screenshot from the preview renderer;
+   * "share-image" is the site's own og:image, re-encoded, when capture is off
+   * or failed.
+   */
+  preview: z
+    .object({
+      kind: z.enum(["capture", "share-image"]),
+      thumbnail: PreviewImageRef,
+      /** Captures only: the full 1280 by 800 first screen. */
+      full: PreviewImageRef.optional(),
+      capturedAt: z.iso.datetime(),
+      /** The renderer id, or "og:image" for a share image. */
+      source: z.string(),
+    })
+    .optional(),
   /** Present only when a for-sale page states a price. The currency is as the page shows it. */
   askingPrice: z
     .object({ amount: z.number().positive(), currency: z.string(), source: z.literal("page") })
     .optional(),
 });
 export type PresenceEvidence = z.infer<typeof PresenceEvidence>;
+export type PreviewRef = NonNullable<PresenceEvidence["preview"]>;
 
 export const Assessment = z.object({
   /** The domain this judgment is about. */

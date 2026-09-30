@@ -19,6 +19,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@titlesearch/cache": "workspace:*",
     "@types/node": "24.19.0",
     "typescript": "7.0.2",
     "vitest": "4.1.11"

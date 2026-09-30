@@ -15,12 +15,16 @@
     "titlesearch": "./src/main.ts"
   },
   "dependencies": {
+    "@jsquash/jpeg": "1.6.0",
+    "@jsquash/png": "3.1.1",
+    "@jsquash/webp": "1.5.0",
     "@modelcontextprotocol/sdk": "1.31.0",
     "@titlesearch/assess": "workspace:*",
     "@titlesearch/cache": "workspace:*",
     "@titlesearch/core": "workspace:*",
     "@titlesearch/mcp": "workspace:*",
     "@titlesearch/providers": "workspace:*",
+    "@titlesearch/render": "workspace:*",
     "zod": "4.6.5"
   },
   "devDependencies": {

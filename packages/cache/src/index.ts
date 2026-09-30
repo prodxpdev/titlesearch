@@ -7,11 +7,14 @@ export {
   type SqliteStoreOptions,
 } from "./sqlite.js";
 export {
+  assertBlob,
   assertKey,
   assertTtl,
+  type BlobStore,
   type CacheStore,
   decodeValue,
   encodeValue,
+  MAX_BLOB_BYTES,
   MAX_KEY_LENGTH,
   MAX_VALUE_BYTES,
   type StoreOptions,

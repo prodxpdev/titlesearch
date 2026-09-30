@@ -14,6 +14,14 @@ export interface CacheStore {
   set<T>(key: string, value: T, ttlSeconds: number): Promise<void>;
 }
 
+/** Binary values, such as preview images, stored by key. */
+export interface BlobStore {
+  /** Returns the bytes and their content type, or undefined if missing or expired. */
+  getBlob(key: string): Promise<{ bytes: Uint8Array; contentType: string } | undefined>;
+  /** Stores bytes for `ttlSeconds`. Replaces any existing value and TTL. */
+  putBlob(key: string, bytes: Uint8Array, contentType: string, ttlSeconds: number): Promise<void>;
+}
+
 // What gets cached, for how long, and under which key. The TTLs are the
 // table in CLAUDE.md. Keys carry a version prefix so a shape change can
 // invalidate old entries by bumping it.
@@ -64,6 +72,10 @@ export const cacheKeys = {
    */
   availability(domain: string, providerIds: readonly string[]): string {
     return `${PREFIX}:avail:${[...providerIds].sort().join(",")}:${domain}`;
+  },
+  /** A preview image, by the hex SHA-256 of its bytes. */
+  previewImage(hash: string): string {
+    return `${PREFIX}:preview:${hash}`;
   },
   presence(domain: string): string {
     return `${PREFIX}:presence:${domain}`;

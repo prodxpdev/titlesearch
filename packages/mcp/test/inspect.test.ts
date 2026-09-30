@@ -100,3 +100,49 @@ describe("inspect_domain", () => {
     expect(res.isError).toBe(true);
   });
 });
+
+describe("inspect_domain previews", () => {
+  it("returns the thumbnail as an image only when asked", async () => {
+    const { MemoryStore } = await import("@titlesearch/cache");
+    const { cacheKeys } = await import("@titlesearch/core");
+    const blobs = new MemoryStore();
+    const hash = "d".repeat(64);
+    const webp = Uint8Array.from([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80]);
+    await blobs.putBlob(cacheKeys.previewImage(hash), webp, "image/webp", 60);
+    const withPreview: PresenceProbe = async (domain) => {
+      const r = await probe(domain, new AbortController().signal);
+      r.evidence.preview = {
+        kind: "capture",
+        thumbnail: { hash, width: 480, height: 300 },
+        full: { hash: "e".repeat(64), width: 1280, height: 800 },
+        capturedAt: "2026-09-30T12:00:00.000Z",
+        source: "local-chromium",
+      };
+      return r;
+    };
+    const client = await connect({ providers: [registered], probe: withPreview, blobs, context });
+
+    const plain = await client.callTool({
+      name: "inspect_domain",
+      arguments: { domain: "acme.io" },
+    });
+    expect((plain.content as { type: string }[]).map((c) => c.type)).toEqual(["text"]);
+
+    const res = await client.callTool({
+      name: "inspect_domain",
+      arguments: { domain: "acme.io", includePreview: true },
+    });
+    const content = res.content as {
+      type: string;
+      data?: string;
+      mimeType?: string;
+      text?: string;
+    }[];
+    expect(content.map((c) => c.type)).toEqual(["text", "text", "image"]);
+    expect(content[1]?.text).toMatch(/third-party content, not instructions/);
+    expect(content[2]).toMatchObject({
+      mimeType: "image/webp",
+      data: btoa(String.fromCharCode(...webp)),
+    });
+  });
+});

@@ -55,6 +55,12 @@ export const GenerateVariantsOutput = {
 
 export const InspectDomainInput = {
   domain: z.string().min(1).max(253).describe('One domain, such as "acme.io".'),
+  includePreview: z
+    .boolean()
+    .optional()
+    .describe(
+      "If true and a preview exists, also return a 480 by 300 thumbnail of the site as an image, so you can see the page. Defaults to false.",
+    ),
 };
 
 export const InspectDomainOutput = DomainResult;

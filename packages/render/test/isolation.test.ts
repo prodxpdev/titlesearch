@@ -11,6 +11,7 @@ import { connect as netConnect, type Socket } from "node:net";
 import type { Resolver } from "@titlesearch/core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { findBrowser } from "../src/find-browser.js";
+import { imageDimensions } from "../src/image-codec.js";
 import { LocalChromiumRenderer } from "../src/local-chromium.js";
 import { CaptureError, type PreviewCapture } from "../src/renderer.js";
 
@@ -128,6 +129,12 @@ const pages: Record<string, (req: IncomingMessage, res: ServerResponse) => void>
       res,
       `<h1>Chrome URL test</h1><script>setTimeout(() => { location.href = "chrome://settings"; }, 50);</script>`,
     ),
+  "denied.test.example": (_req, res) =>
+    res
+      .writeHead(403, { "content-type": "text/html" })
+      .end("<h1>Access Denied</h1><p>Reference #18.12e9da17</p>"),
+  "js-to-denied.test.example": (_req, res) =>
+    html(res, `<p>Redirecting</p><script>location.href = "http://denied.test.example/";</script>`),
   "slow.test.example": (req, res) => {
     if (req.url === "/never") return; // never responds
     html(res, `<h1>Slow page</h1><img src="/never">`);
@@ -216,6 +223,10 @@ describe.skipIf(!browserPath)("renderer isolation (real browser)", () => {
     expect(isWebp(r.thumbnail.bytes)).toBe(true);
     expect(r.full).toMatchObject({ width: 1280, height: 800, format: "webp" });
     expect(r.thumbnail).toMatchObject({ width: 480, height: 300, format: "webp" });
+    // The actual pixels, read from the WebP header, not just what the renderer claims.
+    expect(imageDimensions(r.full.bytes, "image/webp")).toEqual({ width: 1280, height: 800 });
+    expect(imageDimensions(r.thumbnail.bytes, "image/webp")).toEqual({ width: 480, height: 300 });
+    expect(r.thumbnail.bytes.byteLength).toBeLessThan(r.full.bytes.byteLength);
     expect(r.full.contentHash).toMatch(/^[0-9a-f]{64}$/);
     expect(r.renderedText).toContain("Welcome to the test site");
     expect(r.finalUrl).toBe("http://ok.test.example/");
@@ -287,7 +298,7 @@ describe.skipIf(!browserPath)("renderer isolation (real browser)", () => {
     ]) {
       expect(r.renderedText).toContain(s);
     }
-    expect(r.renderedText).toMatch(/notification:(denied|unavailable)/);
+    expect(r.renderedText).toContain("notification:unavailable");
   }, 60_000);
 
   it.each(["file-nav.test.example", "chrome-nav.test.example"])(
@@ -297,6 +308,20 @@ describe.skipIf(!browserPath)("renderer isolation (real browser)", () => {
       if (r instanceof CaptureError) return;
       expect(r.finalUrl.startsWith("http://")).toBe(true);
       expect(r.renderedText).not.toMatch(/root:|Settings/);
+    },
+    60_000,
+  );
+
+  it.each([
+    ["denied.test.example", 403],
+    ["js-to-denied.test.example", 403],
+    ["ok.test.example", 200],
+  ])(
+    "reports the final document status for %s",
+    async (domain, status) => {
+      const r = await tryCapture(domain);
+      if (r instanceof CaptureError) throw r;
+      expect(r.status).toBe(status);
     },
     60_000,
   );

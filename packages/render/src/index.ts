@@ -1,4 +1,14 @@
 export {
+  CHROMIUM_MANIFEST,
+  type ChromiumBuild,
+  ChromiumInstallError,
+  type ChromiumManifest,
+  currentPlatform,
+  type InstallOptions,
+  installChromium,
+  installedChromium,
+} from "./chromium-install.js";
+export {
   type EgressDecision,
   type EgressProxy,
   type EgressProxyOptions,
@@ -7,11 +17,21 @@ export {
 } from "./egress-proxy.js";
 export { findBrowser } from "./find-browser.js";
 export {
+  createWebpEncoder,
+  type DecodableType,
+  imageDimensions,
+  isDecodable,
+  MAX_DECODE_PIXELS,
+  type WasmLoader,
+  type WebpEncoder,
+} from "./image-codec.js";
+export {
   chromiumArgs,
   LOCAL_CHROMIUM,
   type LocalChromiumOptions,
   LocalChromiumRenderer,
 } from "./local-chromium.js";
+export { createPreviewer, type PreviewerOptions, previewImageResponse, WEBP } from "./previewer.js";
 export {
   type CapturedImage,
   CaptureError,
@@ -22,3 +42,4 @@ export {
   THUMBNAIL,
   VIEWPORT,
 } from "./renderer.js";
+export { nodeWasmLoader } from "./wasm-node.js";

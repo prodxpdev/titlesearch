@@ -7,6 +7,7 @@ export {
   DohResolver,
   type DohResolverOptions,
 } from "./doh.js";
+export { fetchVerified, VerificationError } from "./fetch-verified.js";
 export {
   fetchPreviewImage,
   PREVIEW_IMAGE_MAX_BYTES,

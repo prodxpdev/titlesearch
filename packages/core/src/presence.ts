@@ -4,7 +4,7 @@
 // contentConfidence "low". See CLAUDE.md, Presence probe.
 
 import { decodeBody, extractPage } from "./extract/extract.js";
-import type { Occupancy, PresenceEvidence } from "./model.js";
+import type { Occupancy, PresenceEvidence, PreviewRef } from "./model.js";
 import { toUntrustedSiteText } from "./model.js";
 import { type DnsAnswer, DnsError, type DnsRecordType } from "./net/doh.js";
 import type { Resolver } from "./net/resolver.js";
@@ -24,8 +24,23 @@ export interface DnsClient extends Resolver {
   query(name: string, type: DnsRecordType, signal?: AbortSignal): Promise<DnsAnswer>;
 }
 
+/**
+ * Site previews for the probe. Both steps are optional: a runtime without a
+ * renderer passes only shareImage, and one with previews off passes neither.
+ */
+export interface PresencePreviewer {
+  /** Renders the site. Undefined means off, or the capture failed; the probe carries on. */
+  capture?(
+    domain: string,
+    signal: AbortSignal,
+  ): Promise<{ ref: PreviewRef; renderedText: string; finalUrl: string } | undefined>;
+  /** Fetches and re-encodes the page's own share image. Undefined if there isn't a usable one. */
+  shareImage?(imageUrl: string, signal: AbortSignal): Promise<PreviewRef | undefined>;
+}
+
 export interface ProbeOptions {
   dns: DnsClient;
+  previewer?: PresencePreviewer;
   transport?: Transport;
   signatures?: readonly Signature[];
   signal: AbortSignal;
@@ -133,15 +148,33 @@ export async function probePresence(domain: string, options: ProbeOptions): Prom
   }
 
   const clientRedirects = page?.clientRedirects ?? [];
-  const texts = page
-    ? [
-        page.fields.title,
-        page.fields.description,
-        page.fields.ogTitle,
-        page.fields.ogDescription,
-        page.visibleText,
-      ].filter((t): t is string => !!t)
-    : [];
+
+  // A rendered capture shows what a visitor sees after scripts run. Its text
+  // replaces the fetched page's text, and its final URL counts as a redirect.
+  let captured: Awaited<ReturnType<NonNullable<PresencePreviewer["capture"]>>>;
+  if (options.previewer?.capture) {
+    try {
+      captured = await options.previewer.capture(domain, signal);
+    } catch (err) {
+      signal.throwIfAborted();
+      probeErrors.push({
+        stage: "http",
+        code: "capture_failed",
+        message: err instanceof Error ? err.message : "Capture failed.",
+      });
+    }
+  }
+  const renderedText = captured?.renderedText.replace(/\s+/g, " ").trim() ?? "";
+  if (captured) seenUrls.push(captured.finalUrl);
+  const bodyText = renderedText || page?.visibleText || "";
+
+  const texts = [
+    page?.fields.title,
+    page?.fields.description,
+    page?.fields.ogTitle,
+    page?.fields.ogDescription,
+    bodyText,
+  ].filter((t): t is string => !!t);
   const signals = matchSignals(
     { domain, nameservers, urls: seenUrls, clientRedirects, texts },
     signatures,
@@ -153,7 +186,11 @@ export async function probePresence(domain: string, options: ProbeOptions): Prom
     ...base,
     parkingSignals: signals.map((s) => s.id),
     clientRedirects,
-    contentConfidence: (page?.visibleText.length ?? 0) < LOW_CONTENT_CHARS ? "low" : "normal",
+    contentConfidence: renderedText
+      ? "high"
+      : (page?.visibleText.length ?? 0) < LOW_CONTENT_CHARS
+        ? "low"
+        : "normal",
   };
   if (fetched) {
     evidence.http = {
@@ -163,11 +200,20 @@ export async function probePresence(domain: string, options: ProbeOptions): Prom
       pinned: fetched.pinned,
     };
   }
-  if (page) {
-    evidence.page = page.fields;
-    const excerpt = toUntrustedSiteText(page.visibleText);
-    if (excerpt) evidence.untrustedSiteText = excerpt;
+  if (page) evidence.page = page.fields;
+  const excerpt = toUntrustedSiteText(bodyText);
+  if (excerpt) evidence.untrustedSiteText = excerpt;
+
+  let preview: PreviewRef | undefined = captured?.ref;
+  if (!preview && page?.fields.imageUrl && options.previewer?.shareImage) {
+    try {
+      preview = await options.previewer.shareImage(page.fields.imageUrl, signal);
+    } catch {
+      signal.throwIfAborted();
+      // No fallback image; the evidence stands without one.
+    }
   }
+  if (preview) evidence.preview = preview;
   if (forSale) {
     const price = extractAskingPrice(texts.join(" "));
     if (price) evidence.askingPrice = price;
@@ -176,7 +222,7 @@ export async function probePresence(domain: string, options: ProbeOptions): Prom
   let occupancy: Occupancy;
   if (forSale) occupancy = "for_sale";
   else if (parked) occupancy = "parked";
-  else if (fetched) occupancy = "unassessed";
+  else if (fetched || captured) occupancy = "unassessed";
   // Addresses exist but nothing answered over HTTP or HTTPS.
   else occupancy = "no_site";
   return { evidence, occupancy };

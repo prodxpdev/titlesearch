@@ -148,3 +148,84 @@ describe("probePresence without a site", () => {
     expect(r.evidence.probeErrors[0]).toMatchObject({ stage: "dns" });
   });
 });
+
+describe("probePresence with previews", () => {
+  const ref = (hash: string, kind: "capture" | "share-image" = "capture") => ({
+    kind,
+    thumbnail: { hash, width: 480, height: 300 },
+    capturedAt: "2026-09-30T12:00:00.000Z",
+    source: kind === "capture" ? "local-chromium" : "og:image",
+  });
+  const H = (c: string) => c.repeat(64);
+
+  it("uses the rendered page: its text, its final URL, and high confidence", async () => {
+    // bluewidget.com's fetched page is only a script redirect to /lander. Rendered,
+    // it ends on GoDaddy's for-sale page, which the signatures recognize.
+    const c = siteCase("bluewidget.com");
+    const { evidence, occupancy } = await probePresence(c.domain, {
+      dns: replayDns(c),
+      transport: replayTransport(c),
+      signal: new AbortController().signal,
+      previewer: {
+        capture: async () => ({
+          ref: ref(H("a")),
+          renderedText: "bluewidget.com is for sale — Buy for $3,995 or Lease to Own",
+          finalUrl: "https://forsale.godaddy.com/forsale/bluewidget.com",
+        }),
+      },
+    });
+    expect(evidence.contentConfidence).toBe("high");
+    expect(evidence.untrustedSiteText).toContain("Buy for $3,995");
+    expect(evidence.parkingSignals).toEqual(
+      expect.arrayContaining([
+        "ns-afternic",
+        "lander-godaddy",
+        "redirect-godaddy-forsale",
+        "text-for-sale",
+      ]),
+    );
+    expect(evidence.askingPrice).toEqual({ amount: 3995, currency: "$", source: "page" });
+    expect(evidence.preview?.thumbnail.hash).toBe(H("a"));
+    expect(occupancy).toBe("for_sale");
+  });
+
+  it("falls back to the share image when capture fails, and records why", async () => {
+    const c = siteCase("bluerealty.com");
+    const seen: string[] = [];
+    const { evidence } = await probePresence(c.domain, {
+      dns: replayDns(c),
+      transport: replayTransport(c),
+      signal: new AbortController().signal,
+      previewer: {
+        capture: async () => {
+          throw new Error("browser crashed");
+        },
+        shareImage: async (url) => {
+          seen.push(url);
+          return ref(H("b"), "share-image");
+        },
+      },
+    });
+    expect(evidence.probeErrors.some((e) => e.code === "capture_failed")).toBe(true);
+    expect(evidence.preview).toMatchObject({ kind: "share-image", source: "og:image" });
+    expect(seen).toHaveLength(evidence.page?.imageUrl ? 1 : 0);
+    expect(evidence.contentConfidence).toBe("normal");
+  });
+
+  it("carries on without a picture when the fallback fails too", async () => {
+    const c = siteCase("bluerealty.com");
+    const { evidence, occupancy } = await probePresence(c.domain, {
+      dns: replayDns(c),
+      transport: replayTransport(c),
+      signal: new AbortController().signal,
+      previewer: {
+        capture: async () => undefined,
+        shareImage: async () => {
+          throw new Error("decode failed");
+        },
+      },
+    });
+    expect(evidence.preview).toBeUndefined();
+    expect(occupancy).toBe("unassessed");
+  });
+});

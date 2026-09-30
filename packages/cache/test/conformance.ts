@@ -4,7 +4,7 @@
 //   cacheConformance("sqlite (node)", (now) => ({ store: new SqliteStore(open(":memory:"), { now }) }));
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { type CacheStore, MAX_KEY_LENGTH, MAX_VALUE_BYTES } from "../src/store.js";
+import { type CacheStore, MAX_BLOB_BYTES, MAX_KEY_LENGTH, MAX_VALUE_BYTES } from "../src/store.js";
 
 export interface ConformanceSubject {
   store: CacheStore;
@@ -202,6 +202,97 @@ export function cacheConformance(name: string, factory: SubjectFactory): void {
         const value = "é".repeat(MAX_VALUE_BYTES / 2);
         await expect(store.set("k", value, 60)).rejects.toBeInstanceOf(RangeError);
       });
+    });
+  });
+}
+
+export interface BlobSubject {
+  store: import("../src/store.js").BlobStore;
+  close?: () => void | Promise<void>;
+}
+
+/** The shared BlobStore conformance suite, for preview images. */
+export function blobConformance(
+  name: string,
+  factory: (now: () => number) => BlobSubject | Promise<BlobSubject>,
+): void {
+  describe(`BlobStore conformance: ${name}`, () => {
+    let time = Date.parse("2026-09-30T12:00:00Z");
+    let subject: BlobSubject;
+    const advance = (ms: number) => {
+      time += ms;
+    };
+    const bytes = (n: number, fill = 7) => new Uint8Array(n).fill(fill);
+
+    beforeEach(async () => {
+      time = Date.parse("2026-09-30T12:00:00Z");
+      subject = await factory(() => time);
+    });
+    afterEach(async () => {
+      await subject.close?.();
+    });
+
+    it("returns undefined for a missing key", async () => {
+      await expect(subject.store.getBlob("missing")).resolves.toBeUndefined();
+    });
+
+    it("round-trips exact bytes and the content type", async () => {
+      const b = Uint8Array.from([0, 255, 1, 128, 0, 0, 82, 73, 70, 70]);
+      await subject.store.putBlob("k", b, "image/webp", 60);
+      const got = await subject.store.getBlob("k");
+      expect(got?.contentType).toBe("image/webp");
+      expect(Array.from(got?.bytes ?? [])).toEqual(Array.from(b));
+    });
+
+    it("returns a copy", async () => {
+      const b = bytes(4);
+      await subject.store.putBlob("k", b, "image/webp", 60);
+      b[0] = 99;
+      const got = await subject.store.getBlob("k");
+      if (got) got.bytes[1] = 99;
+      expect(Array.from((await subject.store.getBlob("k"))?.bytes ?? [])).toEqual([7, 7, 7, 7]);
+    });
+
+    it("expires at its TTL and replaces on overwrite", async () => {
+      await subject.store.putBlob("k", bytes(2, 1), "image/webp", 10);
+      advance(5_000);
+      await subject.store.putBlob("k", bytes(2, 2), "image/png", 10);
+      advance(9_999);
+      expect(await subject.store.getBlob("k")).toMatchObject({ contentType: "image/png" });
+      advance(1);
+      await expect(subject.store.getBlob("k")).resolves.toBeUndefined();
+    });
+
+    it("keeps blobs and values separate", async () => {
+      await subject.store.putBlob("shared", bytes(1), "image/webp", 60);
+      const values = subject.store as unknown as { get?: (k: string) => Promise<unknown> };
+      if (values.get) await expect(values.get("shared")).resolves.toBeUndefined();
+    });
+
+    it("accepts 1 MB and rejects more, writing nothing", async () => {
+      await subject.store.putBlob("big", bytes(MAX_BLOB_BYTES), "image/webp", 60);
+      expect((await subject.store.getBlob("big"))?.bytes.byteLength).toBe(MAX_BLOB_BYTES);
+      await expect(
+        subject.store.putBlob("big", bytes(MAX_BLOB_BYTES + 1), "image/webp", 60),
+      ).rejects.toBeInstanceOf(RangeError);
+      expect((await subject.store.getBlob("big"))?.bytes.byteLength).toBe(MAX_BLOB_BYTES);
+    });
+
+    it.each([
+      ["a bad TTL", () => subject.store.putBlob("k", bytes(1), "image/webp", 0), RangeError],
+      ["an empty key", () => subject.store.putBlob("", bytes(1), "image/webp", 60), RangeError],
+      [
+        "a bad content type",
+        () => subject.store.putBlob("k", bytes(1), "not a type", 60),
+        TypeError,
+      ],
+      [
+        "a non-Uint8Array",
+        () => subject.store.putBlob("k", "bytes" as unknown as Uint8Array, "image/webp", 60),
+        TypeError,
+      ],
+    ])("rejects %s", async (_label, call, type) => {
+      await expect(call()).rejects.toBeInstanceOf(type);
     });
   });
 }

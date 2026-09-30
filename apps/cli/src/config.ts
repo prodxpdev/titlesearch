@@ -20,6 +20,13 @@ export const CliConfig = z
       })
       .default({ enable: [] }),
     cache: z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
+    previews: z
+      .object({
+        /** "local": screenshots with an installed Chrome or Edge. "off": share images only. */
+        mode: z.enum(["local", "off"]).default("local"),
+      })
+      .strict()
+      .default({ mode: "local" }),
     assessment: z
       .object({
         /**

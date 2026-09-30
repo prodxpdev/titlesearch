@@ -22,6 +22,7 @@ describe("loadConfig", () => {
       providers: { godaddy: { enabled: true } },
       whois: { enable: [] },
       cache: { enabled: true },
+      previews: { mode: "local" },
       assessment: { model: "claude-opus-5-5", effort: "medium", refusalFallback: true },
     });
   });
@@ -63,9 +64,12 @@ describe("resolveAssessmentMode", () => {
 
 describe("resolvePaths", () => {
   it("honors overrides", () => {
-    expect(resolvePaths({ TITLESEARCH_CONFIG_DIR: "/c", TITLESEARCH_CACHE_DIR: "/k" })).toEqual({
-      configDir: "/c",
-      cacheDir: "/k",
-    });
+    expect(
+      resolvePaths({
+        TITLESEARCH_CONFIG_DIR: "/c",
+        TITLESEARCH_CACHE_DIR: "/k",
+        TITLESEARCH_DATA_DIR: "/d",
+      }),
+    ).toEqual({ configDir: "/c", cacheDir: "/k", dataDir: "/d" });
   });
 });

@@ -4,6 +4,7 @@
 import { parseArgs } from "node:util";
 import pkg from "../package.json" with { type: "json" };
 import { runAssess } from "./commands/assess.js";
+import { runBrowser } from "./commands/browser.js";
 import { runCheck, UsageError } from "./commands/check.js";
 import { runMcp } from "./commands/mcp.js";
 import { ConfigError, loadConfig } from "./config.js";
@@ -17,6 +18,7 @@ Check whether a name is free across domain extensions.
 Usage:
   titlesearch check <names...> [--market <text>] [--tlds com,io] [--json]
   titlesearch mcp
+  titlesearch browser install | status
   titlesearch --version
 
 Commands:
@@ -24,6 +26,8 @@ Commands:
           A name containing a dot is checked as-is. With --market, also
           looks at every taken domain and judges whether it competes.
   mcp     Run the MCP server over stdio, for Claude Desktop and Claude Code.
+  browser Site previews need Chrome or Edge. Without one, \`browser install\`
+          downloads a pinned, checksum-verified build (about 100 MB) once.
 
 Options:
   --market <text>  What the product is and who it's for; compares taken domains to it
@@ -63,17 +67,20 @@ async function main(argv: string[]): Promise<number> {
 
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY?.trim() || undefined;
   // Every secret is registered with the logger so it's redacted from every line.
+  const paths = resolvePaths();
+  if (command === "browser") return runBrowser(rest[0], paths.dataDir);
+
   const logger = createLogger(
     process.env.TITLESEARCH_LOG,
     anthropicApiKey ? [anthropicApiKey] : [],
   );
-  const paths = resolvePaths();
-  let services: Awaited<ReturnType<typeof createServices>>;
+  let runtime: Awaited<ReturnType<typeof createServices>>;
   try {
     const config = await loadConfig(paths.configDir);
-    services = await createServices({
+    runtime = await createServices({
       config,
       cacheDir: paths.cacheDir,
+      dataDir: paths.dataDir,
       logger,
       noCache: values["no-cache"] ?? false,
       noGodaddy: values["no-godaddy"] ?? false,
@@ -88,6 +95,20 @@ async function main(argv: string[]): Promise<number> {
     throw err;
   }
 
+  const services = runtime.services;
+  try {
+    return await runCommand(command, rest, values, services);
+  } finally {
+    await runtime.close();
+  }
+}
+
+async function runCommand(
+  command: string,
+  rest: string[],
+  values: ReturnType<typeof parse>["values"],
+  services: Awaited<ReturnType<typeof createServices>>["services"],
+): Promise<number> {
   switch (command) {
     case "check": {
       if (rest.length === 0) {

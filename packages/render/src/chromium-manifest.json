@@ -1,0 +1,38 @@
+{
+  "source": "chrome-for-testing",
+  "artifact": "chrome-headless-shell",
+  "version": "154.0.8037.92",
+  "pinnedAt": "2026-09-30",
+  "platforms": {
+    "darwin-arm64": {
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.92/mac-arm64/chrome-headless-shell-mac-arm64.zip",
+      "sha256": "77da14e75d7f2568e6f7898d3df7cdc6faac74b15e903b2c9d486ebb6ca9b929",
+      "size": 99221129,
+      "executable": "chrome-headless-shell-mac-arm64/chrome-headless-shell"
+    },
+    "darwin-x64": {
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.92/mac-x64/chrome-headless-shell-mac-x64.zip",
+      "sha256": "a54292aaacbb77f76f6ef47558e7c51ab884044e0adacca315567f83c060bcc4",
+      "size": 104748425,
+      "executable": "chrome-headless-shell-mac-x64/chrome-headless-shell"
+    },
+    "linux-x64": {
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.92/linux64/chrome-headless-shell-linux64.zip",
+      "sha256": "636aa5c79f2693632e9921b8bbb050038ba11672e02346c06c20f991aed096f9",
+      "size": 120477194,
+      "executable": "chrome-headless-shell-linux64/chrome-headless-shell"
+    },
+    "linux-arm64": {
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.92/linux-arm64/chrome-headless-shell-linux-arm64.zip",
+      "sha256": "0ed0e47d9e9f639197f508d62ada09e5c6b4c4c60edab3160a9312a733091df6",
+      "size": 121182296,
+      "executable": "chrome-headless-shell-linux-arm64/chrome-headless-shell"
+    },
+    "win32-x64": {
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/154.0.8037.92/win64/chrome-headless-shell-win64.zip",
+      "sha256": "3ac2561f02d9d87aadc0399d00b9002d718a4c365624fa67db9e7bfaf6b1a568",
+      "size": 120822223,
+      "executable": "chrome-headless-shell-win64/chrome-headless-shell.exe"
+    }
+  }
+}

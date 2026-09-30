@@ -54,6 +54,10 @@ Parking detection reads versioned data from `packages/core/signatures/parking.js
 
 Pull requests that add a signature without a fixture and a test won't be merged.
 
+## Pinned downloads
+
+The preview renderer's one-time Chromium download is pinned by version and SHA-256 in `packages/render/src/chromium-manifest.json`. To move to a new Chrome for Testing build, run `node tools/pin-chromium.mjs <version>`, which downloads every platform's archive and records its checksum, then run the renderer isolation suite against it (`TITLESEARCH_CHROME_PATH=<unpacked chrome-headless-shell> pnpm --filter @titlesearch/render test`).
+
 ## Decisions
 
 If you make a choice that a future contributor would otherwise have to rediscover, record it as an ADR in `docs/decisions/`. Copy the format of an existing one.

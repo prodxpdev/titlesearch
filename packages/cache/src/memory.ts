@@ -1,8 +1,10 @@
 // In-process store for tests, single-shot CLI runs, and as a fallback.
 
 import {
+  assertBlob,
   assertKey,
   assertTtl,
+  type BlobStore,
   type CacheStore,
   decodeValue,
   encodeValue,
@@ -14,8 +16,9 @@ export interface MemoryStoreOptions extends StoreOptions {
   maxEntries?: number;
 }
 
-export class MemoryStore implements CacheStore {
+export class MemoryStore implements CacheStore, BlobStore {
   readonly #entries = new Map<string, { json: string; expires: number }>();
+  readonly #blobs = new Map<string, { bytes: Uint8Array; contentType: string; expires: number }>();
   readonly #now: () => number;
   readonly #maxEntries: number;
 
@@ -46,6 +49,39 @@ export class MemoryStore implements CacheStore {
       const oldest = this.#entries.keys().next().value;
       if (oldest === undefined) break;
       this.#entries.delete(oldest);
+    }
+  }
+
+  async getBlob(key: string): Promise<{ bytes: Uint8Array; contentType: string } | undefined> {
+    assertKey(key);
+    const b = this.#blobs.get(key);
+    if (!b) return undefined;
+    if (b.expires <= this.#now()) {
+      this.#blobs.delete(key);
+      return undefined;
+    }
+    return { bytes: b.bytes.slice(), contentType: b.contentType };
+  }
+
+  async putBlob(
+    key: string,
+    bytes: Uint8Array,
+    contentType: string,
+    ttlSeconds: number,
+  ): Promise<void> {
+    assertKey(key);
+    assertTtl(ttlSeconds);
+    assertBlob(bytes, contentType);
+    this.#blobs.delete(key);
+    this.#blobs.set(key, {
+      bytes: bytes.slice(),
+      contentType,
+      expires: this.#now() + ttlSeconds * 1000,
+    });
+    while (this.#blobs.size > this.#maxEntries) {
+      const oldest = this.#blobs.keys().next().value;
+      if (oldest === undefined) break;
+      this.#blobs.delete(oldest);
     }
   }
 }

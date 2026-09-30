@@ -11,7 +11,7 @@ export function openNodeSqlite(path: string): SqliteDriver & { close(): void } {
     exec: (sql) => db.exec(sql),
     prepare: (sql) => {
       const s = db.prepare(sql);
-      return { get: (...p) => s.get(...p), run: (...p) => s.run(...p) };
+      return { get: (...p) => s.get(...(p as never[])), run: (...p) => s.run(...(p as never[])) };
     },
     close: () => db.close(),
   };

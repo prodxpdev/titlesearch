@@ -1,7 +1,7 @@
 // The cache contract. Every store (memory, sqlite, d1, firestore, dynamodb)
 // passes test/conformance.ts, which pins down the behavior below.
 
-export type { CacheStore } from "@titlesearch/core";
+export type { BlobStore, CacheStore } from "@titlesearch/core";
 
 /** Options every store accepts. */
 export interface StoreOptions {
@@ -41,4 +41,15 @@ export function encodeValue(value: unknown): string {
 
 export function decodeValue<T>(json: string): T {
   return JSON.parse(json) as T;
+}
+
+/** Blobs (preview images) are capped well above a 1280 by 800 WebP, and below object-store single-put limits. */
+export const MAX_BLOB_BYTES = 1024 * 1024;
+
+export function assertBlob(bytes: Uint8Array, contentType: string): void {
+  if (!(bytes instanceof Uint8Array)) throw new TypeError("Blobs must be Uint8Array.");
+  if (bytes.byteLength > MAX_BLOB_BYTES)
+    throw new RangeError(`Blobs are limited to ${MAX_BLOB_BYTES} bytes.`);
+  if (!/^[a-z]+\/[a-z0-9.+-]+$/.test(contentType))
+    throw new TypeError("Give a content type such as image/webp.");
 }

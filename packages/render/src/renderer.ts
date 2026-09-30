@@ -20,6 +20,8 @@ export interface PreviewCapture {
   thumbnail: CapturedImage;
   full: CapturedImage;
   finalUrl: string;
+  /** HTTP status of the final top-level document, if one was received. */
+  status: number | undefined;
   /** The rendered DOM's text. Third-party content: it gets the untrustedSiteText treatment. */
   renderedText: string;
   capturedAt: string;

@@ -1,5 +1,6 @@
 export {
   availabilityTtl,
+  type BlobStore,
   type CacheStore,
   cacheKeys,
   normalizeMarket,
@@ -39,6 +40,8 @@ export {
   Occupancy,
   PageFields,
   PresenceEvidence,
+  PreviewImageRef,
+  type PreviewRef,
   Price,
   ReconcileReason,
   SourceError,
@@ -61,6 +64,7 @@ export {
 export {
   type DnsClient,
   LOW_CONTENT_CHARS,
+  type PresencePreviewer,
   type ProbeOptions,
   type ProbeResult,
   probePresence,
