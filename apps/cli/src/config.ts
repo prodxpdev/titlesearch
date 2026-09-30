@@ -2,7 +2,7 @@
 // No secrets live here (invariant 6): registrar keys come from the
 // environment or the OS keychain.
 
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import * as z from "zod";
 
@@ -70,4 +70,13 @@ export async function loadConfig(configDir: string): Promise<CliConfig> {
     throw new ConfigError(`${path}: ${issue?.path.join(".") || "(root)"}: ${issue?.message}`);
   }
   return parsed.data;
+}
+
+/** Writes config.json atomically, keeping it valid if the process stops mid-write. */
+export async function saveConfig(configDir: string, config: CliConfig): Promise<void> {
+  await mkdir(configDir, { recursive: true, mode: 0o700 });
+  const path = join(configDir, "config.json");
+  const tmp = `${path}.tmp`;
+  await writeFile(tmp, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+  await rename(tmp, path);
 }

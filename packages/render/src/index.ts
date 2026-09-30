@@ -31,7 +31,8 @@ export {
   type LocalChromiumOptions,
   LocalChromiumRenderer,
 } from "./local-chromium.js";
-export { createPreviewer, type PreviewerOptions, previewImageResponse, WEBP } from "./previewer.js";
+export { previewImageResponse, WEBP } from "./preview-response.js";
+export { createPreviewer, type PreviewerOptions } from "./previewer.js";
 export {
   type CapturedImage,
   CaptureError,

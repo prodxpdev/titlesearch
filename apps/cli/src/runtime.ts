@@ -81,6 +81,8 @@ async function openCache(cacheDir: string, logger: Logger): Promise<SqliteStore 
 
 export interface Runtime {
   services: TitlesearchServices;
+  /** Which browser previews use, if any. */
+  browser: "system" | "downloaded" | null;
   /** Stops the preview browser, if one started. */
   close(): Promise<void>;
 }
@@ -113,9 +115,12 @@ export async function createServices(options: RuntimeOptions): Promise<Runtime> 
   // Preview images share the cache's SQLite file, or memory when caching is off.
   const blobs = cache ?? new MemoryStore();
   let renderer: LocalChromiumRenderer | undefined;
+  const systemBrowser = findBrowser();
+  const downloadedBrowser = systemBrowser ? undefined : await installedChromium(options.dataDir);
+  const browser = systemBrowser ? "system" : downloadedBrowser ? "downloaded" : null;
   if (config.previews.mode === "local") {
     // An installed Chrome or Edge first, then the verified download from `titlesearch browser install`.
-    const executablePath = findBrowser() ?? (await installedChromium(options.dataDir));
+    const executablePath = systemBrowser ?? downloadedBrowser;
     if (executablePath)
       renderer = new LocalChromiumRenderer({ executablePath, resolver: dns, logger });
     else
@@ -151,6 +156,7 @@ export async function createServices(options: RuntimeOptions): Promise<Runtime> 
   }
 
   return {
+    browser,
     services: {
       providers,
       probe,

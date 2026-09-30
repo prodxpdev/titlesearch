@@ -6,7 +6,8 @@
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./preview-response": "./src/preview-response.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

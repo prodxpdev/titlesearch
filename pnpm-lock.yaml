@@ -56,6 +56,9 @@ importers:
       '@titlesearch/render':
         specifier: workspace:*
         version: link:../../packages/render
+      '@titlesearch/server':
+        specifier: workspace:*
+        version: link:../../packages/server
       zod:
         specifier: 4.6.5
         version: 4.6.5
@@ -213,6 +216,9 @@ importers:
       '@titlesearch/mcp':
         specifier: workspace:*
         version: link:../mcp
+      '@titlesearch/render':
+        specifier: workspace:*
+        version: link:../render
       hono:
         specifier: 4.13.12
         version: 4.13.12
@@ -220,6 +226,12 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
     devDependencies:
+      '@cloudflare/vitest-pool-workers':
+        specifier: 0.22.0
+        version: 0.22.0(@vitest/runner@4.1.11)(@vitest/snapshot@4.1.11)(vitest@4.1.11(@types/node@24.19.0)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.1)(yaml@2.9.1)))
+      '@titlesearch/cache':
+        specifier: workspace:*
+        version: link:../cache
       typescript:
         specifier: 7.0.2
         version: 7.0.2

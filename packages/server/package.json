@@ -10,17 +10,21 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run",
+    "test:workers": "vitest run --config vitest.workers.config.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.31.0",
     "@titlesearch/assess": "workspace:*",
     "@titlesearch/core": "workspace:*",
     "@titlesearch/mcp": "workspace:*",
+    "@titlesearch/render": "workspace:*",
     "hono": "4.13.12",
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.22.0",
+    "@titlesearch/cache": "workspace:*",
     "typescript": "7.0.2",
     "vitest": "4.1.11"
   }

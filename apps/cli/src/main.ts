@@ -7,10 +7,12 @@ import { runAssess } from "./commands/assess.js";
 import { runBrowser } from "./commands/browser.js";
 import { runCheck, UsageError } from "./commands/check.js";
 import { runMcp } from "./commands/mcp.js";
+import { DEFAULT_PORT, runServe } from "./commands/serve.js";
 import { ConfigError, loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
 import { resolvePaths } from "./paths.js";
 import { createServices } from "./runtime.js";
+import { loadUiAssets } from "./ui-assets.js";
 
 const HELP = `titlesearch ${pkg.version}
 Check whether a name is free across domain extensions.
@@ -18,6 +20,7 @@ Check whether a name is free across domain extensions.
 Usage:
   titlesearch check <names...> [--market <text>] [--tlds com,io] [--json]
   titlesearch mcp
+  titlesearch serve [--port 4717]
   titlesearch browser install | status
   titlesearch --version
 
@@ -26,6 +29,8 @@ Commands:
           A name containing a dot is checked as-is. With --market, also
           looks at every taken domain and judges whether it competes.
   mcp     Run the MCP server over stdio, for Claude Desktop and Claude Code.
+  serve   Run the web UI and API at http://127.0.0.1:4717, for this computer
+          only. Sign in with the one-time code it prints.
   browser Site previews need Chrome or Edge. Without one, \`browser install\`
           downloads a pinned, checksum-verified build (about 100 MB) once.
 
@@ -33,6 +38,7 @@ Options:
   --market <text>  What the product is and who it's for; compares taken domains to it
   --tlds <list>    Comma-separated extensions (default: com,io,co,ai,app,dev)
   --json           Print results as JSON
+  --port <number>  Port for serve (default 4717)
   --no-cache       Don't read or write the local cache
   --no-godaddy     Don't ask GoDaddy; registry sources only
   -h, --help       Show this help
@@ -77,6 +83,32 @@ async function main(argv: string[]): Promise<number> {
   let runtime: Awaited<ReturnType<typeof createServices>>;
   try {
     const config = await loadConfig(paths.configDir);
+    if (command === "serve") {
+      const ui = await loadUiAssets();
+      const port = values.port ? Number(values.port) : DEFAULT_PORT;
+      if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+        process.stderr.write("--port must be a number from 1024 to 65535.\n");
+        return 2;
+      }
+      await runServe({
+        port,
+        configDir: paths.configDir,
+        version: pkg.version,
+        logger,
+        config,
+        build: createServices,
+        runtimeOptions: {
+          cacheDir: paths.cacheDir,
+          dataDir: paths.dataDir,
+          logger,
+          command: "check",
+          ...(anthropicApiKey ? { anthropicApiKey } : {}),
+        },
+        hasAnthropicKey: !!anthropicApiKey,
+        ...(ui ? { ui } : {}),
+      });
+      return 0;
+    }
     runtime = await createServices({
       config,
       cacheDir: paths.cacheDir,
@@ -154,9 +186,6 @@ async function runCommand(
     case "mcp":
       await runMcp(services, pkg.version);
       return 0;
-    case "serve":
-      process.stderr.write("`titlesearch serve` isn't available yet.\n");
-      return 2;
     default:
       process.stderr.write(`Unknown command "${command}".\n\n${HELP}\n`);
       return 2;
@@ -170,6 +199,7 @@ function parse(argv: string[]) {
     options: {
       tlds: { type: "string" },
       market: { type: "string" },
+      port: { type: "string" },
       json: { type: "boolean" },
       "no-cache": { type: "boolean" },
       "no-godaddy": { type: "boolean" },

@@ -4,7 +4,8 @@ import { MemoryStore } from "@titlesearch/cache";
 import { cacheKeys, type Resolver, type Transport } from "@titlesearch/core";
 import { beforeAll, describe, expect, it } from "vitest";
 import { createWebpEncoder, imageDimensions, MAX_DECODE_PIXELS } from "../src/image-codec.js";
-import { createPreviewer, previewImageResponse, WEBP } from "../src/previewer.js";
+import { previewImageResponse, WEBP } from "../src/preview-response.js";
+import { createPreviewer } from "../src/previewer.js";
 import type { PreviewCapture, PreviewRenderer } from "../src/renderer.js";
 import { nodeWasmLoader } from "../src/wasm-node.js";
 
