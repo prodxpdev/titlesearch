@@ -34,10 +34,13 @@ describe.runIf(isBun)("titlesearch mcp over stdio", () => {
       expect(client.getServerVersion()?.name).toBe("titlesearch");
       const { tools } = await client.listTools();
       expect(tools.map((t) => t.name).sort()).toEqual([
+        "assess_market_conflicts",
         "check_domains",
         "generate_variants",
         "inspect_domain",
       ]);
+      const { prompts } = await client.listPrompts();
+      expect(prompts.map((p) => p.name)).toEqual(["saas_naming_session"]);
       const res = await client.callTool({
         name: "generate_variants",
         arguments: { seed: "acme", strategies: ["tld"], tlds: ["com", "io"] },

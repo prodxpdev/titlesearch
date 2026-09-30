@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { ConfigError, loadConfig } from "../src/config.js";
 import { resolvePaths } from "../src/paths.js";
+import { resolveAssessmentMode } from "../src/runtime.js";
 
 describe("loadConfig", () => {
   const dirs: string[] = [];
@@ -21,6 +22,7 @@ describe("loadConfig", () => {
       providers: { godaddy: { enabled: true } },
       whois: { enable: [] },
       cache: { enabled: true },
+      assessment: { model: "claude-opus-5-5", effort: "medium", refusalFallback: true },
     });
   });
 
@@ -43,6 +45,19 @@ describe("loadConfig", () => {
     const d = dir();
     writeFileSync(join(d, "config.json"), text);
     await expect(loadConfig(d)).rejects.toBeInstanceOf(ConfigError);
+  });
+});
+
+describe("resolveAssessmentMode", () => {
+  it.each([
+    [undefined, "mcp", true, "client"],
+    [undefined, "mcp", false, "client"],
+    [undefined, "check", true, "anthropic"],
+    [undefined, "check", false, "off"],
+    ["anthropic", "mcp", true, "anthropic"],
+    ["off", "check", true, "off"],
+  ] as const)("config %s, command %s, key %s → %s", (configured, command, hasKey, expected) => {
+    expect(resolveAssessmentMode(configured, command, hasKey)).toBe(expected);
   });
 });
 

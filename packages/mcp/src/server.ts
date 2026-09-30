@@ -3,6 +3,12 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
+  type AssessmentMode,
+  assessMarketConflicts,
+  type ConflictClassifier,
+  NOT_A_TRADEMARK_SEARCH,
+} from "@titlesearch/assess";
+import {
   type AvailabilityProvider,
   type CacheStore,
   checkDomains,
@@ -16,12 +22,17 @@ import {
   type ProviderContext,
   RequestLimitError,
 } from "@titlesearch/core";
+import * as z from "zod";
 import {
+  assessMarketConflictsDescription,
   CHECK_DOMAINS_DESCRIPTION,
   GENERATE_VARIANTS_DESCRIPTION,
   INSPECT_DOMAIN_DESCRIPTION,
+  namingSessionPrompt,
 } from "./descriptions.js";
 import {
+  AssessMarketConflictsInput,
+  AssessMarketConflictsOutput,
   CheckDomainsInput,
   CheckDomainsOutput,
   GenerateVariantsInput,
@@ -33,8 +44,10 @@ import {
 export interface TitlesearchServices {
   providers: readonly AvailabilityProvider[];
   cache?: CacheStore;
-  /** The presence probe. Without one, inspect_domain isn't offered. */
+  /** The presence probe. Without one, inspect_domain and assess_market_conflicts aren't offered. */
   probe?: PresenceProbe;
+  /** How assess_market_conflicts judges sites. Defaults to "client": the MCP client judges. */
+  assessment?: { mode: AssessmentMode; classifier?: ConflictClassifier };
   /** Builds a provider context for one tool call. */
   context(signal: AbortSignal): ProviderContext;
 }
@@ -215,6 +228,82 @@ export function createTitlesearchMcpServer(
           structuredContent: result,
         };
       },
+    );
+  }
+
+  if (probe) {
+    const mode = services.assessment?.mode ?? "client";
+    const classifier = services.assessment?.classifier;
+    if (mode === "anthropic" && !classifier)
+      throw new Error('Assessment mode "anthropic" needs a classifier.');
+    server.registerTool(
+      "assess_market_conflicts",
+      {
+        title: "Assess market conflicts",
+        description: assessMarketConflictsDescription(mode),
+        inputSchema: AssessMarketConflictsInput,
+        outputSchema: AssessMarketConflictsOutput,
+        annotations: READ_ONLY,
+      },
+      async ({ name, market, tlds }, extra) => {
+        let domains: string[];
+        try {
+          if (name.includes("."))
+            throw new DomainError(
+              name,
+              "Give a name without an extension; use tlds for extensions.",
+            );
+          domains = expandCandidates([name], tlds);
+        } catch (err) {
+          const message = inputError(err);
+          if (message) return toolError(message);
+          throw err;
+        }
+        const assessed = await assessMarketConflicts(
+          domains,
+          market,
+          services.context(extra.signal),
+          {
+            providers: services.providers,
+            probe,
+            mode,
+            ...(classifier ? { classifier } : {}),
+            ...(services.cache ? { cache: services.cache } : {}),
+          },
+        );
+        const text = [
+          ...assessed.results.map((r) => {
+            const base = describeInspection(r);
+            const a = r.assessment;
+            return a
+              ? `${base}\nAssessment (${a.assessedBy}): ${a.level}. ${a.reasons.join(" ")}`
+              : base;
+          }),
+          NOT_A_TRADEMARK_SEARCH,
+        ].join("\n\n");
+        return {
+          content: [{ type: "text", text }],
+          structuredContent: { ...assessed, notice: NOT_A_TRADEMARK_SEARCH },
+        };
+      },
+    );
+
+    server.registerPrompt(
+      "saas_naming_session",
+      {
+        title: "SaaS naming session",
+        description:
+          "Walk through naming a product: a brief, candidates, availability, market conflicts, and a shortlist with reasons.",
+        argsSchema: {
+          product: z.string().min(1).max(500).describe("What the product does."),
+          audience: z.string().min(1).max(300).describe("Who it's for."),
+        },
+      },
+      ({ product, audience }) => ({
+        messages: [
+          { role: "user", content: { type: "text", text: namingSessionPrompt(product, audience) } },
+        ],
+      }),
     );
   }
 

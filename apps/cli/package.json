@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.31.0",
+    "@titlesearch/assess": "workspace:*",
     "@titlesearch/cache": "workspace:*",
     "@titlesearch/core": "workspace:*",
     "@titlesearch/mcp": "workspace:*",

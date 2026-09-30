@@ -10,9 +10,15 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
-    "@titlesearch/core": "workspace:*"
+    "@anthropic-ai/sdk": "0.130.0",
+    "@titlesearch/core": "workspace:*",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
   }
 }

@@ -3,6 +3,7 @@
 
 import { parseArgs } from "node:util";
 import pkg from "../package.json" with { type: "json" };
+import { runAssess } from "./commands/assess.js";
 import { runCheck, UsageError } from "./commands/check.js";
 import { runMcp } from "./commands/mcp.js";
 import { ConfigError, loadConfig } from "./config.js";
@@ -14,16 +15,18 @@ const HELP = `titlesearch ${pkg.version}
 Check whether a name is free across domain extensions.
 
 Usage:
-  titlesearch check <names...> [--tlds com,io] [--json]
+  titlesearch check <names...> [--market <text>] [--tlds com,io] [--json]
   titlesearch mcp
   titlesearch --version
 
 Commands:
   check   Check names on each extension and print a table (or JSON).
-          A name containing a dot is checked as-is.
+          A name containing a dot is checked as-is. With --market, also
+          looks at every taken domain and judges whether it competes.
   mcp     Run the MCP server over stdio, for Claude Desktop and Claude Code.
 
 Options:
+  --market <text>  What the product is and who it's for; compares taken domains to it
   --tlds <list>    Comma-separated extensions (default: com,io,co,ai,app,dev)
   --json           Print results as JSON
   --no-cache       Don't read or write the local cache
@@ -32,6 +35,7 @@ Options:
   -v, --version    Show the version
 
 Environment:
+  ANTHROPIC_API_KEY        Enables market-overlap judgment with --market
   TITLESEARCH_LOG          error, warn (default), info, or debug; logs go to stderr
   TITLESEARCH_CONFIG_DIR   Override the config directory
   TITLESEARCH_CACHE_DIR    Override the cache directory
@@ -57,7 +61,12 @@ async function main(argv: string[]): Promise<number> {
     return command || values.help ? 0 : 2;
   }
 
-  const logger = createLogger(process.env.TITLESEARCH_LOG, []);
+  const anthropicApiKey = process.env.ANTHROPIC_API_KEY?.trim() || undefined;
+  // Every secret is registered with the logger so it's redacted from every line.
+  const logger = createLogger(
+    process.env.TITLESEARCH_LOG,
+    anthropicApiKey ? [anthropicApiKey] : [],
+  );
   const paths = resolvePaths();
   let services: Awaited<ReturnType<typeof createServices>>;
   try {
@@ -68,6 +77,8 @@ async function main(argv: string[]): Promise<number> {
       logger,
       noCache: values["no-cache"] ?? false,
       noGodaddy: values["no-godaddy"] ?? false,
+      command: command === "mcp" ? "mcp" : "check",
+      ...(anthropicApiKey ? { anthropicApiKey } : {}),
     });
   } catch (err) {
     if (err instanceof ConfigError) {
@@ -90,11 +101,25 @@ async function main(argv: string[]): Promise<number> {
           ?.split(",")
           .map((t) => t.trim())
           .filter(Boolean);
-        const out = await runCheck(services, rest, {
+        const common = {
           ...(tlds ? { tlds } : {}),
           json: values.json ?? false,
           signal: controller.signal,
-        });
+        };
+        if (values.market !== undefined) {
+          const probe = services.probe;
+          if (!probe) throw new Error("The presence probe isn't configured.");
+          const { out, notice } = await runAssess(
+            { ...services, probe },
+            rest,
+            values.market,
+            common,
+          );
+          if (notice) process.stderr.write(`${notice}\n`);
+          process.stdout.write(`${out}\n`);
+          return 0;
+        }
+        const out = await runCheck(services, rest, common);
         process.stdout.write(`${out}\n`);
         return 0;
       } catch (err) {
@@ -123,6 +148,7 @@ function parse(argv: string[]) {
     allowPositionals: true,
     options: {
       tlds: { type: "string" },
+      market: { type: "string" },
       json: { type: "boolean" },
       "no-cache": { type: "boolean" },
       "no-godaddy": { type: "boolean" },

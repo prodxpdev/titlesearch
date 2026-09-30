@@ -2,6 +2,7 @@
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { AnthropicClassifier, type AssessmentMode } from "@titlesearch/assess";
 import { type SqliteDriver, SqliteStore } from "@titlesearch/cache";
 import {
   type AvailabilityProvider,
@@ -21,7 +22,7 @@ import {
   UpstreamMcpProvider,
 } from "@titlesearch/providers";
 import { nodeWhoisConnector } from "@titlesearch/providers/whois/node";
-import type { CliConfig } from "./config.js";
+import { type CliConfig, ConfigError } from "./config.js";
 
 export interface RuntimeOptions {
   config: CliConfig;
@@ -30,6 +31,21 @@ export interface RuntimeOptions {
   /** Overrides from command-line flags. */
   noCache?: boolean;
   noGodaddy?: boolean;
+  /** Which command is running; sets the default assessment mode. */
+  command: "mcp" | "check";
+  /** From ANTHROPIC_API_KEY. Never logged: it's registered with the redacting logger. */
+  anthropicApiKey?: string;
+}
+
+/** Resolves the assessment mode from config, the command, and whether a key is set. */
+export function resolveAssessmentMode(
+  configured: AssessmentMode | undefined,
+  command: "mcp" | "check",
+  hasKey: boolean,
+): AssessmentMode {
+  if (configured) return configured;
+  if (command === "mcp") return "client";
+  return hasKey ? "anthropic" : "off";
 }
 
 const isBun = typeof (globalThis as { Bun?: unknown }).Bun !== "undefined";
@@ -74,9 +90,29 @@ export async function createServices(options: RuntimeOptions): Promise<Titlesear
   const rateLimiter = createDefaultRateLimiter();
   const dns = new DohResolver();
   const probe: PresenceProbe = (domain, signal) => probePresence(domain, { dns, signal });
+  const mode = resolveAssessmentMode(
+    config.assessment.mode,
+    options.command,
+    !!options.anthropicApiKey,
+  );
+  let classifier: AnthropicClassifier | undefined;
+  if (mode === "anthropic") {
+    if (!options.anthropicApiKey) {
+      throw new ConfigError('assessment.mode is "anthropic", but ANTHROPIC_API_KEY isn\'t set.');
+    }
+    classifier = new AnthropicClassifier({
+      apiKey: options.anthropicApiKey,
+      model: config.assessment.model,
+      effort: config.assessment.effort,
+      refusalFallback: config.assessment.refusalFallback,
+      logger,
+    });
+  }
+
   return {
     providers,
     probe,
+    assessment: { mode, ...(classifier ? { classifier } : {}) },
     ...(cache ? { cache } : {}),
     context: (signal: AbortSignal): ProviderContext => ({ signal, rateLimiter, logger }),
   };

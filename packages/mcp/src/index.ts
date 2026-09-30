@@ -4,6 +4,8 @@ export {
   INSPECT_DOMAIN_DESCRIPTION,
 } from "./descriptions.js";
 export {
+  AssessMarketConflictsInput,
+  AssessMarketConflictsOutput,
   CheckDomainsInput,
   CheckDomainsOutput,
   GenerateVariantsInput,

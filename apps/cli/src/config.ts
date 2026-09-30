@@ -20,6 +20,20 @@ export const CliConfig = z
       })
       .default({ enable: [] }),
     cache: z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
+    assessment: z
+      .object({
+        /**
+         * Unset: `mcp` uses "client" (Claude judges), and `check --market`
+         * uses "anthropic" when ANTHROPIC_API_KEY is set, otherwise "off".
+         */
+        mode: z.enum(["anthropic", "client", "off"]).optional(),
+        model: z.string().min(1).default("claude-opus-5-5"),
+        effort: z.enum(["low", "medium", "high", "xhigh", "max"]).default("medium"),
+        /** Server-side refusal fallback on the Anthropic API (beta). */
+        refusalFallback: z.boolean().default(true),
+      })
+      .strict()
+      .default({ model: "claude-opus-5-5", effort: "medium", refusalFallback: true }),
   })
   .strict();
 export type CliConfig = z.infer<typeof CliConfig>;

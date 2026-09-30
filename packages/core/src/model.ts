@@ -137,8 +137,11 @@ export const PresenceEvidence = z.object({
 export type PresenceEvidence = z.infer<typeof PresenceEvidence>;
 
 export const Assessment = z.object({
+  /** The domain this judgment is about. */
+  domain: z.string(),
   level: z.enum(["competitor", "possible_overlap", "none"]),
-  reasons: z.array(z.string().min(1)).min(2).max(4),
+  /** 2 to 4 plain-language reasons, each citing the evidence. */
+  reasons: z.array(z.string().min(1).max(300)).min(2).max(4),
   assessedBy: z.string().min(1),
   market: z.string(),
 });

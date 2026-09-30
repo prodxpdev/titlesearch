@@ -1,7 +1,8 @@
 // Human-readable output for `titlesearch check`. Status labels follow the
 // mockup's vocabulary where it has one; every detail names its source.
 
-import type { DomainResult, SourceResult } from "@titlesearch/core";
+import { type MarketAssessment, NOT_A_TRADEMARK_SEARCH } from "@titlesearch/assess";
+import type { DomainResult, Occupancy, SourceResult } from "@titlesearch/core";
 
 const SOURCE_NAMES: Record<string, string> = { rdap: "RDAP", whois: "WHOIS", godaddy: "GoDaddy" };
 const sourceName = (id: string) => SOURCE_NAMES[id] ?? id;
@@ -57,4 +58,55 @@ export function formatTable(results: readonly DomainResult[]): string {
     "",
     "Availability only. This isn't a trademark search.",
   ].join("\n");
+}
+
+/** Labels for taken domains once presence is known, from the brief's vocabulary. */
+export const OCCUPANCY_LABELS: Record<Occupancy, string> = {
+  competitor: "Competitor",
+  possible_overlap: "Possible overlap",
+  unrelated: "Unrelated site",
+  parked: "Parked",
+  for_sale: "For sale",
+  no_site: "No site",
+  // TODO(mockup): not in the brief's label list; a real site nobody judged.
+  unassessed: "Site, not assessed",
+};
+
+function statusOf(r: DomainResult): string {
+  return r.occupancy ? OCCUPANCY_LABELS[r.occupancy] : STATUS_LABELS[r.availability];
+}
+
+function assessmentDetail(r: DomainResult): string {
+  const parts = [detail(r)];
+  const p = r.presence;
+  if (p?.askingPrice)
+    parts.push(
+      `Site: asking ${p.askingPrice.currency}${p.askingPrice.amount.toLocaleString("en-US")}`,
+    );
+  if (p?.page?.title) parts.push(`Site: "${p.page.title}"`);
+  return parts.filter(Boolean).join("; ");
+}
+
+export function formatAssessment(a: MarketAssessment): string {
+  const rows = a.results.map((r) => [r.domain, statusOf(r), assessmentDetail(r)]);
+  const header = ["Domain", "Status", "Detail"];
+  const widths = [0, 1].map((i) =>
+    Math.max(header[i]?.length ?? 0, ...rows.map((row) => row[i]?.length ?? 0)),
+  );
+  const line = (cols: string[]) =>
+    cols
+      .map((c, i) => (i < 2 ? c.padEnd(widths[i] ?? 0) : c))
+      .join("  ")
+      .trimEnd();
+  const out = [`Market: ${a.market}`, "", line(header)];
+  a.results.forEach((r, i) => {
+    out.push(line(rows[i] as string[]));
+    if (r.assessment) {
+      const indent = " ".repeat((widths[0] ?? 0) + 2);
+      out.push(`${indent}Assessment (${r.assessment.assessedBy}):`);
+      for (const reason of r.assessment.reasons) out.push(`${indent}- ${reason}`);
+    }
+  });
+  out.push("", NOT_A_TRADEMARK_SEARCH);
+  return out.join("\n");
 }

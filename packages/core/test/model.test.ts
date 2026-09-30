@@ -69,7 +69,12 @@ describe("schemas", () => {
   });
 
   it("requires 2 to 4 assessment reasons", () => {
-    const a = { level: "competitor", assessedBy: "anthropic", market: "invoicing for freelancers" };
+    const a = {
+      domain: "acme.io",
+      level: "competitor",
+      assessedBy: "anthropic",
+      market: "invoicing for freelancers",
+    };
     expect(Assessment.safeParse({ ...a, reasons: ["one"] }).success).toBe(false);
     expect(Assessment.safeParse({ ...a, reasons: ["one", "two"] }).success).toBe(true);
     expect(Assessment.safeParse({ ...a, reasons: ["1", "2", "3", "4", "5"] }).success).toBe(false);

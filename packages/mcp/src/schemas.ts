@@ -59,11 +59,36 @@ export const InspectDomainInput = {
 
 export const InspectDomainOutput = DomainResult;
 
+export const AssessMarketConflictsInput = {
+  name: z
+    .string()
+    .min(1)
+    .max(63)
+    .describe('One name idea, such as "acme". It\'s checked on every extension in tlds.'),
+  market: z
+    .string()
+    .min(1)
+    .max(1000)
+    .describe(
+      "What the product is and who it's for, in a sentence or two. Sites are compared against this.",
+    ),
+  tlds: Tlds.optional(),
+};
+
+export const AssessMarketConflictsOutput = {
+  market: z.string(),
+  mode: z.enum(["anthropic", "client", "off"]),
+  assessedBy: z.string().optional(),
+  results: z.array(DomainResult),
+  notice: z.string(),
+};
+
 /** JSON Schema for every tool input, for docs and non-MCP clients. */
 export function toolInputJsonSchemas(): Record<string, unknown> {
   return {
     check_domains: z.toJSONSchema(z.object(CheckDomainsInput)),
     generate_variants: z.toJSONSchema(z.object(GenerateVariantsInput)),
     inspect_domain: z.toJSONSchema(z.object(InspectDomainInput)),
+    assess_market_conflicts: z.toJSONSchema(z.object(AssessMarketConflictsInput)),
   };
 }

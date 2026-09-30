@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.31.0",
+    "@titlesearch/assess": "workspace:*",
     "@titlesearch/core": "workspace:*",
     "zod": "4.6.5"
   },
