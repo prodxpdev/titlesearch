@@ -81,6 +81,10 @@ jobs:
         run: |
           bun build --compile packages/cache/scripts/compile-smoke.ts --outfile "$RUNNER_TEMP/smoke"
           "$RUNNER_TEMP/smoke"
+      - name: End-to-end tests (Playwright, installed Chrome)
+        run: |
+          pnpm --filter @titlesearch/web build
+          pnpm --filter @titlesearch/web e2e
       - name: Build the CLI binary
         run: |
           node apps/cli/scripts/embed-ui.mjs

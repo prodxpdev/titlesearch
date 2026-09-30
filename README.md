@@ -4,7 +4,7 @@ Titlesearch checks whether a name is free across domain extensions and reports w
 
 It will run as a CLI, a local web app, a desktop app, and a self-hosted service, and every form exposes the same MCP server so Claude can check and suggest names.
 
-**Status:** early development. The core domain model, reconciliation, SSRF-safe fetching, DNS over HTTPS, the RDAP, WHOIS, and GoDaddy availability providers, the memory and SQLite caches, the presence probe, market-overlap assessment, the MCP tools, and the CLI are in place. Checking availability, inspecting taken domains, and judging market overlap work end to end from the CLI and Claude; the web UI doesn't exist yet.
+**Status:** early development. The core domain model, reconciliation, SSRF-safe fetching, DNS over HTTPS, the RDAP, WHOIS, and GoDaddy availability providers, the memory and SQLite caches, the presence probe with site previews, market-overlap assessment, the MCP tools, the HTTP server, the web UI, and the CLI are in place. Checking availability, inspecting taken domains with screenshot previews, and judging market overlap work end to end from the CLI, Claude, and the local web UI.
 
 ## Try it
 
@@ -42,6 +42,15 @@ Claude Code:
 ```sh
 claude mcp add titlesearch -- /absolute/path/to/titlesearch mcp
 ```
+
+### The web UI
+
+```sh
+pnpm --filter @titlesearch/web build
+bun apps/cli/src/main.ts serve
+```
+
+Open `http://127.0.0.1:4717` and enter the one-time code it prints. The UI and API are reachable from this computer only.
 
 The tools are `check_domains`, `generate_variants`, `inspect_domain` (what's on a taken domain: a real site, a parked page, or a for-sale listing), and `assess_market_conflicts` (whether the sites on a name's taken extensions compete with your product). The `saas_naming_session` prompt walks Claude through the whole process. Under `titlesearch mcp`, Claude judges market overlap itself from the evidence.
 

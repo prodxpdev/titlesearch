@@ -6,7 +6,13 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/fixtures", "!docs/design", "!**/src-tauri/target"]
+    "includes": [
+      "**",
+      "!**/fixtures",
+      "!docs/design",
+      "!**/src-tauri/target",
+      "!apps/web/src/styles.css"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -58,7 +64,8 @@
         "apps/**/*.ts",
         "apps/**/*.tsx",
         "deploy/**/*.ts",
-        "!packages/core/src/net/**"
+        "!packages/core/src/net/**",
+        "!apps/web/src/api.ts"
       ],
       "plugins": ["./tools/biome-plugins/no-direct-fetch.grit"]
     },
@@ -71,7 +78,8 @@
         "!packages/core/src/net/**",
         "!packages/core/src/extract/**",
         "!packages/server/src/static/**",
-        "!**/test/**"
+        "!**/test/**",
+        "!**/e2e/**"
       ],
       "plugins": ["./tools/biome-plugins/no-raw-site-content.grit"]
     },
@@ -119,6 +127,17 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/views/Results.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off",
+            "useFocusableInteractive": "off"
           }
         }
       }

@@ -1,0 +1,38 @@
+{
+  "name": "@titlesearch/web",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "description": "The Titlesearch web UI, built to docs/design/titlesearch-mockups.html.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/schibsted-grotesk": "5.3.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@jsquash/png": "3.1.1",
+    "@playwright/test": "1.63.0",
+    "@titlesearch/assess": "workspace:*",
+    "@titlesearch/cache": "workspace:*",
+    "@titlesearch/core": "workspace:*",
+    "@titlesearch/mcp": "workspace:*",
+    "@titlesearch/render": "workspace:*",
+    "@titlesearch/server": "workspace:*",
+    "@types/node": "24.19.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.1",
+    "vitest": "4.1.11"
+  }
+}

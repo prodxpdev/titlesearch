@@ -86,6 +86,19 @@ const cases: Case[] = [
     expect: [],
   },
 
+  {
+    name: "the web UI's same-origin API client may call fetch",
+    path: "apps/web/src/api.ts",
+    code: 'export const r = () => fetch("/api/session");',
+    expect: [],
+  },
+  {
+    name: "any other web UI file may not",
+    path: "apps/web/src/views/other.ts",
+    code: 'export const r = () => fetch("/api/session");',
+    expect: ["inv2"],
+  },
+
   // Invariant 3: raw bodies and HTML stay in core/net and core/extract.
   {
     name: "response.text() in a provider",
