@@ -85,16 +85,18 @@ export const godaddyMapping: UpstreamMapping = {
     if (match.purchasable !== true) {
       return err("inconsistent_response", "GoDaddy said available but not purchasable.");
     }
-    // GoDaddy's MCP returns no prices (priceInfo is always null), so none are reported.
+    // GoDaddy is an availability source only (CLAUDE.md): its MCP returns no
+    // prices, and "premium" means a price source reported a registry premium
+    // price. So every purchasable inventory type maps to "available", and
+    // premium status comes from a price source such as Porkbun.
     switch (match.inventoryType) {
       case "Standard":
-        return { availability: "available" };
       case "Registry Premium":
       // Plain "Premium" can be an aftermarket listing of a registered name
       // (bank.app in the fixtures). RDAP then says registered, and
       // reconciliation makes the result unconfirmed.
       case "Premium":
-        return { availability: "premium" };
+        return { availability: "available" };
       case "Auction":
         // Sold at auction, not at registry price: not available to register.
         return { availability: "registered" };

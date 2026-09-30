@@ -32,3 +32,7 @@
 GoDaddy's MCP documentation says users must agree to GoDaddy's Universal Terms of Service and API Terms of Use, and that excessive requests may be throttled. It doesn't address self-hosted services calling the public endpoint on behalf of their own users. The API Terms of Use page returns 403 to automated fetches, so its full text wasn't reviewed. The excerpts seen permit use "through Automated Tools" to build integrations, but they bind the holder of an API credential, and the public MCP endpoint uses none.
 
 **A person needs to read the API Terms of Use before GoDaddy ships as the default registrar source for deployed instances.** Until then it stays the default in code, which the brief specifies, with this ADR as the flag.
+
+## Addendum, 2026-09-30: availability only
+
+The updated brief makes GoDaddy an availability source only: "premium" now means a price source reported a registry premium price, and prices come only from Porkbun and Name.com. The mapping changed accordingly. `Standard`, `Registry Premium`, and `Premium` all map to `available`. `Auction` still maps to `registered`. Unknown inventory types are still errors. The aftermarket case (`bank.app`) is unaffected: RDAP says registered, so the result is `unconfirmed`.

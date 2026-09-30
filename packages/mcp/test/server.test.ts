@@ -117,7 +117,9 @@ describe("check_domains", () => {
       arguments: { names: ["acme"], tlds: ["com"] },
     });
     const text = (res.content as { text: string }[])[0]?.text ?? "";
-    expect(text).toContain("not at the registry (unconfirmed by a registrar)");
+    expect(text).toContain(
+      "not registered at the registry; no registrar confirmed it, price unknown",
+    );
   });
 
   it("refuses more than 50 domains without calling any provider", async () => {

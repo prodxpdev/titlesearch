@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Titlesearch — UI mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --band:#16233B; --on-band:#FFFFFF; --on-band-muted:#AEB9CC;
+  --canvas:#F4F6F9; --paper:#FFFFFF; --text:#16233B; --muted:#5B6678; --line:#D7DDE6; --line-strong:#B9C3D2;
+  --survey:#2F5D8C; --survey-bg:#E8EFF7;
+  --vacant:#1F7A4D; --vacant-bg:#E4F3EA;
+  --premium:#8A5A0E; --premium-bg:#FBF0DA;
+  --conflict:#B42318; --conflict-bg:#FCE9E7;
+  --overlap:#B54708; --overlap-bg:#FDEEDF;
+  --neutral:#4B5563; --neutral-bg:#EEF0F3;
+  --unknown:#5F3FA0; --unknown-bg:#EFE9F9;
+  --sans:"Schibsted Grotesk", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --band:#0B1424; --on-band-muted:#9AA7BD;
+    --canvas:#0F1826; --paper:#162235; --text:#E6EBF2; --muted:#9AA6B8; --line:#2A3850; --line-strong:#3A4A66;
+    --survey:#7FA8D6; --survey-bg:#1B2C44;
+    --vacant:#5FC18E; --vacant-bg:#143326; --premium:#E3B35C; --premium-bg:#352812;
+    --conflict:#F2877C; --conflict-bg:#3A1A18; --overlap:#F0A868; --overlap-bg:#3A2412;
+    --neutral:#B3BCC9; --neutral-bg:#222E40; --unknown:#B9A2EC; --unknown-bg:#2A2140;
+  }
+}
+:root[data-theme="dark"]{
+  --band:#0B1424; --on-band-muted:#9AA7BD;
+  --canvas:#0F1826; --paper:#162235; --text:#E6EBF2; --muted:#9AA6B8; --line:#2A3850; --line-strong:#3A4A66;
+  --survey:#7FA8D6; --survey-bg:#1B2C44;
+  --vacant:#5FC18E; --vacant-bg:#143326; --premium:#E3B35C; --premium-bg:#352812;
+  --conflict:#F2877C; --conflict-bg:#3A1A18; --overlap:#F0A868; --overlap-bg:#3A2412;
+  --neutral:#B3BCC9; --neutral-bg:#222E40; --unknown:#B9A2EC; --unknown-bg:#2A2140;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--canvas);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--survey)}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--survey);outline-offset:2px;border-radius:4px}
+.dn{font-family:var(--mono);font-weight:500;letter-spacing:-0.01em}
+
+/* Top nav */
+.nav{background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:10}
+.nav-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:28px;padding:14px 24px;overflow-x:auto}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-0.02em;text-decoration:none;color:var(--text);white-space:nowrap}
+.brand svg{flex:none}
+.nav-links{display:flex;gap:4px}
+.nav-links a{text-decoration:none;color:var(--muted);font-weight:500;padding:6px 10px;border-radius:6px;white-space:nowrap}
+.nav-links a:hover{color:var(--text);background:var(--canvas)}
+.nav-links a[aria-current="page"]{color:var(--text);background:var(--survey-bg)}
+.sample{margin-left:auto;font-size:13px;color:var(--muted);border:1px dashed var(--line-strong);padding:3px 9px;border-radius:999px;white-space:nowrap}
+
+/* Band */
+.band{background:var(--band);color:var(--on-band)}
+.band-in{max-width:1180px;margin:0 auto;padding:40px 24px 36px}
+.band h1{margin:0;font-size:clamp(30px,4.4vw,48px);line-height:1.05;letter-spacing:-0.03em;font-weight:800;max-width:22ch}
+.band p{margin:12px 0 0;color:var(--on-band-muted);max-width:62ch;font-size:17px}
+.band .crumb{font-size:14px;color:var(--on-band-muted);margin-bottom:14px}
+.band .crumb a{color:var(--on-band-muted)}
+.band-row{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px}
+
+main{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:24px}
+.panel+.panel{margin-top:16px}
+.panel h2{margin:0 0 4px;font-size:20px;letter-spacing:-0.01em}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:15px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
+@media (max-width:860px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);background:var(--paper);padding:9px 16px;border-radius:8px;font-weight:600;cursor:pointer;text-decoration:none;color:var(--text)}
+.btn:hover{border-color:var(--survey)}
+.btn.primary{background:var(--survey);border-color:var(--survey);color:#fff}
+.band .btn{background:transparent;color:var(--on-band);border-color:rgba(255,255,255,.35)}
+.band .btn:hover{border-color:#fff}
+.band .btn.on{background:#fff;color:#16233B;border-color:#fff}
+
+/* Forms */
+label.f{display:block;font-weight:600;margin:0 0 6px}
+.hint{color:var(--muted);font-size:14px;margin:6px 0 0}
+textarea,input[type=text],input[type=password],input[type=url],select{width:100%;border:1px solid var(--line-strong);background:var(--paper);border-radius:8px;padding:10px 12px}
+textarea{min-height:140px;resize:vertical;font-family:var(--mono);font-size:15px}
+.field+.field{margin-top:20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line-strong);background:var(--paper);border-radius:999px;padding:6px 12px;cursor:pointer;font-family:var(--mono);font-size:14px}
+.chip[aria-pressed="true"]{background:var(--survey);border-color:var(--survey);color:#fff}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:10px}
+.check input{margin-top:5px}
+
+/* Plat grid */
+.plat-wrap{overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.plat{display:grid;grid-template-columns:minmax(220px,1.3fr) repeat(6,minmax(128px,1fr));min-width:1000px}
+.plat .h{padding:12px 14px;font-family:var(--mono);font-size:14px;color:var(--muted);border-bottom:1px solid var(--line-strong);background:var(--canvas)}
+.plat .h:first-child{font-family:var(--sans)}
+.row-h{padding:16px 14px;border-bottom:1px solid var(--line);border-right:1px solid var(--line-strong);display:flex;flex-direction:column;gap:4px}
+.row-h .dn{font-size:18px}
+.row-h .v{font-size:14px;color:var(--muted)}
+.row-h .star{align-self:flex-start;margin-top:4px;background:none;border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:13px;cursor:pointer;color:var(--muted)}
+.row-h .star[aria-pressed="true"]{color:var(--survey);border-color:var(--survey);background:var(--survey-bg)}
+.lot{position:relative;display:block;text-decoration:none;color:inherit;padding:14px 14px 16px;border-bottom:1px solid var(--line);border-right:1px dashed var(--line);min-height:96px}
+.lot:hover{outline:2px solid var(--survey);outline-offset:-2px;z-index:1}
+.lot::after{content:"";position:absolute;right:6px;bottom:6px;width:7px;height:7px;border-right:1.5px solid var(--line-strong);border-bottom:1.5px solid var(--line-strong)}
+.lot .st{display:inline-block;font-weight:700;font-size:14px;padding:2px 8px;border-radius:5px}
+.lot .d{display:block;margin-top:8px;font-size:13px;color:var(--muted);line-height:1.35}
+.lot .p{display:block;margin-top:6px;font-weight:700;font-size:15px}
+.s-available .st{background:var(--vacant-bg);color:var(--vacant)}
+.s-premium .st{background:var(--premium-bg);color:var(--premium)}
+.s-competitor .st{background:var(--conflict-bg);color:var(--conflict)}
+.s-overlap .st{background:var(--overlap-bg);color:var(--overlap)}
+.s-unrelated .st,.s-parked .st,.s-forsale .st,.s-nosite .st{background:var(--neutral-bg);color:var(--neutral)}
+.s-unknown .st{background:var(--unknown-bg);color:var(--unknown)}
+.s-taken .st,.s-cantcheck .st{background:var(--neutral-bg);color:var(--neutral)}
+.s-notregistered .st{background:var(--survey-bg);color:var(--survey)}
+.s-available{background:linear-gradient(0deg,transparent,transparent)}
+.legend{display:flex;flex-wrap:wrap;gap:14px 20px;margin:16px 2px 0;font-size:14px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.toolbar .meta{color:var(--muted);font-size:14px}
+
+/* Provenance tags */
+.src{display:inline-block;font-size:12px;font-weight:600;color:var(--survey);background:var(--survey-bg);border-radius:4px;padding:1px 7px;margin-left:8px;vertical-align:2px}
+dl.kv{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:10px 20px;margin:0}
+dl.kv dt{color:var(--muted);font-size:15px}
+dl.kv dd{margin:0}
+.agree{margin-top:16px;padding:12px 14px;border-radius:8px;font-size:15px}
+.agree.ok{background:var(--vacant-bg);color:var(--vacant)}
+.agree.no{background:var(--unknown-bg);color:var(--unknown)}
+.chain{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:14px}
+.chain li{padding:6px 0;border-bottom:1px dashed var(--line)}
+.chain li:last-child{border-bottom:0}
+.untrusted{border:1px dashed var(--line-strong);border-radius:8px;padding:14px 16px;background:var(--canvas);font-size:15px;color:var(--muted);white-space:pre-wrap}
+.untrusted-h{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted);margin:18px 0 6px}
+.verdict{display:flex;gap:14px;align-items:flex-start;padding:16px;border-radius:8px}
+.verdict .lvl{font-weight:800;font-size:18px;white-space:nowrap}
+.verdict.competitor{background:var(--conflict-bg);color:var(--conflict)}
+.verdict.overlap{background:var(--overlap-bg);color:var(--overlap)}
+.verdict.none{background:var(--neutral-bg);color:var(--neutral)}
+.reasons{margin:14px 0 0;padding-left:20px}
+.reasons li+li{margin-top:6px}
+.mini{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+@media (max-width:600px){.mini{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.mini a{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:6px;padding:8px}
+.mini a[aria-current="true"]{border-color:var(--survey);box-shadow:inset 0 0 0 1px var(--survey)}
+.mini .dn{font-size:13px}
+.mini .st{font-size:12px;font-weight:700;padding:1px 6px;border-radius:4px;display:inline-block;margin-top:4px}
+.status-pill{display:inline-block;font-weight:700;padding:5px 12px;border-radius:6px;font-size:15px;margin-top:14px}
+
+/* Tables */
+table.t{width:100%;border-collapse:collapse;font-size:15px}
+.t th,.t td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.t th{color:var(--muted);font-weight:600;font-size:14px}
+.t-wrap{overflow-x:auto}
+
+/* Providers */
+.prov{display:grid;grid-template-columns:1fr auto;gap:6px 16px;padding:18px 0;border-bottom:1px solid var(--line)}
+.prov:first-of-type{padding-top:4px}
+.prov:last-child{border-bottom:0;padding-bottom:0}
+.prov h3{margin:0;font-size:17px}
+.prov p{margin:0;color:var(--muted);font-size:15px;grid-column:1/-1;max-width:70ch}
+.prov .cfg{grid-column:1/-1;margin-top:10px;display:grid;gap:10px;max-width:560px}
+.state{font-size:14px;font-weight:600;white-space:nowrap}
+.state.on{color:var(--vacant)} .state.off{color:var(--muted)} .state.warn{color:var(--premium)}
+.switch{position:relative;width:44px;height:26px;border-radius:999px;border:1px solid var(--line-strong);background:var(--neutral-bg);cursor:pointer;padding:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--paper);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.switch[aria-checked="true"]{background:var(--survey);border-color:var(--survey)}
+.switch[aria-checked="true"]::after{left:21px}
+.switch[disabled]{opacity:.6;cursor:not-allowed}
+.radio{display:flex;gap:10px;align-items:flex-start;padding:10px 0}
+.radio input{margin-top:5px}
+.radio b{display:block}
+.radio span{color:var(--muted);font-size:15px}
+
+/* Code + tabs */
+pre.code{margin:0;background:var(--band);color:#E6EBF2;border-radius:8px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:14px;line-height:1.55}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--survey)}
+.row-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+
+/* Site previews */
+.shot-frame{container-type:inline-size;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:6px;border:1px solid var(--line);background:#fff}
+.shot{position:absolute;inset:0;background:var(--bg);color:var(--fg);font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column}
+.shot-bar{display:flex;align-items:center;justify-content:space-between;padding:2.2cqw 3.5cqw;border-bottom:.3cqw solid rgba(0,0,0,.08)}
+.shot-logo{font-weight:700;font-size:3.6cqw;letter-spacing:-.02em;white-space:nowrap}
+.shot-links{display:flex;gap:2cqw}.shot-links i{display:block;width:6cqw;height:1.4cqw;border-radius:1cqw;background:currentColor;opacity:.25}
+.shot-hero{padding:5cqw 3.5cqw 3cqw;display:flex;flex-direction:column;gap:2cqw}
+.shot-h{font-weight:700;font-size:6.2cqw;line-height:1.08;max-width:80%;letter-spacing:-.02em}
+.shot-p{font-size:2.8cqw;opacity:.75;max-width:70%;line-height:1.35}
+.shot-btn{align-self:flex-start;background:var(--ac);color:#fff;font-size:2.6cqw;font-weight:700;padding:1.4cqw 3cqw;border-radius:1cqw}
+.shot-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:2.4cqw;padding:0 3.5cqw;margin-top:auto;margin-bottom:3.5cqw}
+.shot-cards i{display:block;height:11cqw;border-radius:1.2cqw;background:currentColor;opacity:.08}
+.shot-lander{padding:4cqw 5cqw;display:flex;flex-direction:column;gap:2cqw}
+.shot-lander .dom{font-size:4.2cqw;font-weight:700}
+.shot-lander .rel{font-size:2.6cqw;opacity:.6;margin-top:1cqw}
+.shot-lander .ad{font-size:3.1cqw;color:var(--ac);text-decoration:underline;padding:1.3cqw 0;border-bottom:.3cqw solid rgba(0,0,0,.08)}
+.shot-sale{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.6cqw;text-align:center;padding:4cqw}
+.shot-sale .dom{font-size:7cqw;font-weight:700;letter-spacing:-.02em}
+.shot-sale .p{font-size:3cqw;opacity:.7}
+.shot-blur .shot{filter:blur(6px);transform:scale(1.06)}
+.thumb{display:block;width:100%;margin-top:10px;padding:0;border:0;background:none;cursor:zoom-in;border-radius:6px}
+.thumb:hover .shot-frame{border-color:var(--survey)}
+.lot{cursor:default}
+.lot-link{display:block;text-decoration:none;color:inherit}
+.lot-link::before{content:"";position:absolute;inset:0;z-index:0}
+.lot .thumb{position:relative;z-index:1}
+.pop{position:absolute;z-index:40;width:340px;background:var(--paper);border:1px solid var(--line-strong);border-radius:10px;box-shadow:0 12px 32px rgba(10,20,40,.22);padding:12px;display:none}
+.pop.show{display:block}
+.pop .cap{display:flex;justify-content:space-between;gap:10px;margin-top:10px;font-size:14px}
+.pop .cap span{color:var(--muted)}
+dialog.pv{border:0;border-radius:12px;padding:0;width:min(960px,calc(100vw - 32px));max-height:calc(100vh - 48px);background:var(--paper);color:var(--text);box-shadow:0 24px 64px rgba(0,0,0,.35)}
+dialog.pv::backdrop{background:rgba(11,20,36,.6)}
+.pv-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.pv-head .dn{font-size:20px}
+.pv-body{padding:20px;display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:20px;overflow:auto}
+@media (max-width:760px){.pv-body{grid-template-columns:1fr}}
+.pv-body dl.kv{grid-template-columns:1fr;gap:2px 0}
+.pv-body dl.kv dd{margin-bottom:10px;font-size:15px;word-break:break-word}
+.x{background:none;border:1px solid var(--line-strong);border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:600}
+.toggle{display:inline-flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--band);color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.empty{text-align:center;padding:48px 16px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:600px){.band-in{padding:28px 18px 26px}main{padding:20px 16px 48px}.nav-in{padding:12px 16px;gap:16px}.panel{padding:18px}}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="#/search" aria-label="Titlesearch home">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M1.5 10h23M10 10v14.5M17 10v14.5" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/><rect x="10.8" y="10.8" width="5.4" height="5.4" fill="#2F5D8C"/></svg>
+      Titlesearch
+    </a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="#/search">New search</a>
+      <a href="#/results">Results</a>
+      <a href="#/shortlist">Shortlist</a>
+      <a href="#/providers">Providers</a>
+      <a href="#/connect">Connect Claude</a>
+    </nav>
+    <span class="sample">Mockup with sample data</span>
+  </div>
+</header>
+<div id="view"></div>
+<div class="pop" id="pop" role="tooltip"></div>
+<dialog class="pv" id="pv" aria-labelledby="pvTitle"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+var TLDS=["com","io","ai","app","dev","co"];
+var MARKET="Scheduling and dispatch software for small field-service contractors";
+
+var LABEL={available:"Available",premium:"Premium",competitor:"Competitor",overlap:"Possible overlap",unrelated:"Unrelated site",parked:"Parked",forsale:"For sale",nosite:"No site",unknown:"Unconfirmed",taken:"Taken",notregistered:"Not registered",cantcheck:"Couldn't check"};
+
+var NAMES=[
+ {n:"fieldloom",verdict:"Viable",note:"The .com is an unrelated textile studio. Four extensions are open."},
+ {n:"crewcadence",verdict:"Crowded",note:"A crew-scheduling product for landscapers holds the .com."},
+ {n:"dispatchwell",verdict:"Viable",note:"The .com is a registry premium name. No competitors found."},
+ {n:"routeline",verdict:"Crowded",note:"Two route-planning products hold the .com and .io."}
+];
+
+var REGISTRARS=["NameCo Registrar, Inc.","Harborline Domains LLC","Registrar of the North AB"];
+
+var C={
+ "fieldloom.com":{s:"unrelated",occ:"Textile studio",created:"2016-03-11",reg:0,
+   site:{title:"Fieldloom — Handwoven textiles from the Blue Ridge",desc:"Small-batch blankets and throws woven in western North Carolina.",org:"Store (JSON-LD: Store)"},
+   http:["http://fieldloom.com  301","https://fieldloom.com/  200"],
+   excerpt:"Handwoven blankets, throws, and table linens. Every piece is woven on our floor looms in Asheville. Visit the studio Thursday through Saturday.",
+   assess:{level:"none",head:"No market overlap",reasons:["Sells physical textile goods to consumers.","No software, scheduling, or contractor terms on the page.","A contractor searching for your product is unlikely to land here by mistake, but you won't own the .com."]}},
+ "fieldloom.io":{s:"available",price:"$39.99"},
+ "fieldloom.ai":{s:"available",price:"$89.99"},
+ "fieldloom.app":{s:"available",price:"$14.99"},
+ "fieldloom.dev":{s:"available",price:"$12.99"},
+ "fieldloom.co":{s:"parked",occ:"Parking-service nameservers",created:"2021-08-02",reg:1,
+   site:{title:"fieldloom.co",desc:"(none)",org:"(none)"},http:["http://fieldloom.co  302","http://lander.parking.example/?d=fieldloom.co  200"],
+   excerpt:"Related searches: Field Service Software  Loom Weaving  Farm Equipment",
+   assess:{level:"none",head:"Parked, no business",reasons:["Nameservers belong to a parking service.","The page shows ad links only.","The owner may sell it. Try a backorder or an offer through the registrar."]}},
+
+ "crewcadence.com":{s:"competitor",occ:"Crew scheduling for landscapers",created:"2019-05-20",reg:0,
+   site:{title:"Crew Cadence — Scheduling for landscaping crews",desc:"Plan routes, assign crews, and send customers arrival texts. Built for lawn care and landscaping companies.",org:"SoftwareApplication (BusinessApplication)"},
+   http:["http://crewcadence.com  301","https://www.crewcadence.com/  200"],
+   excerpt:"Schedule every crew from one board. Drag jobs onto a day, auto-build routes, and text customers when the crew is on the way. Start a 14-day free trial.",
+   assess:{level:"competitor",head:"Competitor",reasons:["Sells crew scheduling and dispatch software, which is your market.","Targets landscaping contractors, a subset of field service.","Offers a free trial, so it is an active product, not a placeholder.","Launching under this name risks customer confusion and a trademark dispute."]}},
+ "crewcadence.io":{s:"forsale",occ:"Sale page, asking $4,800",ask:"$4,800",created:"2020-01-14",reg:2,
+   site:{title:"crewcadence.io is for sale",desc:"Make an offer on this premium domain.",org:"(none)"},http:["https://crewcadence.io  200"],
+   excerpt:"crewcadence.io is for sale. Buy now for $4,800 or make an offer. Secure transfer included.",
+   assess:{level:"none",head:"For sale, no business",reasons:["The page is a sale lander.","The asking price comes from the page itself, not from a registrar."]}},
+ "crewcadence.ai":{s:"available",price:"$89.99"},
+ "crewcadence.app":{s:"overlap",occ:"Crew timesheet app",created:"2024-02-09",reg:0,
+   site:{title:"Cadence — crew timesheets",desc:"Clock in, clock out, and export hours for payroll.",org:"MobileApplication"},
+   http:["https://crewcadence.app  200"],
+   excerpt:"Your crew clocks in from their phone. You get clean timesheets every Friday. Works with most payroll providers.",
+   assess:{level:"overlap",head:"Possible overlap",reasons:["Serves crews and contractors, which are your buyers.","Sells time tracking rather than scheduling or dispatch.","Adjacent enough that customers could confuse the two."]}},
+ "crewcadence.dev":{s:"taken",occ:"Crew Cadence developer docs",created:"2021-06-18",reg:0,
+   site:{title:"Crew Cadence Developers",desc:"API reference and webhooks for Crew Cadence.",org:"(none)"},http:["https://crewcadence.dev  200"],
+   excerpt:"Use the Crew Cadence API to create jobs, assign crews, and receive webhook events when a job changes status."},
+ "crewcadence.co":{s:"nosite",occ:"Registered, nothing served",created:"2022-11-30",reg:1,noSite:true},
+
+ "dispatchwell.com":{s:"premium",price:"$2,450",premium:true},
+ "dispatchwell.io":{s:"available",price:"$39.99"},
+ "dispatchwell.ai":{s:"unknown",unknown:true},
+ "dispatchwell.app":{s:"available",price:"$14.99"},
+ "dispatchwell.dev":{s:"available",price:"$12.99"},
+ "dispatchwell.co":{s:"cantcheck"},
+
+ "routeline.com":{s:"competitor",occ:"Route optimization for delivery fleets",created:"2012-07-03",reg:0,
+   site:{title:"Routeline — Route optimization for fleets",desc:"Plan multi-stop routes, dispatch drivers, and track deliveries in real time.",org:"SoftwareApplication"},
+   http:["https://routeline.com  200"],
+   excerpt:"Cut drive time by planning every stop at once. Dispatch drivers, track progress live, and send proof of delivery.",
+   assess:{level:"competitor",head:"Competitor",reasons:["Sells dispatch and routing software.","Targets delivery fleets, but dispatch features overlap directly with yours.","Established site with pricing and customer logos."]}},
+ "routeline.io":{s:"overlap",occ:"Developer routing API",created:"2018-10-22",reg:2,
+   site:{title:"Routeline API — routing for developers",desc:"A routing and ETA API for logistics apps.",org:"WebAPI"},http:["https://routeline.io  200"],
+   excerpt:"Add routing and ETAs to your app with one API call. Free tier includes 2,000 requests per month.",
+   assess:{level:"overlap",head:"Possible overlap",reasons:["Sells routing technology rather than an end-user product.","Contractors are unlikely buyers, but the category is close.","Shares the exact brand name in the same broad space."]}},
+ "routeline.ai":{s:"parked",occ:"Parking-service nameservers",created:"2023-04-17",reg:1,
+   site:{title:"routeline.ai",desc:"(none)",org:"(none)"},http:["http://routeline.ai  200"],excerpt:"Related searches: Route Planner  Delivery Software  GPS Tracking",
+   assess:{level:"none",head:"Parked, no business",reasons:["Nameservers belong to a parking service.","The page shows ad links only."]}},
+ "routeline.app":{s:"unrelated",occ:"Running-route planner",created:"2023-09-05",reg:0,
+   site:{title:"Routeline — plan your next run",desc:"Draw a loop, get the distance, share it with friends.",org:"MobileApplication"},http:["https://routeline.app  200"],
+   excerpt:"Draw a loop on the map and see the distance and elevation. Share routes with your running club.",
+   assess:{level:"none",head:"No market overlap",reasons:["Consumer fitness app.","No business, scheduling, or contractor language."]}},
+ "routeline.dev":{s:"notregistered"},
+ "routeline.co":{s:"forsale",occ:"Sale page, asking $1,200",ask:"$1,200",created:"2019-02-26",reg:1,
+   site:{title:"routeline.co may be for sale",desc:"Inquire about this domain.",org:"(none)"},http:["https://routeline.co  200"],
+   excerpt:"This domain may be for sale. Buy now for $1,200.",
+   assess:{level:"none",head:"For sale, no business",reasons:["The page is a sale lander.","The asking price comes from the page itself."]}}
+};
+
+/* Sample previews: stand-ins for rendered screenshots */
+var PV={
+ "fieldloom.com":{k:"site",bg:"#F3EEE6",fg:"#3B2F25",ac:"#8C5A3C",logo:"Fieldloom",h:"Handwoven textiles from the Blue Ridge",p:"Small-batch blankets and throws.",b:"Shop the studio",age:"14 minutes ago"},
+ "fieldloom.co":{k:"lander",bg:"#FFFFFF",fg:"#222",ac:"#1A0DAB",ads:["Field Service Software","Loom Weaving","Farm Equipment"],age:"14 minutes ago"},
+ "crewcadence.com":{k:"site",bg:"#FFFFFF",fg:"#12332B",ac:"#1E8A5A",logo:"Crew Cadence",h:"Schedule every crew from one board",p:"Routes, crews, and on-the-way texts for landscapers.",b:"Start free trial",age:"12 minutes ago"},
+ "crewcadence.io":{k:"sale",bg:"#F5F7FA",fg:"#1B2330",ac:"#2563EB",price:"Buy now for $4,800",age:"12 minutes ago"},
+ "crewcadence.app":{k:"site",bg:"#101828",fg:"#F2F4F7",ac:"#F79009",logo:"Cadence",h:"Crew timesheets, done by Friday",p:"Clock in from any phone. Export to payroll.",b:"Get the app",age:"12 minutes ago"},
+ "routeline.com":{k:"site",bg:"#FFFFFF",fg:"#0B2545",ac:"#1D4ED8",logo:"Routeline",h:"Route optimization for fleets",p:"Plan every stop, dispatch drivers, track live.",b:"Book a demo",age:"9 minutes ago"},
+ "routeline.io":{k:"site",bg:"#0D1117",fg:"#E6EDF3",ac:"#8B5CF6",logo:"Routeline API",h:"Routing and ETAs in one API call",p:"Free tier includes 2,000 requests a month.",b:"Get an API key",age:"9 minutes ago"},
+ "routeline.ai":{k:"lander",bg:"#FFFFFF",fg:"#222",ac:"#1A0DAB",ads:["Route Planner","Delivery Software","GPS Tracking"],age:"9 minutes ago"},
+ "routeline.app":{k:"site",bg:"#ECFDF3",fg:"#054F31",ac:"#16A34A",logo:"Routeline",h:"Plan your next run",p:"Draw a loop, get distance and elevation.",b:"Download",age:"9 minutes ago"},
+ "crewcadence.dev":{k:"site",bg:"#F8FAFC",fg:"#0F172A",ac:"#1E8A5A",logo:"Crew Cadence Developers",h:"Build on Crew Cadence",p:"API reference, webhooks, and SDKs.",b:"Read the docs",age:"12 minutes ago"},
+ "routeline.co":{k:"sale",bg:"#FFFFFF",fg:"#1B2330",ac:"#0F766E",price:"Buy now for $1,200",age:"9 minutes ago"}
+};
+var previewsOn=true, blurPreviews=false, previewMode="local";
+function shot(d){
+  var v=PV[d]; if(!v) return "";
+  var s='--bg:'+v.bg+';--fg:'+v.fg+';--ac:'+v.ac, inner;
+  if(v.k==="lander") inner='<div class="shot-lander"><div class="dom">'+esc(d)+'</div><div class="rel">Related searches</div>'+v.ads.map(function(a){return '<div class="ad">'+esc(a)+'</div>';}).join("")+'</div>';
+  else if(v.k==="sale") inner='<div class="shot-sale"><div class="dom">'+esc(d)+'</div><div class="p">This domain is for sale</div><div class="shot-btn">'+esc(v.price)+'</div></div>';
+  else inner='<div class="shot-bar"><span class="shot-logo">'+esc(v.logo)+'</span><span class="shot-links"><i></i><i></i><i></i></span></div><div class="shot-hero"><div class="shot-h">'+esc(v.h)+'</div><div class="shot-p">'+esc(v.p)+'</div><div class="shot-btn">'+esc(v.b)+'</div></div><div class="shot-cards"><i></i><i></i><i></i></div>';
+  return '<div class="shot-frame'+(blurPreviews?" shot-blur":"")+'" aria-hidden="true"><div class="shot" style="'+s+'">'+inner+'</div></div>';
+}
+
+var shortlist={fieldloom:true,dispatchwell:true};
+var tldOn={com:true,io:true,ai:true,app:true,dev:true,co:true,xyz:false,net:false,so:false,tech:false};
+var providers={godaddy:true,porkbun:true,namecom:false};
+var assessor="api";
+
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+function src(t){return '<span class="src">'+esc(t)+'</span>';}
+function toast(msg){var t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.remove("show");},1800);}
+function band(h,p,extra,crumb){return '<section class="band"><div class="band-in">'+(crumb||"")+'<div class="band-row"><div><h1>'+h+'</h1>'+(p?'<p>'+p+'</p>':'')+'</div>'+(extra||"")+'</div></div></section>';}
+function lotSub(c){
+  if(c.s==="available"||c.s==="premium")return '<span class="p">'+esc(c.price)+'</span><span class="d">'+(c.s==="premium"?"Registry premium price":"First year")+'</span>';
+  if(c.s==="unknown")return '<span class="d">Sources disagree</span>';
+  if(c.s==="notregistered")return '<span class="d">No registrar confirmed. Price unknown.</span>';
+  if(c.s==="cantcheck")return '<span class="d">No source answered</span>';
+  return '<span class="d">'+esc(c.occ)+'</span>';
+}
+
+/* ---------- Views ---------- */
+function viewSearch(){
+  var chips=Object.keys(tldOn).map(function(t){return '<button type="button" class="chip" data-tld="'+t+'" aria-pressed="'+tldOn[t]+'">.'+t+'</button>';}).join("");
+  return band("Is the name free, and who lives next door?","Check each name across the extensions you care about, then see what's already running on the ones that are taken.")+
+  '<main><form class="grid3" id="searchForm">'+
+   '<div class="panel">'+
+    '<div class="field"><label class="f" for="names">Name ideas</label><textarea id="names" spellcheck="false">fieldloom\ncrewcadence\ndispatchwell\nrouteline</textarea><p class="hint">One per line. Leave off the extension.</p></div>'+
+    '<div class="field"><label class="f" for="market">What are you building?</label><input type="text" id="market" value="'+esc(MARKET)+'"><p class="hint">Used to judge whether sites on taken domains compete with you.</p></div>'+
+    '<div class="field"><span class="f" id="tldl">Extensions</span><div class="chips" role="group" aria-labelledby="tldl">'+chips+'</div></div>'+
+    '<div class="row-actions"><button class="btn primary" type="submit">Run search</button></div>'+
+   '</div>'+
+   '<div class="panel"><h2>Also try</h2><p class="sub">Adds variations of each name to the search.</p>'+
+    '<label class="check"><input type="checkbox" checked> <span><b>Prefixes</b><br><span class="hint" style="margin:0">get, try, use</span></span></label>'+
+    '<label class="check"><input type="checkbox"> <span><b>Suffixes</b><br><span class="hint" style="margin:0">hq, app, labs</span></span></label>'+
+    '<label class="check"><input type="checkbox"> <span><b>Plural and singular</b></span></label>'+
+    '<hr style="border:0;border-top:1px solid var(--line);margin:20px 0">'+
+    '<h2>Sources</h2><p class="sub" style="margin-bottom:8px">Availability from the registry and GoDaddy. Prices from Porkbun.</p>'+
+    '<a href="#/providers">Change providers</a>'+
+   '</div>'+
+  '</form></main>';
+}
+
+function viewResults(){
+  var head='<div class="h">Name</div>'+TLDS.map(function(t){return '<div class="h">.'+t+'</div>';}).join("");
+  var rows=NAMES.map(function(r){
+    var h='<div class="row-h"><span class="dn">'+r.n+'</span><span class="v"><b>'+r.verdict+'.</b> '+esc(r.note)+'</span><button class="star" data-star="'+r.n+'" aria-pressed="'+(!!shortlist[r.n])+'">'+(shortlist[r.n]?"On shortlist":"Add to shortlist")+'</button></div>';
+    var lots=TLDS.map(function(t){var d=r.n+"."+t,c=C[d];
+      var th=(previewsOn&&PV[d])?'<button class="thumb" data-preview="'+d+'" aria-label="Preview '+d+'">'+shot(d)+'</button>':'';
+      return '<div class="lot s-'+c.s+'"><a class="lot-link" href="#/domain/'+d+'" aria-label="'+d+': '+LABEL[c.s]+'"><span class="st">'+LABEL[c.s]+'</span>'+lotSub(c)+'</a>'+th+'</div>';}).join("");
+    return h+lots;
+  }).join("");
+  var leg=[["available","vacant"],["premium","premium"],["competitor","conflict"],["overlap","overlap"],["unrelated","neutral"],["notregistered","survey"],["unknown","unknown"]].map(function(x){return '<span><i style="background:var(--'+x[1]+')"></i>'+LABEL[x[0]]+(x[0]==="unrelated"?", taken, parked, for sale, or couldn't check":"")+'</span>';}).join("");
+  return band("4 names across 6 extensions",esc(MARKET),'<a class="btn" href="#/search">Edit search</a>')+
+  '<main><div class="toolbar"><span class="meta">Checked 24 domains. Prices are first-year from Porkbun and can change.</span>'+
+  '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center"><span class="toggle">Site previews <button class="switch" role="switch" data-toggle="previews" aria-checked="'+previewsOn+'" aria-label="Show site previews"></button></span><button class="btn" data-act="copy-results">Copy for Claude</button><button class="btn" data-act="export">Export Markdown</button></div></div>'+
+  '<div class="plat-wrap"><div class="plat" role="table" aria-label="Domain results">'+head+rows+'</div></div>'+
+  '<div class="legend">'+leg+'</div></main>';
+}
+
+function statusStyle(s){var m={available:"vacant",premium:"premium",competitor:"conflict",overlap:"overlap",unknown:"unknown",notregistered:"survey"};var k=m[s]||"neutral";return 'background:var(--'+k+'-bg);color:var(--'+k+')';}
+
+function viewDomain(d){
+  var c=C[d]; if(!c) return band("Domain not found","")+'<main><div class="panel empty">That domain isn\'t in these results. <a href="#/results">Back to results</a></div></main>';
+  var name=d.split(".")[0], tld=d.split(".")[1];
+  var crumb='<div class="crumb"><a href="#/results">Results</a> / '+name+'</div>';
+  var extra='<button class="btn'+(shortlist[name]?" on":"")+'" data-star="'+name+'" aria-pressed="'+(!!shortlist[name])+'">'+(shortlist[name]?"On shortlist":"Add to shortlist")+'</button>';
+  var head=band('<span class="dn">'+d+'</span>','',extra,crumb).replace('</h1>','</h1><span class="status-pill" style="'+statusStyle(c.s)+'">'+LABEL[c.s]+'</span>');
+  var taken=!(c.s==="available"||c.s==="premium"||c.s==="unknown"||c.s==="notregistered"||c.s==="cantcheck");
+
+  var reg;
+  if(c.s==="available") reg=kv([["Registry","Not registered"+src("RDAP")],["GoDaddy","Available"+src("GoDaddy")],["Price",c.price+" first year"+src("Porkbun")]])+'<div class="agree ok">Both sources agree this name is open.</div><div class="row-actions"><a class="btn primary" href="#" data-act="buy">Buy at Porkbun</a></div>';
+  else if(c.s==="premium") reg=kv([["Registry","Not registered"+src("RDAP")],["GoDaddy","Available"+src("GoDaddy")],["Price",c.price+" first year, registry premium"+src("Porkbun")],["Renewal","Premium renewals are often priced above standard. Confirm before buying."]])+'<div class="agree ok">Both sources agree this name can be registered. The registry sets a premium price.</div><div class="row-actions"><a class="btn primary" href="#" data-act="buy">View at Porkbun</a></div>';
+  else if(c.s==="notregistered") reg=kv([["Registry","Not registered"+src("RDAP")],["GoDaddy","Didn't respond"+src("GoDaddy")],["Price","No price from this source"+src("Porkbun")]])+'<div class="agree no">The registry has no record of this name, but no registrar confirmed it can be bought. It may be reserved or premium. Check again, or confirm at a registrar.</div><div class="row-actions"><button class="btn" data-act="recheck">Check again</button></div>';
+  else if(c.s==="cantcheck") reg=kv([["Registry","Didn't respond"+src("RDAP")],["GoDaddy","Didn't respond"+src("GoDaddy")]])+'<div class="agree no">No source answered, so this name\'s status is unknown. Check again in a few minutes.</div><div class="row-actions"><button class="btn" data-act="recheck">Check again</button></div>';
+  else if(c.s==="unknown") reg=kv([["Registry","Not registered"+src("RDAP")],["GoDaddy","Not available"+src("GoDaddy")]])+'<div class="agree no">Sources disagree. The registry may have reserved this name, or it was registered in the last few minutes. Check again later or confirm at a registrar before relying on it.</div><div class="row-actions"><button class="btn" data-act="recheck">Check again</button></div>';
+  else reg=kv([["Registry","Registered"+src("RDAP")],["Created",c.created+src("RDAP")],["Registrar",REGISTRARS[c.reg]+src("RDAP")],["GoDaddy","Not available"+src("GoDaddy")]])+'<div class="agree ok">Both sources agree this name is taken.</div>';
+
+  var left='<div class="panel"><h2>Availability</h2><p class="sub">Checked just now.</p>'+reg+'</div>';
+
+  if(taken && !c.noSite){
+    left+='<div class="panel"><h2>What\'s there</h2><p class="sub">Read from the site\'s public pages.</p>'+
+      (PV[d]?'<button class="thumb" style="margin:0 0 6px;cursor:zoom-in" data-preview="'+d+'" aria-label="Open larger preview of '+d+'">'+shot(d)+'</button><p class="hint" style="margin:0 0 18px">Captured '+PV[d].age+src("Preview")+'</p>':'')+
+      kv([["Title",esc(c.site.title)+src("Site")],["Description",esc(c.site.desc)+src("Site")],["Type",esc(c.site.org)+src("Site")]])+
+      '<div class="untrusted-h"><span>Text from the site</span><span>Written by the site owner, shown as-is</span></div><div class="untrusted">'+esc(c.excerpt)+'</div></div>';
+    left+='<div class="panel"><h2>Connection</h2><p class="sub">How the site responded.</p><ul class="chain">'+c.http.map(function(h){return '<li>'+esc(h)+'</li>';}).join("")+'</ul>'+
+      '<p class="hint" style="margin-top:12px">Private and internal addresses are never contacted. Redirects are checked at every hop.</p></div>';
+  } else if(c.noSite){
+    left+='<div class="panel"><h2>What\'s there</h2><p class="sub">Nothing is being served.</p>'+kv([["DNS","No A or AAAA records"+src("DNS")],["Mail","No MX records"+src("DNS")]])+'<p class="hint" style="margin-top:14px">A registered name with no site is often held for a future project or for resale. The owner is not listed publicly.</p></div>';
+  }
+
+  var right='';
+  if(taken && !c.assess && !c.noSite){
+    right+='<div class="panel"><h2>Market overlap</h2><p class="sub">Not assessed.</p><p style="margin:0">Turn on assessment in <a href="#/providers">Providers</a>, or ask Claude to compare this site with what you\'re building.</p></div>';
+  }
+  if(taken && c.assess){
+    var a=c.assess;
+    right+='<div class="panel"><h2>Market overlap</h2><p class="sub">Compared with: '+esc(MARKET)+'</p>'+
+      '<div class="verdict '+a.level+'"><span class="lvl">'+esc(a.head)+'</span></div><ul class="reasons">'+a.reasons.map(function(r){return '<li>'+esc(r)+'</li>';}).join("")+'</ul>'+
+      '<p class="hint" style="margin-top:14px">Assessed by Claude through the Anthropic API. This is not a trademark search.</p></div>';
+  }
+  right+='<div class="panel"><h2>'+name+' on other extensions</h2><p class="sub">Select one to see its report.</p><div class="mini">'+
+    TLDS.map(function(t){var dd=name+"."+t,cc=C[dd];return '<a href="#/domain/'+dd+'" aria-current="'+(t===tld)+'"><span class="dn">.'+t+'</span><br><span class="st" style="'+statusStyle(cc.s)+'">'+LABEL[cc.s]+'</span></a>';}).join("")+'</div></div>';
+
+  return head+'<main><div class="grid3"><div>'+left+'</div><div>'+right+'</div></div></main>';
+}
+function kv(rows){return '<dl class="kv">'+rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>';}).join("")+'</dl>';}
+
+function viewShortlist(){
+  var names=NAMES.filter(function(r){return shortlist[r.n];});
+  if(!names.length) return band("Shortlist","")+'<main><div class="panel empty"><p>Your shortlist is empty.</p><a class="btn primary" href="#/results">Add names from results</a></div></main>';
+  function num(p){return parseFloat(String(p).replace(/[$,]/g,""));}
+  var rows=names.map(function(r){
+    var open=TLDS.filter(function(t){var s=C[r.n+"."+t].s;return s==="available";});
+    var comps=TLDS.filter(function(t){var s=C[r.n+"."+t].s;return s==="competitor"||s==="overlap";});
+    var com=C[r.n+".com"];
+    var core=["io","app","dev"].filter(function(t){return C[r.n+"."+t].s==="available";});
+    var cost=core.reduce(function(a,t){return a+num(C[r.n+"."+t].price);},0);
+    return '<tr><td><a class="dn" href="#/domain/'+r.n+'.com">'+r.n+'</a></td><td>'+LABEL[com.s]+(com.price?", "+com.price:com.occ?"<br><span class=\"hint\" style=\"margin:0\">"+esc(com.occ)+"</span>":"")+'</td><td>'+(open.length?open.map(function(t){return "."+t;}).join(", "):"None")+'</td><td>'+(comps.length?comps.map(function(t){return "."+t;}).join(", "):"None found")+'</td><td>$'+cost.toFixed(2)+'<br><span class="hint" style="margin:0">'+core.map(function(t){return "."+t;}).join(" + ")+'</span></td><td><button class="btn" data-star="'+r.n+'" aria-pressed="true">Remove</button></td></tr>';
+  }).join("");
+  return band("Shortlist",names.length+" names to decide between.",'<button class="btn" data-act="copy-short">Copy for Claude</button>')+
+  '<main><div class="panel"><div class="t-wrap"><table class="t"><thead><tr><th>Name</th><th>.com</th><th>Open extensions</th><th>Competitors or overlap</th><th>Open core set, first year</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+  '<div class="panel"><h2>Before you buy</h2><p class="sub" style="margin:0">Market overlap looks at live websites only. Search the USPTO trademark database, and your target countries\' registers, for every name you plan to use.</p></div></main>';
+}
+
+function viewProviders(){
+  function sw(id,on,dis){return '<button class="switch" role="switch" data-prov="'+id+'" aria-checked="'+on+'"'+(dis?" disabled":"")+' aria-label="Use '+id+'"></button>';}
+  function st(on){return '<span class="state '+(on?"on":"off")+'">'+(on?"On":"Off")+'</span>';}
+  return band("Providers","Choose where availability, prices, and overlap checks come from. Titlesearch only reads. It can't register, renew, or change any domain.")+
+  '<main><div class="panel"><h2>Availability and pricing</h2><p class="sub">Every domain is checked against the registry. Prices and premium status come from a registrar with an API key.</p>'+
+   '<div class="prov"><h3>Registry records (RDAP)</h3><div style="display:flex;gap:12px;align-items:center">'+st(true)+sw("rdap",true,true)+'</div><p>Asks each extension\'s registry directly whether a name is registered. Always on, so results never depend on a single registrar.</p></div>'+
+   '<div class="prov"><h3>GoDaddy</h3><div style="display:flex;gap:12px;align-items:center">'+st(providers.godaddy)+sw("godaddy",providers.godaddy)+'</div><p>Availability from GoDaddy\'s public domain service. No account needed, and no prices. GoDaddy sees the names you check.</p>'+
+    '<div class="cfg">'+kv([["Endpoint",'<span class="dn" style="font-size:14px">api.godaddy.com/v1/domains/mcp</span>'],["Status",'<span class="state on">Responding normally</span>'],["Format check","Passed today"]])+'</div></div>'+
+   '<div class="prov"><h3>Porkbun</h3><div style="display:flex;gap:12px;align-items:center">'+st(providers.porkbun)+sw("porkbun",providers.porkbun)+'</div><p>Prices and premium status from Porkbun using your API key. Use a key without purchase permission if your account allows it.</p>'+
+    '<div class="cfg"><div><label class="f" for="pbk">API key</label><input id="pbk" type="password" value="pk1_sample_key_for_mockup"></div><div><label class="f" for="pbs">Secret key</label><input id="pbs" type="password" value="sk1_sample_secret_for_mockup"></div><p class="hint" style="margin:0">Stored in your system keychain on this computer.</p></div></div>'+
+   '<div class="prov"><h3>Name.com</h3><div style="display:flex;gap:12px;align-items:center">'+st(providers.namecom)+sw("namecom",providers.namecom)+'</div><p>Prices from Name.com using your API token.</p></div>'+
+   '<div class="prov"><h3>Another MCP server</h3><div><button class="btn" data-act="addmcp">Add server</button></div><p>Connect any domain-search MCP server by URL. Only the read tools you name are ever called.</p></div>'+
+  '</div>'+
+  '<div class="grid2" style="margin-top:16px">'+
+   '<div class="panel" style="margin:0"><h2>Market overlap</h2><p class="sub">How sites on taken domains are compared with what you\'re building.</p>'+
+    radio("assess","api","Claude, through the Anthropic API","Uses your API key. Reports show a verdict and reasons.")+
+    radio("assess","mcp","Leave it to Claude in chat","When Claude uses Titlesearch, it reads the evidence and judges overlap itself. The app shows evidence only.")+
+    radio("assess","off","Don\'t assess","Show what each site says and let me decide.")+
+    '<div class="field" style="margin-top:14px"><label class="f" for="ak">Anthropic API key</label><input id="ak" type="password" placeholder="sk-ant-…"></div>'+
+   '</div>'+
+   '<div class="panel" style="margin:0"><h2>Site previews</h2><p class="sub">Pictures of what\'s running on taken domains.</p>'+
+    radioP("local","Capture on this computer","Uses Chrome or Edge if installed, or a browser Titlesearch downloads on first use.")+
+    radioP("cloudflare","Cloudflare Browser Rendering","For copies deployed to Cloudflare Workers. Billed to your Cloudflare account.")+
+    radioP("off","Don\'t capture","Reports show page details without a picture.")+
+    '<label class="check"><input type="checkbox" data-toggle="blur"'+(blurPreviews?" checked":"")+'> <span><b>Blur previews until opened</b><br><span class="hint" style="margin:0">Hides images from unfamiliar sites until you choose to look.</span></span></label>'+
+   '</div>'+
+   '<div class="panel" style="margin:0"><h2>Site checks</h2><p class="sub">Limits on how Titlesearch visits taken domains.</p>'+
+    kv([["Timeout","5 seconds per request"],["Redirects","Up to 3, each one checked"],["Page size","First 512 KB"],["Addresses","Public internet only"],["Saved for","6 hours, then checked again"]])+
+   '</div>'+
+  '</div></main>';
+}
+function radioP(v,b,s){return '<label class="radio"><input type="radio" name="pmode" value="'+v+'"'+(previewMode===v?" checked":"")+'><span><b>'+b+'</b><span>'+s+'</span></span></label>';}
+
+/* Popover and modal */
+var pop=document.getElementById("pop"), dlg=document.getElementById("pv");
+function showPop(btn){
+  var d=btn.dataset.preview, v=PV[d], c=C[d]; if(!v) return;
+  pop.innerHTML=shot(d)+'<div class="cap"><b class="dn">'+esc(d)+'</b><span>'+LABEL[c.s]+'</span></div>';
+  var r=btn.getBoundingClientRect(), w=340, x=r.right+10, y=r.top+window.scrollY-20;
+  if(x+w>window.innerWidth-12) x=r.left-w-10;
+  if(x<12) x=12;
+  pop.style.left=(x+window.scrollX)+"px"; pop.style.top=Math.max(window.scrollY+12,y)+"px";
+  pop.classList.add("show");
+}
+function hidePop(){pop.classList.remove("show");}
+function openPreview(d){
+  var v=PV[d], c=C[d]; if(!v) return; hidePop();
+  var wasBlur=blurPreviews; blurPreviews=false; var img=shot(d); blurPreviews=wasBlur;
+  var finalUrl=c.http?c.http[c.http.length-1].split(/\s+/)[0]:"https://"+d+"/";
+  dlg.innerHTML='<div class="pv-head"><div><span class="dn" id="pvTitle">'+esc(d)+'</span> <span class="status-pill" style="margin:0 0 0 10px;'+statusStyle(c.s)+'">'+LABEL[c.s]+'</span></div><button class="x" data-act="close-pv">Close</button></div>'+
+   '<div class="pv-body"><div>'+img+'</div><div>'+
+   kv([["Captured",v.age+src("Preview")],["Page",esc(finalUrl)],["Window","1280 by 800, first screen only"],["Title",esc(c.site?c.site.title:"")]])+
+   '<div class="row-actions" style="flex-direction:column;align-items:stretch"><a class="btn primary" href="#/domain/'+d+'" data-act="close-pv-nav">Open report</a><button class="btn" data-act="recapture">Capture again</button><a class="btn" href="#" data-act="visit">Visit site</a></div>'+
+   '<p class="hint">Visiting opens the site in your browser. The site will see your IP address.</p></div></div>';
+  dlg.showModal();
+}
+document.addEventListener("mouseover",function(e){var b=e.target.closest(".lot .thumb");if(b)showPop(b);});
+document.addEventListener("mouseout",function(e){var b=e.target.closest(".lot .thumb");if(b&&!b.contains(e.relatedTarget))hidePop();});
+document.addEventListener("focusin",function(e){var b=e.target.closest(".lot .thumb");if(b)showPop(b);else hidePop();});
+window.addEventListener("scroll",hidePop,{passive:true});
+dlg.addEventListener("click",function(e){if(e.target===dlg)dlg.close();});
+
+function radio(g,v,b,s){return '<label class="radio"><input type="radio" name="'+g+'" value="'+v+'"'+(assessor===v?" checked":"")+'><span><b>'+b+'</b><span>'+s+'</span></span></label>';}
+
+var connectTab="desktop";
+function viewConnect(){
+  var tabs=[["desktop","Claude Desktop"],["code","Claude Code"],["remote","Your own server"]];
+  var body;
+  if(connectTab==="desktop") body='<p class="sub">Add this to your Claude Desktop config file, then restart Claude.</p><pre class="code">{\n  "mcpServers": {\n    "titlesearch": {\n      "command": "titlesearch",\n      "args": ["mcp"]\n    }\n  }\n}</pre><div class="row-actions"><button class="btn" data-act="copy">Copy config</button></div>';
+  else if(connectTab==="code") body='<p class="sub">Run this in your terminal.</p><pre class="code">claude mcp add titlesearch -- titlesearch mcp</pre><div class="row-actions"><button class="btn" data-act="copy">Copy command</button></div>';
+  else body='<p class="sub">For a copy you deployed to Cloud Run, Cloudflare Workers, or AWS. Add it in Claude as a custom connector and sign in when prompted.</p><pre class="code">https://titlesearch.your-company.com/mcp</pre><div class="row-actions"><button class="btn" data-act="copy">Copy URL</button></div><p class="hint">Sign-in uses the identity provider you set up at deploy time.</p>';
+  var tools=[["check_domains","Checks names across extensions and returns availability and price."],["inspect_domain","Reports what's running on one domain: registry record, connection, and page details."],["assess_market_conflicts","Gathers evidence on every taken extension for a name, for Claude to judge against your market."],["generate_variants","Builds prefix, suffix, and extension variations of a name."]];
+  return band("Use Titlesearch from Claude","Ask Claude to brainstorm names for a product and check them as it goes.")+
+  '<main><div class="grid3"><div class="panel"><div class="tabs" role="tablist">'+tabs.map(function(t){return '<button role="tab" data-tab="'+t[0]+'" aria-selected="'+(connectTab===t[0])+'">'+t[1]+'</button>';}).join("")+'</div>'+body+'</div>'+
+  '<div class="panel"><h2>What Claude can do</h2><p class="sub">Read-only. Claude can check and compare names, never buy them.</p><table class="t"><tbody>'+
+   tools.map(function(t){return '<tr><td class="dn" style="font-size:14px;white-space:nowrap">'+t[0]+'</td><td>'+esc(t[1])+'</td></tr>';}).join("")+
+  '</tbody></table><p class="hint" style="margin-top:14px">Try: “Suggest ten names for a scheduling app for dance studios and check .com, .app, and .io for each.”</p></div></div>'+
+  '<div class="panel" style="margin-top:16px"><h2>This computer</h2><p class="sub">The app\'s local server, for other tools on this machine.</p>'+kv([["Address",'<span class="dn" style="font-size:14px">http://127.0.0.1:4717</span>'],["Access token",'<span class="dn" style="font-size:14px">••••••••••••••••</span> <button class="btn" style="padding:4px 10px;margin-left:8px" data-act="rotate">Replace token</button>'],["Reachable from","This computer only"]])+'</div></main>';
+}
+
+/* ---------- Router ---------- */
+var view=document.getElementById("view");
+function route(){
+  var h=location.hash.replace(/^#\/?/,"")||"search", parts=h.split("/"), html;
+  if(parts[0]==="results") html=viewResults();
+  else if(parts[0]==="domain") html=viewDomain(decodeURIComponent(parts[1]||""));
+  else if(parts[0]==="shortlist") html=viewShortlist();
+  else if(parts[0]==="providers") html=viewProviders();
+  else if(parts[0]==="connect") html=viewConnect();
+  else { parts[0]="search"; html=viewSearch(); }
+  view.innerHTML=html;
+  document.querySelectorAll(".nav-links a").forEach(function(a){
+    var k=a.getAttribute("href").slice(2); a.setAttribute("aria-current",(k===parts[0]||(k==="results"&&parts[0]==="domain"))?"page":"false");
+  });
+  document.title="Titlesearch — "+({search:"New search",results:"Results",domain:(parts[1]||"Domain"),shortlist:"Shortlist",providers:"Providers",connect:"Connect Claude"}[parts[0]]);
+}
+window.addEventListener("hashchange",function(){route();window.scrollTo(0,0);});
+
+document.addEventListener("click",function(e){
+  var el=e.target.closest("[data-preview],[data-toggle],[data-tld],[data-star],[data-act],[data-prov],[data-tab]"); if(!el) return;
+  if(el.dataset.preview){e.preventDefault();openPreview(el.dataset.preview);return;}
+  if(el.dataset.toggle==="previews"){previewsOn=!previewsOn;route();return;}
+  if(el.dataset.toggle==="blur"){blurPreviews=el.checked;return;}
+  if(el.dataset.act==="close-pv"){dlg.close();return;}
+  if(el.dataset.act==="close-pv-nav"){dlg.close();return;}
+  if(el.dataset.tld){tldOn[el.dataset.tld]=!tldOn[el.dataset.tld];el.setAttribute("aria-pressed",tldOn[el.dataset.tld]);return;}
+  if(el.dataset.star){var n=el.dataset.star;shortlist[n]=!shortlist[n];toast(shortlist[n]?"Added "+n+" to shortlist":"Removed "+n+" from shortlist");route();return;}
+  if(el.dataset.prov){if(el.disabled)return;providers[el.dataset.prov]=!providers[el.dataset.prov];route();return;}
+  if(el.dataset.tab){connectTab=el.dataset.tab;route();return;}
+  var a=el.dataset.act; e.preventDefault();
+  var msg={"copy-results":"Copied results for Claude","copy-short":"Copied shortlist for Claude",export:"Saved titlesearch-results.md",buy:"Opens GoDaddy in your browser",recheck:"Checking again…",copy:"Copied",rotate:"Token replaced. Update your other tools.",addmcp:"Opens the add-server form",visit:"Opens the site in your browser",recapture:"Capturing a new preview…"}[a];
+  if(msg) toast(msg);
+});
+document.addEventListener("change",function(e){if(e.target.name==="assess")assessor=e.target.value;if(e.target.name==="pmode"){previewMode=e.target.value;previewsOn=previewMode!=="off";}});
+document.addEventListener("submit",function(e){if(e.target.id==="searchForm"){e.preventDefault();location.hash="#/results";}});
+route();
+})();
+</script>
+</body>
+</html>

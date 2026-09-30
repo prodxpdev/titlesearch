@@ -76,6 +76,8 @@ export interface SafeFetchOptions {
   /** Can lower the 512 KB body cap, never raise it. */
   maxBytes?: number;
   userAgent?: string;
+  /** The Accept header. Defaults to HTML. */
+  accept?: string;
 }
 
 // Bodies live here, not on the result, so nothing outside core can read them.
@@ -106,7 +108,9 @@ export async function safeFetch(
       signal.throwIfAborted();
       const address = await validateDestination(url, options.resolver, signal, chain);
       signal.throwIfAborted();
-      const headers = new Headers({ accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5" });
+      const headers = new Headers({
+        accept: options.accept ?? "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
+      });
       if (options.userAgent) headers.set("user-agent", options.userAgent);
 
       let res: Response;

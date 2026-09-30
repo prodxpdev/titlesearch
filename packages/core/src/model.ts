@@ -101,6 +101,10 @@ export const PageFields = z.object({
   ogDescription: z.string().optional(),
   jsonLdTypes: z.array(z.string()),
   jsonLdName: z.string().optional(),
+  /** The page's share image (og:image or twitter:image), as an absolute http(s) URL. Fetch only through the preview route. */
+  imageUrl: z.string().max(2048).optional(),
+  /** The page's icon, as an absolute http(s) URL. Fetch only through the preview route. */
+  iconUrl: z.string().max(2048).optional(),
 });
 export type PageFields = z.infer<typeof PageFields>;
 
@@ -119,8 +123,12 @@ export const PresenceEvidence = z.object({
     .optional(),
   page: PageFields.optional(),
   untrustedSiteText: UntrustedSiteText.optional(),
-  /** "low" when the page had under about 200 characters of visible text, such as a JS-rendered shell. */
-  contentConfidence: z.enum(["normal", "low"]),
+  /**
+   * "low" when the fetched page had under about 200 characters of visible
+   * text, such as a JS-rendered shell. "high" when the text came from the
+   * preview renderer's rendered DOM.
+   */
+  contentConfidence: z.enum(["low", "normal", "high"]),
   /** Ids of the parking signatures that matched. */
   parkingSignals: z.array(z.string()),
   /** Redirects the page asks for in a meta refresh or script. Recorded, never followed. */

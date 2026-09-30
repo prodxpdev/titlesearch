@@ -89,6 +89,7 @@ describe("extractPage", () => {
       ogTitle: "Acme",
       ogDescription: "Get paid faster.",
       jsonLdTypes: [],
+      iconUrl: "https://acme.io/favicon.ico",
     });
   });
 
@@ -161,7 +162,32 @@ describe("extractPage", () => {
   it("drops empty fields", () => {
     expect(page(`<title>   </title><meta name="description" content="">`).fields).toEqual({
       jsonLdTypes: [],
+      iconUrl: "https://acme.io/favicon.ico",
     });
+  });
+});
+
+describe("preview image and icon", () => {
+  it("resolves og:image and prefers apple-touch-icon", () => {
+    const p = page(`<meta property="og:image" content="/img/share.png">
+      <link rel="icon" href="/favicon-32.png"><link rel="apple-touch-icon" href="https://cdn.acme.io/touch.png">`);
+    expect(p.fields.imageUrl).toBe("https://acme.io/img/share.png");
+    expect(p.fields.iconUrl).toBe("https://cdn.acme.io/touch.png");
+  });
+
+  it("falls back to twitter:image and then /favicon.ico", () => {
+    const p = page(`<meta name="twitter:image" content="https://acme.io/t.jpg">`);
+    expect(p.fields.imageUrl).toBe("https://acme.io/t.jpg");
+    expect(p.fields.iconUrl).toBe("https://acme.io/favicon.ico");
+  });
+
+  it.each([
+    "javascript:alert(1)",
+    "data:image/png;base64,AAAA",
+    "https://user:pw@acme.io/x.png",
+    "ftp://acme.io/x.png",
+  ])("drops the image URL %s", (url) => {
+    expect(page(`<meta property="og:image" content="${url}">`).fields.imageUrl).toBeUndefined();
   });
 });
 

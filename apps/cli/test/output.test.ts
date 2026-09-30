@@ -40,7 +40,7 @@ describe("output", () => {
         { source: "rdap", availability: "unregistered_at_registry", checkedAt: at, latencyMs: 1 },
       ],
     });
-    expect(detail(res)).toBe("RDAP: not found; no registrar confirmed it");
+    expect(detail(res)).toBe("RDAP: not found; No registrar confirmed. Price unknown.");
   });
 
   it("shows prices with their currency and errors by code", () => {
@@ -73,7 +73,7 @@ describe("output", () => {
       r({ domain: "longer-name.io", availability: "registered" }),
     ]);
     const lines = table.split("\n");
-    expect(lines[0]).toBe("Domain          Status      Detail");
+    expect(lines[0]).toBe("Domain          Status     Detail");
     expect(lines[1]).toBe("a.com           Available");
     expect(lines.at(-1)).toBe("Availability only. This isn't a trademark search.");
   });

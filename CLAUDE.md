@@ -26,6 +26,10 @@ These hold everywhere, in every package and every deploy target. Do not trade th
 5. **Local surfaces are local.** The local HTTP server binds to `127.0.0.1` only. It requires a per-install random bearer token and validates the `Origin` header to block DNS rebinding.
 6. **No secrets in code, images, logs, or URLs.** Registrar keys and the Anthropic API key come from the platform secret store (Workers secrets, GCP Secret Manager, AWS Secrets Manager), the OS keychain on desktop, or environment variables for the CLI. They are redacted from every log line and error message.
 7. **US English** in all user-facing copy, docs, and identifiers.
+8. **The renderer is isolated and egress-controlled.** Site previews run in a headless browser that executes third-party JavaScript. Chromium resolves DNS and loads subresources itself, so `safeFetch` cannot protect it. The rules:
+   - All renderer traffic goes through an egress proxy that applies the same address rules as `safeFetch` to every connection, including subresources and redirects, after DNS resolution.
+   - The renderer runs in its own process or container with no credentials and no access to the cache, secrets, or cloud metadata.
+   - The UI never loads a third-party site directly: no iframes, no hotlinked images. Every preview image is served from Titlesearch's own origin.
 
 ---
 
@@ -59,6 +63,8 @@ packages/
   providers/   rdap, godaddy-mcp, porkbun, namecom, upstream-mcp (generic), doh
   cache/       CacheStore interface + sqlite, d1, firestore, dynamodb, memory
   assess/      ConflictClassifier interface + anthropic implementation
+  render/      PreviewRenderer interface, local-chromium, cloudflare-browser-rendering,
+               egress proxy, image encoding
   mcp/         tool and prompt definitions over core (transport-agnostic)
   server/      Hono app: REST routes, /mcp, auth middleware, static UI hosting
 apps/
@@ -83,8 +89,8 @@ Tooling: pnpm workspaces, Turborepo, TypeScript `strict` with `noUncheckedIndexe
 
 ```ts
 type Availability =
-  | "available"                 // registrar confirmed, standard price
-  | "premium"                   // registrar confirmed, registry premium price
+  | "available"                 // a registrar confirmed it can be registered; price only if a price source answered
+  | "premium"                   // a price source reported a registry premium price
   | "registered"                // registry says registered
   | "unregistered_at_registry"  // RDAP not found, no registrar consulted
   | "unconfirmed"               // sources disagree
@@ -157,12 +163,12 @@ There are no other methods. `ProviderContext` carries the abort signal, a rate l
 - Treat 404 as not found and 200 as registered. Retry 429 and 5xx with jittered backoff, a maximum of 2 retries, honoring `Retry-After`.
 - Where a TLD has no RDAP service, fall back to WHOIS over TCP port 43. On Workers that means `connect()` from `cloudflare:sockets`; confirm port 43 egress is permitted on each target and document it. Parse WHOIS conservatively: when unsure, report `error`, never a guess.
 
-**GoDaddy (default registrar source).** GoDaddy's public MCP server lives at `https://api.godaddy.com/v1/domains/mcp` (streamable HTTP, no auth, read-only, rate-limited).
+**GoDaddy (default availability source).** GoDaddy's public MCP server lives at `https://api.godaddy.com/v1/domains/mcp` (streamable HTTP, no auth, read-only, rate-limited). It confirms availability but returns no prices, so it is never labeled as a price source.
 - Implement it as a configuration of the generic upstream-MCP provider, not as bespoke code.
 - **Do not guess tool names or schemas.** Connect, call `tools/list`, and record the real tool definitions and a set of real responses into `fixtures/godaddy/`. Write the Zod schemas and the response mapping from those recordings.
 - If a response fails validation, return `error` for that domain. Never coerce it.
 - Add a nightly CI job (`contract-canary`) that calls the live endpoint with a fixed set of domains, validates the responses, and opens a GitHub issue on schema drift.
-- Its responses were designed to drive client-side widgets. Map only the fields needed: availability, premium flag, price, and currency.
+- Its responses were designed to drive client-side widgets. Map availability only. If a future response carries prices, add them behind a fixture-backed schema change, not speculatively.
 
 **Generic upstream-MCP provider.** Config shape:
 
@@ -177,7 +183,7 @@ There are no other methods. `ProviderContext` carries the abort signal, a rate l
 - The client refuses any call to a tool not in `allowedTools`.
 - **Do not use Porkbun's hosted MCP as an upstream.** It exposes account-changing and purchasing tools.
 
-**Porkbun and Name.com.** Use their REST APIs with API keys, implemented as direct adapters. Keys come from the secret store. Documentation should recommend keys scoped without purchase permission where the registrar supports that.
+**Porkbun and Name.com (price sources).** Prices and premium status come only from these. Use their REST APIs with API keys, implemented as direct adapters. Porkbun is the default price source. When no price source is configured or none answers, the UI shows "No price from this source", never a blank or an estimate. Keys come from the secret store. Documentation should recommend keys scoped without purchase permission where the registrar supports that.
 
 ---
 
@@ -196,7 +202,52 @@ For every domain whose result is `registered`:
 
    The file is versioned data. Every signature needs at least one fixture page in `fixtures/sites/` and a test. An asking price is extracted only when it appears on the page, and it's labeled as coming from the page.
 
-A thin body (under about 200 characters of visible text) on a JS-rendered site sets `contentConfidence: "low"`. There is no headless browser in the core path.
+A thin body (under about 200 characters of visible text) on a JS-rendered site sets `contentConfidence: "low"`. When site previews are enabled, the renderer also returns rendered-DOM text. Extraction then uses that text instead, and `contentConfidence` rises to `"high"`. The same `untrustedSiteText` rules apply to it.
+
+---
+
+## Site previews
+
+Occupied domains get a screenshot. It appears as a thumbnail in the results grid, as a larger popover on hover or keyboard focus, and in a modal on click; the domain report shows it too. See the mockup for all four states.
+
+```ts
+interface PreviewRenderer {
+  id: "local-chromium" | "cloudflare-browser-rendering" | string;
+  capture(domain: string, ctx: RenderContext): Promise<PreviewResult>;
+}
+
+interface PreviewResult {
+  thumbnail: { contentHash: string; width: 480; height: 300; format: "webp" };
+  full: { contentHash: string; width: 1280; height: 800; format: "webp" };
+  finalUrl: string;
+  renderedText: string;          // feeds extraction, treated as untrusted
+  capturedAt: string;
+  renderer: string;
+}
+```
+
+**Renderers.**
+- **`local-chromium`** runs on the CLI, desktop, and container targets. It drives an installed Chrome or Edge through CDP using `puppeteer-core` or `playwright-core`. It must not bundle Chromium into the binary. If no browser is installed, it offers a one-time download of a pinned Chromium build to the app's data directory, verified by checksum.
+- **In the container image (Cloud Run and Lambda)**, the renderer runs as a separate service or sidecar with its own egress policy, not in the API process.
+- **`cloudflare-browser-rendering`** is used for the Workers target and billed to the deployer's Cloudflare account. Confirm its current limits, and whether requests can be forced through an egress proxy. If they can't, document which invariant 8 protections still hold there.
+
+**Capture settings.**
+- The viewport is 1280 by 800, capturing the first screen only.
+- Wait for network idle, with a hard cap of 8 seconds.
+- The browser context is fresh for every capture: no persistent profile, no cookies carried over, no stored credentials.
+- Disable downloads, permission prompts, notifications, geolocation, WebRTC, service workers, and the file, data, and chrome URL schemes for navigation.
+- Block media and fonts larger than 2 MB.
+- Limit concurrency to 2 captures locally and make it configurable when deployed.
+
+**Storage and serving.** Images are stored by content hash in the `CacheStore` (blob variant) or object storage, and served from `/api/preview/:hash` with `Content-Type: image/webp`, `X-Content-Type-Options: nosniff`, and a restrictive CSP. They are cached with the presence evidence and expire on the same schedule.
+
+**Content.** A "Blur previews until opened" setting blurs thumbnails and popovers, and the modal shows the image unblurred. Offensive content is a real risk when rendering arbitrary registered domains.
+
+**MCP.** `inspect_domain` accepts `includePreview?: boolean`, default false. When true, it returns the thumbnail as an MCP image content block so the client model can see the page. The full-size image is never returned over MCP; it's too large for model context.
+
+**Fallback.** When previews are off or capture fails, show the page's `og:image` if one exists. It must be fetched through `safeFetch`, re-encoded to WebP, and served from Titlesearch's origin, and it is labeled as the site's own share image, not a capture. Otherwise show no image.
+
+**Not used.** Live iframes of third-party sites: many sites refuse framing, they run trackers and scripts in the user's browser, and they expose the user's IP. Third-party screenshot APIs: they would see every name the user checks. A third-party screenshot API may be added later only as an opt-in provider, labeled with that disclosure.
 
 ---
 
@@ -288,10 +339,10 @@ TTLs:
 `docs/design/titlesearch-mockups.html` is the source of truth for screens, copy, and states. Its routes:
 
 - **New search.** Name ideas, a market description, extension chips, and variant options.
-- **Results.** The plat grid: names as rows, extensions as columns, each lot showing its status and one line of detail.
+- **Results.** The plat grid: names as rows, extensions as columns, each lot showing its status, one line of detail, and a preview thumbnail for occupied domains. Hovering over or focusing a thumbnail shows a larger popover, and clicking opens the preview modal. A toolbar switch hides previews.
 - **Domain report.** Availability with per-source provenance tags, "What's there", the connection chain, market overlap, and the same name on other extensions.
 - **Shortlist.** A comparison table, the trademark reminder, and "Copy for Claude".
-- **Providers.** Registrar toggles and configuration, the assessment mode, and site-check limits.
+- **Providers.** Registrar toggles and configuration, the assessment mode, the site-preview renderer and blur setting, and site-check limits.
 - **Connect Claude.** Config snippets for Desktop, Code, and remote, plus the local server details.
 
 Design tokens:
@@ -300,7 +351,7 @@ Design tokens:
 - **Type:** Schibsted Grotesk for text; IBM Plex Mono for domain strings only.
 - **Dark mode:** supported through `prefers-color-scheme` and `data-theme`.
 
-Every figure shown carries a provenance tag naming its source (RDAP, GoDaddy, DNS, Site, Assessment). Status labels are exactly: Available, Premium, Competitor, Possible overlap, Unrelated site, Parked, For sale, No site, Unconfirmed.
+Every figure shown carries a provenance tag naming its source (RDAP, GoDaddy, Porkbun, DNS, Site, Preview, Assessment). Status labels are exactly: Available, Premium, Competitor, Possible overlap, Unrelated site, Taken, Parked, For sale, No site, Not registered, Unconfirmed, Couldn't check. They map to the model as follows: Taken is `registered` with a site found but `occupancy: "unassessed"`, shown in the neutral style with the page title. Not registered is `unregistered_at_registry`. Couldn't check is `error`. Unconfirmed is reserved for sources that disagree.
 
 Accessibility: full keyboard navigation of the plat grid, visible focus, WCAG AA contrast in both themes, and reduced motion respected.
 
@@ -314,6 +365,7 @@ Accessibility: full keyboard navigation of the plat grid, visible focus, WCAG AA
 - **Cache conformance:** all five stores.
 - **MCP:** in-process client tests for every tool, including the refusal of non-allowlisted upstream tools and the 50-domain cap.
 - **End-to-end:** Playwright against `titlesearch serve` with providers stubbed, covering every mockup route.
+- **Renderer isolation:** fixture sites that load subresources from private addresses, redirect to metadata endpoints, use DNS rebinding, trigger downloads, and request permissions. Every one must be blocked at the egress proxy, and the capture must still complete or fail cleanly.
 - **Contract canary:** nightly, live, for GoDaddy MCP and the RDAP bootstrap. Failures open issues; they never block PRs.
 
 ---
@@ -341,11 +393,12 @@ This is dependency order, not a release schedule. The finished product includes 
 5. `mcp` tools, then `apps/cli` with `mcp` and `check`. At this point Claude Desktop works end to end.
 6. Presence probe, extraction, parking signatures, and the evidence bundle.
 7. `assess` with the anthropic classifier and client mode.
-8. `server` (Hono): REST routes, `/mcp`, local auth, then `apps/web` built to the mockup, then `serve` mode.
-9. The Porkbun and Name.com adapters.
-10. Deploy targets: the container for Cloud Run and Lambda, and Workers with D1, each with an OAuth setup guide.
-11. The Tauri desktop shell, signing, notarization, and auto-update.
-12. The registry `server.json`, README with a demo GIF, and the docs site.
+8. `render`: the egress proxy and its isolation test suite first, then `local-chromium`, image storage, and the `/api/preview` route.
+9. `server` (Hono): REST routes, `/mcp`, local auth, then `apps/web` built to the mockup, then `serve` mode.
+10. The Porkbun adapter (the default price source), then Name.com.
+11. Deploy targets: the container for Cloud Run and Lambda, and Workers with D1, each with an OAuth setup guide.
+12. The Tauri desktop shell, signing, notarization, and auto-update.
+13. The registry `server.json`, README with a demo GIF, and the docs site.
 
 ---
 
@@ -362,8 +415,10 @@ This is dependency order, not a release schedule. The finished product includes 
 
 These were not confirmed when this brief was written. Check each one, and record the finding in an ADR:
 
-- GoDaddy MCP tool names, input and output schemas, and rate-limit behavior (use `tools/list`).
+- GoDaddy MCP tool names, input and output schemas, and rate-limit behavior (use `tools/list`). Confirmed so far: it returns no prices.
+- Porkbun's availability and pricing endpoints, what key permissions they need, and whether they flag premium names.
 - GoDaddy's API Terms of Use regarding self-hosted instances calling the public MCP on behalf of their own users.
 - Current `@modelcontextprotocol/sdk` APIs for the stateless Streamable HTTP server and client, and whether `@hono/mcp` is maintained.
+- Cloudflare Browser Rendering limits and pricing, and whether its traffic can be routed through an egress proxy.
 - Port 43 outbound availability on Workers, Cloud Run, and Lambda.
 - Availability of the `titlesearch` name on npm, the GitHub org, Homebrew, and the domain; clear it with Titlesearch itself.

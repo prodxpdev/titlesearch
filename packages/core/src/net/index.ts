@@ -8,6 +8,13 @@ export {
   type DohResolverOptions,
 } from "./doh.js";
 export {
+  fetchPreviewImage,
+  PREVIEW_IMAGE_MAX_BYTES,
+  type PreviewImage,
+  type PreviewImageType,
+  sniffImageType,
+} from "./image.js";
+export {
   type BlockReason,
   classifyIp,
   type IpClass,

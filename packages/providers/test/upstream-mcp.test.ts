@@ -212,8 +212,9 @@ describe("GoDaddy mapping against recorded responses", () => {
   it.each([
     ["check-single-registered", "google.com", { availability: "registered" }],
     ["check-single-available", `${NX}.com`, { availability: "available" }],
-    ["check-single-premium-shoes.online", "shoes.online", { availability: "premium" }],
-    ["check-single-premium-bank.app", "bank.app", { availability: "premium" }],
+    // GoDaddy is availability-only: its "Registry Premium" and "Premium" map to available.
+    ["check-single-premium-shoes.online", "shoes.online", { availability: "available" }],
+    ["check-single-premium-bank.app", "bank.app", { availability: "available" }],
   ])("%s", (file, domain, expected) => {
     expect(godaddyMapping.interpret(result(file), domain)).toEqual(expected);
   });
@@ -290,11 +291,11 @@ describe("UpstreamMcpProvider with GoDaddy", () => {
     expect(results.map((r) => [r.source, r.availability])).toEqual([
       ["godaddy", "registered"],
       ["godaddy", "available"],
-      ["godaddy", "premium"],
+      ["godaddy", "available"],
     ]);
   });
 
-  it("reconciles GoDaddy's aftermarket 'Premium' against RDAP as unconfirmed", async () => {
+  it("reconciles GoDaddy's aftermarket listing against RDAP as unconfirmed", async () => {
     const godaddy = new UpstreamMcpProvider(GODADDY_MCP, {
       mappings: builtInMappings(),
       transport: godaddyTransport(checks),
@@ -310,7 +311,7 @@ describe("UpstreamMcpProvider with GoDaddy", () => {
       ...(await rdap.check(["bank.app"], ctx())),
       ...(await godaddy.check(["bank.app"], ctx())),
     ];
-    expect(sources.map((s) => s.availability)).toEqual(["registered", "premium"]);
+    expect(sources.map((s) => s.availability)).toEqual(["registered", "available"]);
     expect(reconcile(sources)).toEqual({
       availability: "unconfirmed",
       reason: "registry_taken_registrar_free",

@@ -71,6 +71,19 @@ const BLOCK = new Set([
 const MAX_VISIBLE_TEXT = 100_000;
 const MAX_CLIENT_REDIRECTS = 5;
 
+/** Resolves a URL against the page, keeping only absolute http(s) URLs without credentials. */
+function absoluteHttpUrl(value: string | undefined, base: string): string | undefined {
+  if (!value) return undefined;
+  try {
+    const u = new URL(value.trim(), base);
+    if ((u.protocol !== "http:" && u.protocol !== "https:") || u.username || u.password)
+      return undefined;
+    return u.href.length <= 2048 ? u.href : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Same cleaning as untrustedSiteText, with a field-specific cap. */
 function clean(value: string | undefined, max: number): string | undefined {
   if (value === undefined) return undefined;
@@ -133,6 +146,7 @@ export function extractPage(html: string, pageUrl: string): ExtractedPage {
   const jsonLdTypes: string[] = [];
   const jsonLdNames: string[] = [];
   const redirects: string[] = [];
+  const icons: { rel: string; href: string }[] = [];
   const text: string[] = [];
   let textLength = 0;
   // Open elements, each marked if it hides its contents. A close tag pops back
@@ -154,6 +168,12 @@ export function extractPage(html: string, pageUrl: string): ExtractedPage {
   tokenize(html, {
     open(name, attrs, selfClosing) {
       if (name === "title" && title === undefined) inTitle = true;
+      if (name === "link") {
+        const rel = (attrs.get("rel") ?? "").toLowerCase();
+        const href = attrs.get("href");
+        if (href && /(?:^|\s)(?:icon|apple-touch-icon)(?:\s|$)/.test(rel))
+          icons.push({ rel, href });
+      }
       if (name === "meta") {
         const key = (attrs.get("property") ?? attrs.get("name") ?? "").toLowerCase();
         const content = attrs.get("content");
@@ -223,5 +243,15 @@ export function extractPage(html: string, pageUrl: string): ExtractedPage {
   set("ogTitle", clean(meta.get("og:title"), 300));
   set("ogDescription", clean(meta.get("og:description"), 500));
   set("jsonLdName", clean(jsonLdNames[0], 200));
+  set(
+    "imageUrl",
+    absoluteHttpUrl(
+      meta.get("og:image") ?? meta.get("og:image:url") ?? meta.get("twitter:image"),
+      pageUrl,
+    ),
+  );
+  // Prefer the larger apple-touch-icon, then any icon, then the conventional /favicon.ico.
+  const icon = icons.find((i) => i.rel.includes("apple-touch-icon")) ?? icons[0];
+  set("iconUrl", absoluteHttpUrl(icon?.href ?? "/favicon.ico", pageUrl));
   return { fields, visibleText, clientRedirects: redirects };
 }

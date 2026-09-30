@@ -7,16 +7,15 @@ import type { DomainResult, Occupancy, SourceResult } from "@titlesearch/core";
 const SOURCE_NAMES: Record<string, string> = { rdap: "RDAP", whois: "WHOIS", godaddy: "GoDaddy" };
 const sourceName = (id: string) => SOURCE_NAMES[id] ?? id;
 
-// TODO(mockup): "Registered", "Not at registry", and "Error" aren't in the
-// brief's label list, which covers taken names only after a site check
-// (step 6). Reconcile with docs/design/titlesearch-mockups.html when it lands.
+// Status labels from CLAUDE.md (UI). "Taken" covers a registered domain
+// whose site hasn't been judged, or wasn't looked at (plain `check`).
 export const STATUS_LABELS: Record<DomainResult["availability"], string> = {
   available: "Available",
   premium: "Premium",
-  registered: "Registered",
-  unregistered_at_registry: "Not at registry",
+  registered: "Taken",
+  unregistered_at_registry: "Not registered",
   unconfirmed: "Unconfirmed",
-  error: "Error",
+  error: "Couldn't check",
 };
 
 function describeSource(s: SourceResult): string {
@@ -35,7 +34,8 @@ function describeSource(s: SourceResult): string {
 
 export function detail(r: DomainResult): string {
   const parts = r.sources.map(describeSource);
-  if (r.availability === "unregistered_at_registry") parts.push("no registrar confirmed it");
+  if (r.availability === "unregistered_at_registry")
+    parts.push("No registrar confirmed. Price unknown.");
   if (r.availabilityReason === "registry_taken_registrar_free")
     parts.push("possibly a resale listing");
   return parts.join("; ");
@@ -68,8 +68,7 @@ export const OCCUPANCY_LABELS: Record<Occupancy, string> = {
   parked: "Parked",
   for_sale: "For sale",
   no_site: "No site",
-  // TODO(mockup): not in the brief's label list; a real site nobody judged.
-  unassessed: "Site, not assessed",
+  unassessed: "Taken",
 };
 
 function statusOf(r: DomainResult): string {

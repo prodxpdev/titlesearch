@@ -75,7 +75,8 @@ const STATUS_TEXT: Record<DomainResult["availability"], string> = {
   available: "available",
   premium: "premium",
   registered: "registered",
-  unregistered_at_registry: "not at the registry (unconfirmed by a registrar)",
+  unregistered_at_registry:
+    "not registered at the registry; no registrar confirmed it, price unknown",
   unconfirmed: "unconfirmed: sources disagree",
   error: "error: no source answered",
 };
