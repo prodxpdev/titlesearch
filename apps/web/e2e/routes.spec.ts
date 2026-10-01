@@ -175,6 +175,18 @@ test.describe("mockup routes", () => {
   });
 });
 
+test.describe("desktop sign-in", () => {
+  test("signs in with the code the desktop app provides", async ({ page, request }) => {
+    const code = await (await request.get("/__e2e/login-code")).text();
+    await page.addInitScript((c) => {
+      (window as { __TITLESEARCH_DESKTOP_CODE__?: string }).__TITLESEARCH_DESKTOP_CODE__ = c;
+    }, code);
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: "New search" })).toBeVisible();
+    await expect(page.getByLabel("Sign-in code")).toHaveCount(0);
+  });
+});
+
 test.describe("deployed sign-in", () => {
   test("offers the identity provider instead of a code", async ({ page }) => {
     await page.route("**/api/session", (route) =>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">
+  <title>Titlesearch</title>
+  <!-- Tray template image: macOS tints it for light and dark menu bars. -->
+  <g fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round">
+    <rect x="5" y="5" width="34" height="34" rx="5"/>
+    <path d="M5 17h34M17 17v22M27 17v22"/>
+  </g>
+  <rect x="18.5" y="18.5" width="7" height="19" fill="#000"/>
+</svg>

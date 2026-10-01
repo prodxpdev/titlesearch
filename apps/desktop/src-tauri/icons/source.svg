@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Titlesearch</title>
+  <!-- The favicon's plat: a street band over three lots, the middle one
+       highlighted, in white on the navy band, inset to the macOS icon grid. -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#16233B"/>
+  <rect x="452" y="447" width="120" height="300" fill="#5B8BC4"/>
+  <g fill="none" stroke="#fff" stroke-width="30" stroke-linejoin="round">
+    <rect x="262" y="262" width="500" height="500" rx="56"/>
+    <path d="M262 432h500M437 432v330M587 432v330"/>
+  </g>
+</svg>

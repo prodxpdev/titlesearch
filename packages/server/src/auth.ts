@@ -20,6 +20,8 @@ export interface LocalAuthOptions {
   port: number;
   /** Extra allowed origins, such as the desktop webview's. */
   extraOrigins?: readonly string[];
+  /** How long a browser session lasts. Default 12 hours; the desktop app uses longer. */
+  sessionTtlMs?: number;
   now?: () => number;
 }
 
@@ -37,7 +39,7 @@ export type Principal =
 export interface ServerAuth {
   /** How the UI signs in: a one-time code from the terminal, or a redirect to an identity provider. */
   readonly loginMethod: "code" | "oidc";
-  readonly sessionCookie: { name: string; secure: boolean };
+  readonly sessionCookie: { name: string; secure: boolean; maxAgeSeconds?: number };
   hostAllowed(host: string | undefined): boolean;
   /** An absent Origin is fine (curl, MCP clients); a present one must be ours. */
   originAllowed(origin: string | undefined): boolean;
@@ -73,12 +75,13 @@ function randomString(bytes: number, alphabet?: string): string {
 
 export class LocalAuth implements ServerAuth {
   readonly loginMethod = "code";
-  readonly sessionCookie = { name: SESSION_COOKIE, secure: false };
+  readonly sessionCookie: { name: string; secure: boolean; maxAgeSeconds: number };
   #token: string;
   readonly #now: () => number;
   readonly #hosts: Set<string>;
   readonly #origins: Set<string>;
   readonly #sessions = new Map<string, number>();
+  readonly #sessionTtlMs: number;
   #code: { value: string; expires: number; attempts: number } | undefined;
 
   constructor(options: LocalAuthOptions) {
@@ -86,6 +89,12 @@ export class LocalAuth implements ServerAuth {
       throw new Error("The local token must be at least 32 characters.");
     this.#token = options.token;
     this.#now = options.now ?? Date.now;
+    this.#sessionTtlMs = options.sessionTtlMs ?? SESSION_TTL_MS;
+    this.sessionCookie = {
+      name: SESSION_COOKIE,
+      secure: false,
+      maxAgeSeconds: Math.floor(this.#sessionTtlMs / 1000),
+    };
     this.#hosts = new Set([`127.0.0.1:${options.port}`, `localhost:${options.port}`]);
     this.#origins = new Set([
       `http://127.0.0.1:${options.port}`,
@@ -125,7 +134,7 @@ export class LocalAuth implements ServerAuth {
     }
     this.#code = undefined;
     const id = randomString(32);
-    this.#sessions.set(id, this.#now() + SESSION_TTL_MS);
+    this.#sessions.set(id, this.#now() + this.#sessionTtlMs);
     return id;
   }
 

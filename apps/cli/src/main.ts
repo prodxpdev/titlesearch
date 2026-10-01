@@ -90,6 +90,17 @@ async function main(argv: string[]): Promise<number> {
     const config = await loadConfig(paths.configDir);
     if (command === "serve") {
       const ui = await loadUiAssets();
+      const desktopToken = process.env.TITLESEARCH_TOKEN?.trim();
+      const desktop =
+        process.env.TITLESEARCH_DESKTOP === "1"
+          ? desktopToken && /^[0-9a-f]{64}$/.test(desktopToken)
+            ? { token: desktopToken }
+            : undefined
+          : undefined;
+      if (process.env.TITLESEARCH_DESKTOP === "1" && !desktop) {
+        process.stderr.write("Desktop mode needs a 64-character hex TITLESEARCH_TOKEN.\n");
+        return 2;
+      }
       const port = values.port ? Number(values.port) : DEFAULT_PORT;
       if (!Number.isInteger(port) || port < 1024 || port > 65535) {
         process.stderr.write("--port must be a number from 1024 to 65535.\n");
@@ -112,6 +123,7 @@ async function main(argv: string[]): Promise<number> {
         },
         hasAnthropicKey: !!anthropicApiKey,
         ...(ui ? { ui } : {}),
+        ...(desktop ? { desktop } : {}),
       });
       return 0;
     }

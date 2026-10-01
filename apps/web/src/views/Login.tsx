@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, api } from "../api";
 import { Band } from "../components";
 import { setState, useStore } from "../store";
@@ -30,8 +30,30 @@ function ProviderLogin() {
   );
 }
 
+/**
+ * The desktop app's one-time code, set by its webview before the page loads
+ * (never in a URL). Read once, then removed.
+ */
+function takeDesktopCode(): string | undefined {
+  const w = window as { __TITLESEARCH_DESKTOP_CODE__?: unknown };
+  const code = w.__TITLESEARCH_DESKTOP_CODE__;
+  delete w.__TITLESEARCH_DESKTOP_CODE__;
+  return typeof code === "string" && code ? code : undefined;
+}
+
 function CodeLogin() {
   const [code, setCode] = useState("");
+  // Inside the desktop app, sign in with the code it provides.
+  useEffect(() => {
+    const desktopCode = takeDesktopCode();
+    if (!desktopCode) return;
+    api.signIn(desktopCode).then(
+      () => setState({ authenticated: true }),
+      () => {
+        // Expired or used: fall back to the form.
+      },
+    );
+  }, []);
   const [error, setError] = useState<string>();
   return (
     <>

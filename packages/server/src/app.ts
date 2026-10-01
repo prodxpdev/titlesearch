@@ -213,7 +213,7 @@ export function createApp(options: AppOptions): Hono<Env> {
       secure: cookie.secure,
       sameSite: "Strict",
       path: "/",
-      maxAge: 12 * 60 * 60,
+      maxAge: cookie.maxAgeSeconds ?? 12 * 60 * 60,
     });
     return c.json({ authenticated: true });
   });

@@ -123,6 +123,22 @@ jobs:
           pnpm --filter @titlesearch/workers embed-ui
           pnpm --filter @titlesearch/workers exec wrangler deploy --dry-run --outdir "$RUNNER_TEMP/worker"
 
+  desktop:
+    name: Desktop shell (Rust)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Format, lint, and build the shell
+        working-directory: apps/desktop/src-tauri
+        run: |
+          rustup component add clippy rustfmt
+          # The real sidecar is built for releases; a placeholder satisfies externalBin here.
+          mkdir -p binaries
+          printf '#!/bin/sh\n' > "binaries/titlesearch-$(rustc -vV | sed -n 's/host: //p')"
+          chmod +x binaries/*
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+
   terraform:
     name: Terraform modules
     runs-on: ubuntu-latest

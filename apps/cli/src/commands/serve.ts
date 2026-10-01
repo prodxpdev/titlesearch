@@ -27,6 +27,28 @@ declare const Bun: {
   }): { port: number; stop(): void };
 };
 
+/**
+ * Desktop mode (TITLESEARCH_DESKTOP=1): run as the Tauri app's sidecar. The
+ * token comes from the app (the OS keychain) through TITLESEARCH_TOKEN instead
+ * of a file. Events go to stdout as JSON lines for the app to read: "ready"
+ * with a one-time login code for its webview, "code" when asked for another
+ * (any line on stdin), and "token" when the user replaces the token. stdout is
+ * a pipe only the app reads.
+ */
+export interface DesktopMode {
+  token: string;
+}
+
+function emit(event: Record<string, unknown>): void {
+  process.stdout.write(`${JSON.stringify(event)}\n`);
+}
+
+function newToken(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) =>
+    b.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
 export interface ServeOptions {
   port: number;
   configDir: string;
@@ -37,6 +59,7 @@ export interface ServeOptions {
   build: (options: RuntimeOptions) => Promise<Runtime>;
   ui?: UiAssets;
   hasAnthropicKey: boolean;
+  desktop?: DesktopMode;
 }
 
 function toSettings(
@@ -74,8 +97,14 @@ export async function runServe(options: ServeOptions): Promise<void> {
 
   let config = options.config;
   let runtime = await options.build({ ...options.runtimeOptions, config });
-  const token = await loadOrCreateToken(options.configDir);
-  const auth = new LocalAuth({ token, port: options.port });
+  const desktop = options.desktop;
+  const token = desktop ? desktop.token : await loadOrCreateToken(options.configDir);
+  // The desktop app is one person's, on their own computer: its webview stays signed in.
+  const auth = new LocalAuth({
+    token,
+    port: options.port,
+    ...(desktop ? { sessionTtlMs: 30 * 24 * 60 * 60 * 1000 } : {}),
+  });
 
   const keys = options.runtimeOptions.priceKeys ?? {};
   const settings: SettingsHandler = {
@@ -116,7 +145,13 @@ export async function runServe(options: ServeOptions): Promise<void> {
     auth,
     version: options.version,
     settings,
-    rotateToken: () => rotateToken(options.configDir),
+    rotateToken: desktop
+      ? async () => {
+          const next = newToken();
+          emit({ event: "token", token: next });
+          return next;
+        }
+      : () => rotateToken(options.configDir),
     logger: options.logger,
     ...(options.ui ? { ui: options.ui } : {}),
   });
@@ -128,20 +163,26 @@ export async function runServe(options: ServeOptions): Promise<void> {
     idleTimeout: 120,
   });
   const url = `http://${HOSTNAME}:${server.port}`;
-  const showCode = () => {
-    process.stdout.write(`\nOpen ${url} and enter this code: ${auth.issueLoginCode()}\n`);
-    process.stdout.write(
-      "It works once, for 5 minutes. Press Enter for a new code, or Ctrl+C to stop.\n",
+  if (desktop) {
+    emit({ event: "ready", url, loginCode: auth.issueLoginCode() });
+    createInterface({ input: process.stdin }).on("line", () =>
+      emit({ event: "code", loginCode: auth.issueLoginCode() }),
     );
-  };
-  process.stdout.write(`Titlesearch is running at ${url} (this computer only).\n`);
-  process.stdout.write(
-    `API and MCP clients use the bearer token in ${tokenPath(options.configDir)}.\n`,
-  );
-  process.stdout.write(`MCP endpoint: ${url}/mcp\n`);
-  showCode();
-
-  if (process.stdin.isTTY) createInterface({ input: process.stdin }).on("line", showCode);
+  } else {
+    const showCode = () => {
+      process.stdout.write(`\nOpen ${url} and enter this code: ${auth.issueLoginCode()}\n`);
+      process.stdout.write(
+        "It works once, for 5 minutes. Press Enter for a new code, or Ctrl+C to stop.\n",
+      );
+    };
+    process.stdout.write(`Titlesearch is running at ${url} (this computer only).\n`);
+    process.stdout.write(
+      `API and MCP clients use the bearer token in ${tokenPath(options.configDir)}.\n`,
+    );
+    process.stdout.write(`MCP endpoint: ${url}/mcp\n`);
+    showCode();
+    if (process.stdin.isTTY) createInterface({ input: process.stdin }).on("line", showCode);
+  }
   await new Promise<void>((resolve) => {
     const stop = () => {
       server.stop();
