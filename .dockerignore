@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+.git
+.turbo
+**/.turbo
+apps/desktop/src-tauri/target
+**/test-results
+**/playwright-report

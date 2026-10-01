@@ -111,8 +111,12 @@ export function createApp(options: AppOptions): Hono<Env> {
       c.header("cache-control", "no-store");
   });
 
-  // Host and Origin checks on everything, including the UI shell (invariant 5).
+  // Liveness for platform health checks, which send their own Host. Says nothing else.
+  app.get("/healthz", (c) => c.json({ ok: true }));
+
+  // Host and Origin checks on everything else, including the UI shell (invariant 5).
   app.use("*", async (c, next) => {
+    if (c.req.path === "/healthz") return next();
     // HTTP/1.1 always sends Host; a Request built in-process can't, so fall back to the URL.
     const host = c.req.header("host") ?? new URL(c.req.url).host;
     if (!options.auth.hostAllowed(host)) {

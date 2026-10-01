@@ -56,6 +56,8 @@ export interface OidcAuthOptions {
   publicUrl: string;
   /** The identity provider's issuer URL. HTTPS only. */
   issuer: string;
+  /** More Host values to accept, such as a Lambda function URL's host behind CloudFront. */
+  extraHosts?: readonly string[];
   /** The `aud` access tokens must carry. Defaults to the MCP resource URL, `${publicUrl}/mcp`. */
   audience?: string;
   /** For browser sign-in. Without it, the UI can't sign in; tokens still work. */
@@ -139,7 +141,8 @@ export class OidcAuth implements ServerAuth {
   }
 
   hostAllowed(host: string | undefined): boolean {
-    return host?.toLowerCase() === this.#public.host;
+    const h = host?.toLowerCase();
+    return h === this.#public.host || (!!h && (this.#options.extraHosts ?? []).includes(h));
   }
 
   originAllowed(origin: string | undefined): boolean {

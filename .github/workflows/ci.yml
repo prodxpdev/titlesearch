@@ -116,6 +116,32 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:workers
 
+  container:
+    name: Container images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build the API and renderer images
+        run: |
+          docker build -f deploy/container/Dockerfile --target api -t titlesearch-api:ci .
+          docker build -f deploy/container/Dockerfile --target renderer -t titlesearch-renderer:ci .
+      - name: Smoke-test the API image
+        run: |
+          docker run -d --name api -p 127.0.0.1:8080:8080 \
+            -e PUBLIC_URL=https://titlesearch.example.com -e OIDC_ISSUER=https://accounts.google.com \
+            -e SESSION_SECRET="$(openssl rand -hex 32)" -e ALLOWED_EMAIL_DOMAINS=example.com \
+            titlesearch-api:ci
+          timeout 30 bash -c 'until curl -sf http://127.0.0.1:8080/healthz; do sleep 1; done'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Host: titlesearch.example.com' http://127.0.0.1:8080/mcp)" = 401
+      - name: Smoke-test a capture in the renderer image
+        run: |
+          token="$(openssl rand -hex 24)"
+          docker run -d --name renderer -p 127.0.0.1:8081:8080 -e RENDERER_TOKEN="$token" titlesearch-renderer:ci
+          timeout 30 bash -c 'until curl -sf http://127.0.0.1:8081/healthz; do sleep 1; done'
+          curl -sf -X POST http://127.0.0.1:8081/capture -H "authorization: Bearer $token" \
+            -H 'content-type: application/json' -d '{"domain":"example.com"}' --max-time 60 \
+            | python3 -c 'import sys, json; d = json.load(sys.stdin); assert d["full"]["width"] == 1280, d'
+
   dco:
     name: DCO sign-off
     if: github.event_name == 'pull_request'

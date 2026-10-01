@@ -1,18 +1,10 @@
 {
-  "name": "@titlesearch/render",
+  "name": "@titlesearch/container",
   "version": "0.0.0",
-  "description": "Site previews: the egress proxy, the local-chromium renderer, and image handling.",
+  "description": "The container images: the API (Cloud Run, Lambda, ECS) and the separate renderer service.",
   "license": "Apache-2.0",
   "type": "module",
   "private": true,
-  "exports": {
-    ".": "./src/index.ts",
-    "./preview-response": "./src/preview-response.ts",
-    "./image-codec": "./src/image-codec.ts",
-    "./previewer": "./src/previewer.ts",
-    "./remote": "./src/remote.ts",
-    "./renderer": "./src/renderer.ts"
-  },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
@@ -23,7 +15,10 @@
     "@jsquash/webp": "1.5.0",
     "@titlesearch/cache": "workspace:*",
     "@titlesearch/core": "workspace:*",
-    "puppeteer-core": "25.12.0",
+    "@titlesearch/deploy": "workspace:*",
+    "@titlesearch/providers": "workspace:*",
+    "@titlesearch/render": "workspace:*",
+    "@titlesearch/server": "workspace:*",
     "zod": "4.6.5"
   },
   "devDependencies": {

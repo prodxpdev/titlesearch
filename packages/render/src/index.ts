@@ -34,6 +34,13 @@ export {
 export { previewImageResponse, WEBP } from "./preview-response.js";
 export { createPreviewer, type PreviewerOptions } from "./previewer.js";
 export {
+  createRenderService,
+  RemoteRenderer,
+  type RemoteRendererOptions,
+  type RenderServiceOptions,
+  WireCapture,
+} from "./remote.js";
+export {
   type CapturedImage,
   CaptureError,
   type PreviewCapture,

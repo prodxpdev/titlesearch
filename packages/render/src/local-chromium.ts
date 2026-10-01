@@ -41,6 +41,12 @@ export interface LocalChromiumOptions {
   /** Concurrent captures. CLAUDE.md: 2 locally. */
   concurrency?: number;
   logger?: Logger;
+  /**
+   * Runs Chromium without its own sandbox. Only for the deployed renderer
+   * service, whose container or microVM is the isolation boundary, where
+   * Chromium's sandbox can't start (no user namespaces). Never set locally.
+   */
+  noSandbox?: boolean;
   /** Tests only: routes the proxy's validated connections to local servers. */
   proxyConnect?: (address: string, port: number) => Socket;
   /** Tests only: observe browser-level events such as downloads. */
@@ -153,7 +159,7 @@ export class LocalChromiumRenderer implements PreviewRenderer {
         const browser = await puppeteer.launch({
           executablePath: this.#options.executablePath,
           headless: true,
-          args: chromiumArgs(proxy.url),
+          args: [...chromiumArgs(proxy.url), ...(this.#options.noSandbox ? ["--no-sandbox"] : [])],
           // No automation extension, no default "--enable-automation" banner needs.
           defaultViewport: { ...VIEWPORT },
         });

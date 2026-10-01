@@ -1,0 +1,32 @@
+{
+  "name": "@titlesearch/deploy",
+  "version": "0.0.0",
+  "description": "Deployment configuration and wiring shared by the container and Workers targets.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:workers": "vitest run --config vitest.workers.config.ts"
+  },
+  "dependencies": {
+    "@titlesearch/assess": "workspace:*",
+    "@titlesearch/cache": "workspace:*",
+    "@titlesearch/core": "workspace:*",
+    "@titlesearch/mcp": "workspace:*",
+    "@titlesearch/providers": "workspace:*",
+    "@titlesearch/render": "workspace:*",
+    "@titlesearch/server": "workspace:*",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.22.0",
+    "jose": "6.2.12",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
+  }
+}
