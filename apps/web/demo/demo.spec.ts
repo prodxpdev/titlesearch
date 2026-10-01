@@ -1,10 +1,19 @@
 // The README demo: a search with a market description and suggested names,
 // a preview, the domain report, and the shortlist. Paced for viewers.
 
-import { expect, test } from "@playwright/test";
+import { fileURLToPath } from "node:url";
+import { expect, type Page, test } from "@playwright/test";
 import { lot, signIn } from "../e2e/helpers";
 
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Stills for the website, from the same run as the GIF. */
+const shot = (page: Page, name: string) =>
+  page.screenshot({
+    path: fileURLToPath(new URL(`../../../docs/public/screens/${name}.jpg`, import.meta.url)),
+    type: "jpeg",
+    quality: 82,
+  });
 
 test("demo", async ({ page }) => {
   await signIn(page);
@@ -22,6 +31,7 @@ test("demo", async ({ page }) => {
   await page.getByRole("button", { name: "Run search" }).click();
   await expect(page.getByText("Says what it does").first()).toBeVisible();
   await pause(2200);
+  await shot(page, "results");
 
   const taken = lot(page, "fieldloom.com");
   await taken.locator(".shot-frame").first().hover();
@@ -31,6 +41,7 @@ test("demo", async ({ page }) => {
 
   await page.locator('a[href="#/domain/fieldloom.com"]').first().click();
   await pause(2600);
+  await shot(page, "report");
   await page.mouse.wheel(0, 500);
   await pause(1800);
 

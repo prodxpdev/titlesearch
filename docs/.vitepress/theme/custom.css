@@ -22,3 +22,41 @@
   border-radius: 10px;
   margin-top: 8px;
 }
+
+/* The home page's sections below the hero and features. */
+.VPHome .ts-section {
+  max-width: 1152px;
+  margin: 56px auto 0;
+  padding: 0 24px;
+}
+.VPHome .ts-section h2 {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+  font-size: 28px;
+}
+.VPHome .ts-split {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 40px;
+  align-items: center;
+}
+.VPHome .ts-split.ts-reverse > div:first-child {
+  order: 2;
+}
+.VPHome .ts-section img {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgb(22 35 59 / 0.12);
+}
+#download {
+  scroll-margin-top: 80px;
+}
+@media (max-width: 760px) {
+  .VPHome .ts-split {
+    grid-template-columns: 1fr;
+  }
+  .VPHome .ts-split.ts-reverse > div:first-child {
+    order: 0;
+  }
+}

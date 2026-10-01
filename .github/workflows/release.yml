@@ -3,10 +3,11 @@ name: Release
 # Pushing a version tag (v1.2.3) builds and publishes everything:
 #   - CLI binaries for macOS (arm64, x64), Windows (x64), and Linux (x64, arm64),
 #     each with a CycloneDX SBOM, plus SHA256SUMS and build provenance;
-#   - the desktop app for each platform, with signed updater artifacts;
+#   - desktop installers for each platform, under stable names
+#     (Titlesearch-macOS-AppleSilicon.dmg, Titlesearch-Windows-x64-setup.exe, ...);
 #   - the API and renderer images on GHCR, with SBOM and provenance attestations;
-#   - the npm package, with provenance, through trusted publishing;
-#   - server.json to the MCP Registry.
+#   - with the PUBLISH_NPM variable set to true, the npm package (trusted
+#     publishing, with provenance) and server.json to the MCP Registry.
 # Signing steps run when their secrets are set (docs/releasing.md); without
 # them, artifacts are published unsigned and the release notes say so.
 
@@ -199,17 +200,15 @@ jobs:
   desktop:
     name: Desktop (${{ matrix.target }})
     needs: prepare
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { os: macos-latest, target: aarch64-apple-darwin }
-          - { os: macos-latest, target: x86_64-apple-darwin }
-          - { os: windows-latest, target: x86_64-pc-windows-msvc }
-          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu }
-          - { os: ubuntu-22.04-arm, target: aarch64-unknown-linux-gnu }
+          - { os: macos-latest, target: aarch64-apple-darwin, label: macOS-AppleSilicon }
+          - { os: macos-latest, target: x86_64-apple-darwin, label: macOS-Intel }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, label: Windows-x64 }
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu, label: Linux-x64 }
+          - { os: ubuntu-22.04-arm, target: aarch64-unknown-linux-gnu, label: Linux-arm64 }
     runs-on: ${{ matrix.os }}
     env:
       TAURI_TARGET_TRIPLE: ${{ matrix.target }}
@@ -255,9 +254,13 @@ jobs:
       - name: Release configuration
         id: config
         shell: bash
-        # Updater artifacts need the signing key; Windows signing needs the thumbprint.
+        # Without an Apple certificate, macOS builds are signed ad hoc, so they
+        # still open (after "Open Anyway"). Updater artifacts need the update key.
         run: |
           config='{}'
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            config=$(echo "$config" | jq '.bundle.macOS.signingIdentity = "-"')
+          fi
           if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
             config=$(echo "$config" | jq '.bundle.createUpdaterArtifacts = true')
           fi
@@ -266,14 +269,35 @@ jobs:
           fi
           echo "json=$(echo "$config" | jq -c .)" >> "$GITHUB_OUTPUT"
       - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         with:
           projectPath: apps/desktop
           tauriScript: pnpm tauri
           args: --target ${{ matrix.target }} --config '${{ steps.config.outputs.json }}'
-          releaseId: ${{ needs.prepare.outputs.release_id }}
-          includeUpdaterJson: ${{ env.TAURI_SIGNING_PRIVATE_KEY != '' }}
+      # Stable names, so releases/latest/download/<name> always means the newest version.
+      - name: Collect installers
+        shell: bash
+        env:
+          LABEL: ${{ matrix.label }}
+        run: |
+          bundle="apps/desktop/src-tauri/target/$TAURI_TARGET_TRIPLE/release/bundle"
+          mkdir -p installers
+          copy() { for f in $1; do [ -f "$f" ] && cp "$f" "installers/$2"; done; }
+          copy "$bundle/dmg/*.dmg"              "Titlesearch-$LABEL.dmg"
+          copy "$bundle/nsis/*-setup.exe"       "Titlesearch-$LABEL-setup.exe"
+          copy "$bundle/msi/*.msi"              "Titlesearch-$LABEL.msi"
+          copy "$bundle/appimage/*.AppImage"    "Titlesearch-$LABEL.AppImage"
+          copy "$bundle/deb/*.deb"              "Titlesearch-$LABEL.deb"
+          copy "$bundle/rpm/*.rpm"              "Titlesearch-$LABEL.rpm"
+          copy "$bundle/macos/*.app.tar.gz"     "Titlesearch-$LABEL.app.tar.gz"
+          copy "$bundle/macos/*.app.tar.gz.sig" "Titlesearch-$LABEL.app.tar.gz.sig"
+          copy "$bundle/nsis/*-setup.exe.sig"   "Titlesearch-$LABEL-setup.exe.sig"
+          copy "$bundle/appimage/*.AppImage.sig" "Titlesearch-$LABEL.AppImage.sig"
+          ls -la installers
+          [ -n "$(ls installers)" ] || { echo "::error::No installers were built."; exit 1; }
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: archives-desktop-${{ matrix.label }}
+          path: installers/
 
   container:
     name: Container images
@@ -322,6 +346,8 @@ jobs:
   npm:
     name: npm package
     needs: prepare
+    # Opt in once trusted publishing is set up on npmjs.com (docs/setup/releasing.md).
+    if: vars.PUBLISH_NPM == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -353,6 +379,7 @@ jobs:
   registry:
     name: MCP Registry
     needs: [prepare, npm]
+    if: vars.PUBLISH_NPM == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -372,7 +399,8 @@ jobs:
 
   publish:
     name: Publish the release
-    needs: [prepare, sign-macos, sign-windows, archive-linux, desktop, container, npm]
+    # Container images publish on their own; downloads never wait for them.
+    needs: [prepare, sign-macos, sign-windows, archive-linux, desktop]
     runs-on: ubuntu-latest
     permissions:
       contents: write

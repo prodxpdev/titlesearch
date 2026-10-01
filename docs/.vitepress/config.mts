@@ -27,6 +27,7 @@ export default defineConfig({
   themeConfig: {
     logo: "/favicon.svg",
     nav: [
+      { text: "Download", link: "/#download" },
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Deploy", link: "/setup/" },
       { text: "Reference", link: "/reference/mcp-tools" },

@@ -3,7 +3,7 @@
   "name": "io.github.prodxpdev/titlesearch",
   "title": "Titlesearch",
   "description": "Checks if a product name is free across domain extensions, and who holds the taken ones.",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "websiteUrl": "https://github.com/prodxpdev/titlesearch",
   "repository": {
     "url": "https://github.com/prodxpdev/titlesearch",
@@ -14,10 +14,17 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "titlesearch",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "runtimeHint": "npx",
-      "transport": { "type": "stdio" },
-      "packageArguments": [{ "type": "positional", "value": "mcp" }],
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
       "environmentVariables": [
         {
           "name": "ANTHROPIC_API_KEY",
