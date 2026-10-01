@@ -1,9 +1,11 @@
 // `titlesearch serve`: the local UI and API on 127.0.0.1 (invariant 5).
 
 import { createInterface } from "node:readline";
-import type { Logger } from "@titlesearch/core";
+import type { RedactingLogger } from "@titlesearch/core";
 import {
   createApp,
+  KEY_NAMES,
+  type KeyName,
   LocalAuth,
   type Settings,
   SettingsError,
@@ -11,7 +13,7 @@ import {
   type UiAssets,
 } from "@titlesearch/server";
 import { type CliConfig, saveConfig } from "../config.js";
-import type { PriceKeys, Runtime, RuntimeOptions } from "../runtime.js";
+import { type PriceKeys, priceKeysFromEnv, type Runtime, type RuntimeOptions } from "../runtime.js";
 import { loadOrCreateToken, rotateToken, tokenPath } from "../token.js";
 
 export const DEFAULT_PORT = 4717;
@@ -53,21 +55,24 @@ export interface ServeOptions {
   port: number;
   configDir: string;
   version: string;
-  logger: Logger;
+  logger: RedactingLogger;
   config: CliConfig;
   runtimeOptions: Omit<RuntimeOptions, "config">;
   build: (options: RuntimeOptions) => Promise<Runtime>;
   ui?: UiAssets;
-  hasAnthropicKey: boolean;
+  /** Key values at startup, from the environment (the keychain, in the desktop app). */
+  keys: Partial<Record<KeyName, string>>;
   desktop?: DesktopMode;
 }
 
 function toSettings(
   config: CliConfig,
   runtime: Runtime,
-  hasKey: boolean,
-  keys: PriceKeys,
+  values: Partial<Record<KeyName, string>>,
+  desktop: boolean,
 ): Settings {
+  const hasKey = !!values.ANTHROPIC_API_KEY;
+  const keys: PriceKeys = priceKeysFromEnv(values);
   return {
     providers: {
       rdap: { enabled: true },
@@ -88,6 +93,10 @@ function toSettings(
     },
     suggestions: { available: !!runtime.services.suggester },
     previews: { mode: config.previews.mode, browser: runtime.browser },
+    keys: {
+      storage: desktop ? "keychain" : "environment",
+      set: Object.fromEntries(KEY_NAMES.map((n) => [n, !!values[n]])) as Record<KeyName, boolean>,
+    },
     siteChecks: { timeoutSeconds: 5, maxRedirects: 3, pageKilobytes: 512, cacheHours: 6 },
   };
 }
@@ -97,7 +106,16 @@ export async function runServe(options: ServeOptions): Promise<void> {
     throw new Error("`titlesearch serve` runs on Bun. Use the titlesearch binary.");
 
   let config = options.config;
-  let runtime = await options.build({ ...options.runtimeOptions, config });
+  // The current keys. In the desktop app, the page can change them (setKey).
+  const values: Partial<Record<KeyName, string>> = { ...options.keys };
+  const build = (c: CliConfig) =>
+    options.build({
+      ...options.runtimeOptions,
+      config: c,
+      priceKeys: priceKeysFromEnv(values),
+      ...(values.ANTHROPIC_API_KEY ? { anthropicApiKey: values.ANTHROPIC_API_KEY } : {}),
+    });
+  let runtime = await build(config);
   const desktop = options.desktop;
   const token = desktop ? desktop.token : await loadOrCreateToken(options.configDir);
   // The desktop app is one person's, on their own computer: its webview stays signed in.
@@ -107,38 +125,64 @@ export async function runServe(options: ServeOptions): Promise<void> {
     ...(desktop ? { sessionTtlMs: 30 * 24 * 60 * 60 * 1000 } : {}),
   });
 
-  const keys = options.runtimeOptions.priceKeys ?? {};
+  const current = () => toSettings(config, runtime, values, !!desktop);
+  const apply = async (next: CliConfig) => {
+    const rebuilt = await build(next);
+    await saveConfig(options.configDir, next);
+    const old = runtime;
+    config = next;
+    runtime = rebuilt;
+    await old.close();
+    return current();
+  };
   const settings: SettingsHandler = {
-    get: () => toSettings(config, runtime, options.hasAnthropicKey, keys),
+    get: current,
     async update(patch) {
+      const keys = priceKeysFromEnv(values);
       const next: CliConfig = structuredClone(config);
       if (patch.providers?.godaddy)
         next.providers.godaddy.enabled = patch.providers.godaddy.enabled;
       if (patch.providers?.porkbun) {
         if (patch.providers.porkbun.enabled && !keys.porkbun)
-          throw new SettingsError("Set PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY first.");
+          throw new SettingsError("Add both Porkbun keys first.");
         next.providers.porkbun.enabled = patch.providers.porkbun.enabled;
       }
       if (patch.providers?.namecom) {
         if (patch.providers.namecom.enabled && !keys.namecom)
-          throw new SettingsError("Set NAMECOM_USERNAME and NAMECOM_TOKEN first.");
+          throw new SettingsError("Add your Name.com username and token first.");
         next.providers.namecom.enabled = patch.providers.namecom.enabled;
       }
       if (patch.previews) next.previews.mode = patch.previews.mode;
       if (patch.assessment) {
-        if (patch.assessment.mode === "anthropic" && !options.hasAnthropicKey) {
-          throw new SettingsError("Set ANTHROPIC_API_KEY before choosing the Anthropic API.");
+        if (patch.assessment.mode === "anthropic" && !values.ANTHROPIC_API_KEY) {
+          throw new SettingsError("Add an Anthropic API key before choosing the Anthropic API.");
         }
         next.assessment.mode = patch.assessment.mode;
       }
-      const rebuilt = await options.build({ ...options.runtimeOptions, config: next });
-      await saveConfig(options.configDir, next);
-      const old = runtime;
-      config = next;
-      runtime = rebuilt;
-      await old.close();
-      return toSettings(config, runtime, options.hasAnthropicKey, keys);
+      return apply(next);
     },
+    // Only the desktop app keeps keys for you (in the OS keychain). The value
+    // goes to the app over this process's private stdout pipe, and is
+    // redacted from every log line from now on.
+    ...(desktop
+      ? {
+          async setKey(name: KeyName, value: string | null) {
+            if (value) {
+              if (name !== "NAMECOM_USERNAME") options.logger.addSecrets([value]);
+              values[name] = value;
+            } else {
+              delete values[name];
+            }
+            const next: CliConfig = structuredClone(config);
+            // Without its key, the Anthropic mode can't stay selected.
+            if (!values.ANTHROPIC_API_KEY && next.assessment.mode === "anthropic")
+              next.assessment.mode = "client";
+            const result = await apply(next);
+            emit({ event: "key", name, value });
+            return result;
+          },
+        }
+      : {}),
   };
 
   const app = createApp({

@@ -35,3 +35,20 @@ describe("redaction", () => {
     expect(JSON.stringify(lines)).not.toContain(secret);
   });
 });
+
+describe("redactingLogger.addSecrets", () => {
+  it("redacts a secret learned while running", () => {
+    const lines: string[] = [];
+    const sink: Logger = {
+      debug: (m) => lines.push(m),
+      info: (m) => lines.push(m),
+      warn: (m) => lines.push(m),
+      error: (m) => lines.push(m),
+    };
+    const log = redactingLogger(sink, []);
+    log.warn("key sk-ant-new-0123456789");
+    log.addSecrets(["sk-ant-new-0123456789"]);
+    log.warn("key sk-ant-new-0123456789");
+    expect(lines).toEqual(["key sk-ant-new-0123456789", `key ${REDACTED}`]);
+  });
+});

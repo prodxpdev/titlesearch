@@ -28,6 +28,7 @@ export {
   type LogFields,
   type Logger,
   REDACTED,
+  type RedactingLogger,
   redactingLogger,
   silentLogger,
 } from "./log.js";

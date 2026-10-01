@@ -45,7 +45,7 @@ Then ask Claude something like: *"I'm naming a scheduling app for landscaping cr
 
 ## Optional keys
 
-None are needed to start. With them, Titlesearch can do more:
+None are needed to start. With them, Titlesearch can do more. **In the desktop app**, paste them on the **Providers** page; they're kept in your system keychain and take effect right away. For the command line and `titlesearch serve`, set them as environment variables:
 
 | Variable | Adds |
 |---|---|

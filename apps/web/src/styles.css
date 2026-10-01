@@ -1230,3 +1230,18 @@ dialog.pv::backdrop {
   padding: 10px 14px;
   margin: 0 0 16px;
 }
+/* A key field on the Providers page. */
+.field.key {
+  margin: 12px 0 0;
+}
+.key-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.key-row input {
+  flex: 1;
+  min-width: 180px;
+  font-family: var(--mono);
+}

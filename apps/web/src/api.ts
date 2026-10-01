@@ -3,7 +3,7 @@
 // session cookie authenticates; it's HttpOnly, so scripts never see it.
 
 import type { DomainResult } from "@titlesearch/core";
-import type { Settings } from "@titlesearch/server";
+import type { KeyName, Settings } from "@titlesearch/server";
 
 export class AuthError extends Error {
   override readonly name = "AuthError";
@@ -83,6 +83,11 @@ export const api = {
       body: { seed, strategies, tlds },
     }),
   settings: () => request<{ settings: Settings; version: string }>("/api/settings"),
+  /** Saves a key to the keychain (desktop app). The value is never sent back. */
+  setKey: (name: KeyName, value: string) =>
+    request<{ settings: Settings }>(`/api/keys/${name}`, { method: "PUT", body: { value } }),
+  removeKey: (name: KeyName) =>
+    request<{ settings: Settings }>(`/api/keys/${name}`, { method: "DELETE" }),
   updateSettings: (patch: unknown) =>
     request<{ settings: Settings }>("/api/settings", { method: "PATCH", body: patch }),
   health: () => request<{ providers: ProviderHealth[] }>("/api/providers/health"),

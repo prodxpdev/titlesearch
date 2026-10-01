@@ -1,6 +1,6 @@
-import type { Settings } from "@titlesearch/server";
+import type { KeyName, Settings } from "@titlesearch/server";
 import { useEffect, useState } from "react";
-import { AuthError, api, type ProviderHealth } from "../api";
+import { ApiError, AuthError, api, type ProviderHealth } from "../api";
 import { Band, Kv } from "../components";
 import { setState, toast, useStore } from "../store";
 
@@ -8,18 +8,142 @@ function State({ on }: { on: boolean }) {
   return <span className={`state ${on ? "on" : "off"}`}>{on ? "On" : "Off"}</span>;
 }
 
+/**
+ * One key. In the desktop app it's typed here and kept in the keychain; the
+ * page never sees it again, only whether it's saved. Elsewhere, keys come from
+ * the environment, and this says which variable to set.
+ */
+function KeyField({
+  name,
+  label,
+  settings,
+  onChange,
+  secret = true,
+  placeholder,
+}: {
+  name: KeyName;
+  label: string;
+  settings: Settings;
+  onChange: (s: Settings) => void;
+  secret?: boolean;
+  placeholder?: string;
+}) {
+  const saved = settings.keys.set[name];
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const id = `key-${name}`;
+
+  if (settings.keys.storage === "environment") {
+    return (
+      <div className="field key">
+        <span className="f">{label}</span>
+        <p className="hint" style={{ marginTop: 0 }}>
+          {saved ? (
+            "Set in this server's environment."
+          ) : (
+            <>
+              Not set. Start Titlesearch with <code>{name}</code> in its environment.
+            </>
+          )}
+        </p>
+      </div>
+    );
+  }
+
+  const run = async (fn: () => Promise<{ settings: Settings }>, message: string) => {
+    setBusy(true);
+    setError(undefined);
+    try {
+      onChange((await fn()).settings);
+      setValue("");
+      setEditing(false);
+      toast(message);
+    } catch (err) {
+      if (err instanceof AuthError) return setState({ authenticated: false });
+      setError(err instanceof ApiError ? err.message : "Couldn't save the key.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (saved && !editing) {
+    return (
+      <div className="field key">
+        <span className="f">{label}</span>
+        <div className="key-row">
+          <span className="state on">{secret ? "Saved in your keychain" : "Saved"}</span>
+          <button type="button" className="btn" onClick={() => setEditing(true)}>
+            Replace
+          </button>
+          <button
+            type="button"
+            className="btn"
+            disabled={busy}
+            onClick={() => void run(() => api.removeKey(name), `${label} removed`)}
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      className="field key"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (value.trim()) void run(() => api.setKey(name, value.trim()), `${label} saved`);
+      }}
+    >
+      <label className="f" htmlFor={id}>
+        {label}
+      </label>
+      <div className="key-row">
+        <input
+          id={id}
+          type={secret ? "password" : "text"}
+          autoComplete="off"
+          spellCheck={false}
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => setValue(e.target.value)}
+        />
+        <button className="btn primary" type="submit" disabled={busy || !value.trim()}>
+          Save
+        </button>
+        {editing && (
+          <button type="button" className="btn" onClick={() => setEditing(false)}>
+            Cancel
+          </button>
+        )}
+      </div>
+      {error && (
+        <p className="err" role="alert">
+          {error}
+        </p>
+      )}
+      <p className="hint">
+        {secret ? "Kept in your system keychain. Titlesearch never shows it again." : ""}
+      </p>
+    </form>
+  );
+}
+
 function PriceSource({
   name,
   state,
-  env,
   onToggle,
   children,
+  keys,
 }: {
   name: string;
   state: { enabled: boolean; configured: boolean };
-  env: string;
   onToggle: () => void;
   children: React.ReactNode;
+  keys: React.ReactNode;
 }) {
   return (
     <div className="prov">
@@ -37,10 +161,8 @@ function PriceSource({
           onToggle={onToggle}
         />
       </div>
-      <p>
-        {children}
-        {state.configured ? null : ` To turn it on, set ${env} and restart Titlesearch.`}
-      </p>
+      <p>{children}</p>
+      {keys}
     </div>
   );
 }
@@ -228,7 +350,24 @@ export function Providers() {
           <PriceSource
             name="Porkbun"
             state={settings.providers.porkbun}
-            env="PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY"
+            keys={
+              <>
+                <KeyField
+                  name="PORKBUN_API_KEY"
+                  label="Porkbun API key"
+                  placeholder="pk1_sb_…"
+                  settings={settings}
+                  onChange={setSettings}
+                />
+                <KeyField
+                  name="PORKBUN_SECRET_API_KEY"
+                  label="Porkbun secret key"
+                  placeholder="sk1_sb_…"
+                  settings={settings}
+                  onChange={setSettings}
+                />
+              </>
+            }
             onToggle={() =>
               void update(
                 { providers: { porkbun: { enabled: !settings.providers.porkbun.enabled } } },
@@ -236,14 +375,30 @@ export function Providers() {
               )
             }
           >
-            The default price source: prices and premium status from Porkbun's availability check.
-            Porkbun keys can't be limited to read-only use, so restrict yours by IP address in
-            Porkbun's dashboard. Titlesearch only ever checks availability.
+            The default price source: prices and premium status from Porkbun. Create a{" "}
+            <b>sandbox key</b> (it starts with <code>pk1_sb_</code>) at porkbun.com/account/api: it
+            sees real prices but can't buy anything. Titlesearch only ever checks availability.
           </PriceSource>
           <PriceSource
             name="Name.com"
             state={settings.providers.namecom}
-            env="NAMECOM_USERNAME and NAMECOM_TOKEN"
+            keys={
+              <>
+                <KeyField
+                  name="NAMECOM_USERNAME"
+                  label="Name.com username"
+                  secret={false}
+                  settings={settings}
+                  onChange={setSettings}
+                />
+                <KeyField
+                  name="NAMECOM_TOKEN"
+                  label="Name.com API token"
+                  settings={settings}
+                  onChange={setSettings}
+                />
+              </>
+            }
             onToggle={() =>
               void update(
                 { providers: { namecom: { enabled: !settings.providers.namecom.enabled } } },
@@ -251,8 +406,9 @@ export function Providers() {
               )
             }
           >
-            Prices and premium status from Name.com's availability check, as an alternative or a
-            second opinion. Titlesearch only ever checks availability.
+            Prices and premium status from Name.com, as an alternative or a second opinion. Create
+            an API token just for Titlesearch at name.com/account/settings/api. Titlesearch only
+            ever checks availability.
           </PriceSource>
           <div className="prov">
             <h3>Another MCP server</h3>
@@ -299,13 +455,20 @@ export function Providers() {
               "Show what each site says and let me decide.",
               () => void update({ assessment: { mode: "off" } }, "Assessment turned off"),
             )}
-            <div className="field" style={{ marginTop: 14 }}>
-              <span className="f">Anthropic API key</span>
-              <p className="hint" style={{ marginTop: 0 }}>
-                {settings.assessment.keyConfigured
-                  ? "Set in this server's environment."
-                  : "Not set. Set ANTHROPIC_API_KEY where you run titlesearch serve. Keys never go through this page."}
-              </p>
+            <div style={{ marginTop: 14 }}>
+              <KeyField
+                name="ANTHROPIC_API_KEY"
+                label="Anthropic API key"
+                placeholder="sk-ant-…"
+                settings={settings}
+                onChange={setSettings}
+              />
+              {!settings.assessment.keyConfigured && settings.keys.storage === "keychain" && (
+                <p className="hint" style={{ marginTop: 0 }}>
+                  Create one at console.anthropic.com. It also turns on names suggested from your
+                  description.
+                </p>
+              )}
             </div>
           </div>
           <div className="panel" style={{ margin: 0 }}>
@@ -323,15 +486,6 @@ export function Providers() {
                   : "No browser found. Run `titlesearch browser install`, or install Chrome or Edge.",
               () =>
                 void update({ previews: { mode: "local" } }, "Previews captured on this computer"),
-            )}
-            {radio(
-              "pmode",
-              "cloudflare",
-              settings.previews.mode,
-              "Cloudflare Browser Rendering",
-              "For copies deployed to Cloudflare Workers. Billed to your Cloudflare account.",
-              () => {},
-              true,
             )}
             {radio(
               "pmode",

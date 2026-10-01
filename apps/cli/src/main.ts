@@ -3,6 +3,7 @@
 
 import { parseArgs } from "node:util";
 import type { NameSuggestion } from "@titlesearch/assess";
+import { KEY_NAMES } from "@titlesearch/server";
 import pkg from "../package.json" with { type: "json" };
 import { runAssess } from "./commands/assess.js";
 import { runBrowser } from "./commands/browser.js";
@@ -126,7 +127,12 @@ async function main(argv: string[]): Promise<number> {
           priceKeys,
           ...(anthropicApiKey ? { anthropicApiKey } : {}),
         },
-        hasAnthropicKey: !!anthropicApiKey,
+        keys: Object.fromEntries(
+          KEY_NAMES.flatMap((n) => {
+            const v = process.env[n]?.trim();
+            return v ? [[n, v]] : [];
+          }),
+        ),
         ...(ui ? { ui } : {}),
         ...(desktop ? { desktop } : {}),
       });

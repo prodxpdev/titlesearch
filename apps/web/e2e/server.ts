@@ -229,6 +229,16 @@ let settings: Settings = {
     namecom: { enabled: false, configured: false },
   },
   assessment: { mode: "anthropic", model: "test-model", keyConfigured: true },
+  keys: {
+    storage: "keychain",
+    set: {
+      ANTHROPIC_API_KEY: true,
+      PORKBUN_API_KEY: true,
+      PORKBUN_SECRET_API_KEY: true,
+      NAMECOM_USERNAME: false,
+      NAMECOM_TOKEN: false,
+    },
+  },
   suggestions: { available: true },
   previews: { mode: "local", browser: "system" },
   siteChecks: { timeoutSeconds: 5, maxRedirects: 3, pageKilobytes: 512, cacheHours: 6 },
@@ -243,6 +253,16 @@ const settingsHandler: SettingsHandler = {
       settings.providers.porkbun.enabled = patch.providers.porkbun.enabled;
     if (patch.assessment) settings.assessment.mode = patch.assessment.mode;
     if (patch.previews) settings.previews.mode = patch.previews.mode;
+    return settings;
+  },
+  // Like the desktop app, minus the keychain: only whether each key is set.
+  setKey: async (name, value) => {
+    settings = structuredClone(settings);
+    settings.keys.set[name] = !!value;
+    const set = settings.keys.set;
+    settings.providers.namecom.configured = set.NAMECOM_USERNAME && set.NAMECOM_TOKEN;
+    settings.providers.porkbun.configured = set.PORKBUN_API_KEY && set.PORKBUN_SECRET_API_KEY;
+    settings.assessment.keyConfigured = set.ANTHROPIC_API_KEY;
     return settings;
   },
 };

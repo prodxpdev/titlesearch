@@ -50,6 +50,49 @@ enum SidecarEvent {
     Token {
         token: String,
     },
+    /// A key entered on the Providers page: save it, or delete it when null.
+    Key {
+        name: String,
+        value: Option<String>,
+    },
+}
+
+/// The keys the app keeps in the keychain, one entry each, named as the
+/// environment variables the sidecar reads.
+const KEY_NAMES: [&str; 5] = [
+    "ANTHROPIC_API_KEY",
+    "PORKBUN_API_KEY",
+    "PORKBUN_SECRET_API_KEY",
+    "NAMECOM_USERNAME",
+    "NAMECOM_TOKEN",
+];
+
+/// The saved keys, to hand to the sidecar at launch.
+fn keychain_keys() -> Vec<(&'static str, String)> {
+    KEY_NAMES
+        .iter()
+        .filter_map(|name| {
+            let entry = keyring::Entry::new(KEYCHAIN_SERVICE, name).ok()?;
+            entry.get_password().ok().map(|v| (*name, v))
+        })
+        .collect()
+}
+
+fn store_key(name: &str, value: Option<&str>) {
+    if !KEY_NAMES.contains(&name) {
+        return;
+    }
+    let result = keyring::Entry::new(KEYCHAIN_SERVICE, name).and_then(|entry| match value {
+        Some(v) => entry.set_password(v),
+        None => match entry.delete_credential() {
+            Err(keyring::Error::NoEntry) => Ok(()),
+            other => other,
+        },
+    });
+    // The key's name is logged, never its value.
+    if let Err(e) = result {
+        log::error!("Couldn't update {name} in the keychain: {e}");
+    }
 }
 
 fn is_token(s: &str) -> bool {
@@ -109,6 +152,7 @@ fn start_sidecar(app: &AppHandle) -> Result<(), String> {
         .args(["serve", "--port", &port.to_string()])
         .env("TITLESEARCH_DESKTOP", "1")
         .env("TITLESEARCH_TOKEN", token)
+        .envs(keychain_keys())
         .spawn()
         .map_err(|e| e.to_string())?;
     *app.state::<Sidecar>().child.lock().unwrap() = Some(child);
@@ -162,6 +206,7 @@ fn handle_line(app: &AppHandle, line: &[u8]) {
             }
         }
         SidecarEvent::Token { token } => store_token(&token),
+        SidecarEvent::Key { name, value } => store_key(&name, value.as_deref()),
     }
 }
 

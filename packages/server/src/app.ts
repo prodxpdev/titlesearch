@@ -36,7 +36,14 @@ import * as z from "zod";
 import type { Principal, ServerAuth } from "./auth.js";
 import { createHealthCheck } from "./health.js";
 import { ConcurrencyLimit, PrincipalRateLimit } from "./limits.js";
-import { SettingsError, type SettingsHandler, SettingsPatch } from "./settings.js";
+import {
+  KEY_NAMES,
+  type KeyName,
+  KeyValue,
+  SettingsError,
+  type SettingsHandler,
+  SettingsPatch,
+} from "./settings.js";
 import { type UiAssets, uiResponse } from "./static/ui.js";
 
 export interface AppOptions {
@@ -393,6 +400,45 @@ export function createApp(options: AppOptions): Hono<Env> {
       throw err;
     }
   });
+  // Keys, where this app keeps them (the desktop app's keychain). The value
+  // goes one way: it's never returned, logged, or put in settings.
+  const keyRoute = async (c: Context<Env>, value: string | null) => {
+    const name = c.req.param("name") as KeyName;
+    if (!(KEY_NAMES as readonly string[]).includes(name))
+      return apiError(c, 404, "not_found", "No such key.");
+    if (!options.settings?.setKey)
+      return apiError(
+        c,
+        400,
+        "keys_from_environment",
+        "This server reads keys from its environment or secret store, not from this page.",
+      );
+    try {
+      return c.json({ settings: await options.settings.setKey(name, value) });
+    } catch (err) {
+      if (err instanceof SettingsError) return apiError(c, 400, "invalid_setting", err.message);
+      throw err;
+    }
+  };
+  app.put("/api/keys/:name", async (c) => {
+    let json: unknown;
+    try {
+      json = await c.req.json();
+    } catch {
+      return apiError(c, 400, "invalid_json", "The request body isn't valid JSON.");
+    }
+    const body = z.object({ value: KeyValue }).strict().safeParse(json);
+    if (!body.success)
+      return apiError(
+        c,
+        400,
+        "invalid_request",
+        body.error.issues[0]?.message ?? "Paste the key without spaces or line breaks.",
+      );
+    return keyRoute(c, body.data.value);
+  });
+  app.delete("/api/keys/:name", (c) => keyRoute(c, null));
+
   app.post("/api/token/rotate", async (c) => {
     if (!options.rotateToken || !options.auth.setToken)
       return apiError(c, 404, "not_found", "Token rotation isn't available here.");

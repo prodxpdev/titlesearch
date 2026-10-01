@@ -156,8 +156,16 @@ test.describe("mockup routes", () => {
     await expect(porkbun).toHaveAttribute("aria-checked", "true");
     await porkbun.click();
     await expect(porkbun).toHaveAttribute("aria-checked", "false");
-    await expect(page.getByRole("switch", { name: "Use Name.com" })).toBeDisabled();
-    await expect(page.getByText("set NAMECOM_USERNAME and NAMECOM_TOKEN")).toBeVisible();
+    // Name.com has no keys yet: add them here, and its switch becomes usable.
+    const namecom = page.getByRole("switch", { name: "Use Name.com" });
+    await expect(namecom).toBeDisabled();
+    await page.getByLabel("Name.com username").fill("pat");
+    await page.getByLabel("Name.com username").press("Enter");
+    await page.getByLabel("Name.com API token").fill("namecom-token-0123");
+    await page.getByLabel("Name.com API token").press("Enter");
+    await expect(page.getByText("Saved in your keychain").first()).toBeVisible();
+    await expect(namecom).toBeEnabled();
+    await expect(page.getByText("Cloudflare Browser Rendering")).toHaveCount(0);
     await page.getByLabel("Blur previews until opened").check();
     await page.getByRole("link", { name: "Results" }).click();
     await expect(page.locator(".lot .shot-frame.shot-blur").first()).toBeVisible();

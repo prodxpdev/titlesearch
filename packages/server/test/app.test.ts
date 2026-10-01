@@ -388,19 +388,75 @@ describe("settings", () => {
     assessment: { mode: "client", model: "claude-opus-5-5", keyConfigured: false },
     suggestions: { available: false },
     previews: { mode: "local", browser: "system" },
+    keys: {
+      storage: "keychain",
+      set: {
+        ANTHROPIC_API_KEY: false,
+        PORKBUN_API_KEY: false,
+        PORKBUN_SECRET_API_KEY: false,
+        NAMECOM_USERNAME: false,
+        NAMECOM_TOKEN: false,
+      },
+    },
     siteChecks: { timeoutSeconds: 5, maxRedirects: 3, pageKilobytes: 512, cacheHours: 6 },
   };
-  const handler = (): SettingsHandler & { patches: unknown[] } => {
+  const handler = (): SettingsHandler & {
+    patches: unknown[];
+    keys: [string, string | null][];
+  } => {
     const patches: unknown[] = [];
+    const keys: [string, string | null][] = [];
     return {
       patches,
+      keys,
       get: () => settings,
       update: async (p) => {
         patches.push(p);
         return settings;
       },
+      setKey: async (name, value) => {
+        keys.push([name, value]);
+        return settings;
+      },
     };
   };
+
+  it("saves and removes keys, and never returns them", async () => {
+    const h = handler();
+    const { authed } = setup({ settings: h });
+    const put = await authed("/api/keys/ANTHROPIC_API_KEY", {
+      method: "PUT",
+      body: JSON.stringify({ value: "  sk-ant-abc123  " }),
+    });
+    expect(put.status).toBe(200);
+    expect(await put.text()).not.toContain("sk-ant-abc123");
+    expect((await authed("/api/keys/ANTHROPIC_API_KEY", { method: "DELETE" })).status).toBe(200);
+    expect(h.keys).toEqual([
+      ["ANTHROPIC_API_KEY", "sk-ant-abc123"],
+      ["ANTHROPIC_API_KEY", null],
+    ]);
+  });
+
+  it.each([
+    ["an unknown key", "/api/keys/AWS_SECRET_ACCESS_KEY", { value: "abcdef" }, 404],
+    ["a key with spaces", "/api/keys/PORKBUN_API_KEY", { value: "pk1 abc def" }, 400],
+    ["an extra field", "/api/keys/PORKBUN_API_KEY", { value: "pk1_abc", also: 1 }, 400],
+  ])("refuses %s", async (_l, path, body, status) => {
+    const { authed } = setup({ settings: handler() });
+    const res = await authed(path, { method: "PUT", body: JSON.stringify(body) });
+    expect(res.status).toBe(status);
+  });
+
+  it("explains when keys come from the environment", async () => {
+    const h = handler();
+    delete (h as { setKey?: unknown }).setKey;
+    const { authed } = setup({ settings: h });
+    const res = await authed("/api/keys/ANTHROPIC_API_KEY", {
+      method: "PUT",
+      body: JSON.stringify({ value: "sk-ant-abc123" }),
+    });
+    expect(await res.json()).toMatchObject({ error: { code: "keys_from_environment" } });
+  });
 
   it("reads and patches non-secret settings", async () => {
     const h = handler();

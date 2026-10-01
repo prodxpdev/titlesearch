@@ -29,14 +29,29 @@ export function createRedactor(secrets: readonly string[]): <T>(value: T) => T {
   return <T>(value: T) => walk(value, new WeakSet()) as T;
 }
 
-export function redactingLogger(inner: Logger, secrets: readonly string[]): Logger {
-  const redact = createRedactor(secrets);
+export interface RedactingLogger extends Logger {
+  /** Redacts these too from now on, such as a key entered while running. */
+  addSecrets(secrets: readonly string[]): void;
+}
+
+export function redactingLogger(inner: Logger, secrets: readonly string[]): RedactingLogger {
+  const known = [...secrets];
+  let redact = createRedactor(known);
   const wrap =
     (level: keyof Logger) =>
     (message: string, fields?: LogFields): void => {
       inner[level](redact(message), fields === undefined ? undefined : redact(fields));
     };
-  return { debug: wrap("debug"), info: wrap("info"), warn: wrap("warn"), error: wrap("error") };
+  return {
+    debug: wrap("debug"),
+    info: wrap("info"),
+    warn: wrap("warn"),
+    error: wrap("error"),
+    addSecrets(more) {
+      known.push(...more.filter((s) => s && !known.includes(s)));
+      redact = createRedactor(known);
+    },
+  };
 }
 
 export const silentLogger: Logger = { debug() {}, info() {}, warn() {}, error() {} };

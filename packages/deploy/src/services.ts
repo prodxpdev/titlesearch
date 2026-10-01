@@ -170,6 +170,17 @@ export function deployedSettings(
     },
     suggestions: { available: !!services.suggester },
     previews: { mode: renderer ? "local" : "off", browser: null },
+    // A deployment's keys come from its secret store; the page can't change them.
+    keys: {
+      storage: "environment",
+      set: {
+        ANTHROPIC_API_KEY: !!env.ANTHROPIC_API_KEY,
+        PORKBUN_API_KEY: !!env.PORKBUN_API_KEY,
+        PORKBUN_SECRET_API_KEY: !!env.PORKBUN_SECRET_API_KEY,
+        NAMECOM_USERNAME: !!env.NAMECOM_USERNAME,
+        NAMECOM_TOKEN: !!env.NAMECOM_TOKEN,
+      },
+    },
     siteChecks: { timeoutSeconds: 5, maxRedirects: 3, pageKilobytes: 512, cacheHours: 6 },
   };
   return {

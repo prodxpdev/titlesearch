@@ -1,11 +1,14 @@
 // Logs go to stderr only: in `mcp` mode stdout carries the protocol.
 
-import { type LogFields, type Logger, redactingLogger } from "@titlesearch/core";
+import { type LogFields, type RedactingLogger, redactingLogger } from "@titlesearch/core";
 
 const LEVELS = ["error", "warn", "info", "debug"] as const;
 type Level = (typeof LEVELS)[number];
 
-export function createLogger(level: string | undefined, secrets: readonly string[]): Logger {
+export function createLogger(
+  level: string | undefined,
+  secrets: readonly string[],
+): RedactingLogger {
   const max = LEVELS.indexOf(
     (LEVELS as readonly string[]).includes(level ?? "") ? (level as Level) : "warn",
   );
