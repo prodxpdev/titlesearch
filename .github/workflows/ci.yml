@@ -54,8 +54,20 @@ jobs:
         # restricts unprivileged user namespaces, which Chrome's sandbox needs.
         # Lifting that is better than running Chrome with --no-sandbox.
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Start the DynamoDB and Firestore emulators
+        # The cloud cache stores run the conformance suite against these.
+        run: |
+          docker run -d -p 127.0.0.1:8000:8000 amazon/dynamodb-local@sha256:ff89bd48ff32cd8d9be5fee8873b65b8854dc408f1afe881be6eb00247bc0dab -jar DynamoDBLocal.jar -inMemory
+          docker run -d -p 127.0.0.1:8080:8080 gcr.io/google.com/cloudsdktool/google-cloud-cli@sha256:8d8573471c489a409f03891d2c24d177fa531276184f7002b9a2d853d1b3ed54 gcloud emulators firestore start --host-port=0.0.0.0:8080
+          for port in 8000 8080; do
+            timeout 120 bash -c "until curl -s -o /dev/null http://127.0.0.1:$port/; do sleep 2; done"
+          done
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
+        env:
+          DYNAMODB_ENDPOINT: http://127.0.0.1:8000
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+          TITLESEARCH_REQUIRE_EMULATORS: "1"
 
   test-bun:
     name: Test (Bun)

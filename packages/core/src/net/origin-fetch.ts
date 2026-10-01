@@ -26,6 +26,12 @@ export type OriginFetch = (url: string | URL, init?: OriginFetchInit) => Promise
 export interface OriginFetchOptions {
   /** Origins such as "https://rdap.verisign.com". HTTPS only. */
   origins: readonly string[];
+  /**
+   * Plain-HTTP origins, each named explicitly: cloud metadata servers and
+   * local emulators (such as http://metadata.google.internal). Never derived
+   * from user input.
+   */
+  httpOrigins?: readonly string[];
   transport?: Transport;
   timeoutMs?: number;
   maxBytes?: number;
@@ -54,6 +60,11 @@ export function createOriginFetch(options: OriginFetchOptions): OriginFetch {
       return u.origin;
     }),
   );
+  for (const o of options.httpOrigins ?? []) {
+    const u = new URL(o);
+    if (u.protocol !== "http:") throw new Error(`HTTP origin ${o} must use http:.`);
+    allowed.add(u.origin);
+  }
   const transport = options.transport ?? globalFetchTransport;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;

@@ -8,16 +8,22 @@
   "exports": {
     ".": "./src/index.ts",
     "./sqlite/node": "./src/sqlite-node.ts",
-    "./sqlite/bun": "./src/sqlite-bun.ts"
+    "./sqlite/bun": "./src/sqlite-bun.ts",
+    "./d1": "./src/d1.ts",
+    "./firestore": "./src/firestore.ts",
+    "./dynamodb": "./src/dynamodb.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:workers": "vitest run --config vitest.workers.config.ts"
   },
   "dependencies": {
-    "@titlesearch/core": "workspace:*"
+    "@titlesearch/core": "workspace:*",
+    "aws4fetch": "1.0.20"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.22.0",
     "@types/node": "24.19.0",
     "typescript": "7.0.2",
     "vitest": "4.1.11"

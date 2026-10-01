@@ -19,5 +19,5 @@ export {
   MAX_VALUE_BYTES,
   type StoreOptions,
 } from "./store.js";
-// Runtime adapters are subpath exports: @titlesearch/cache/sqlite/node and
-// @titlesearch/cache/sqlite/bun.
+// Runtime adapters and cloud stores are subpath exports:
+// @titlesearch/cache/sqlite/node, /sqlite/bun, /d1, /firestore, and /dynamodb.

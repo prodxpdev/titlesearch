@@ -9,6 +9,23 @@ describe("createOriginFetch", () => {
     expect(() => createOriginFetch({ origins: ["http://rdap.example"] })).toThrow(/HTTPS/);
   });
 
+  it("allows only the plain-HTTP origins named explicitly", async () => {
+    const transport = fakeTransport(() => json({ ok: true }));
+    const f = createOriginFetch({
+      origins: [],
+      httpOrigins: ["http://metadata.google.internal"],
+      transport,
+    });
+    expect((await f("http://metadata.google.internal/computeMetadata/v1/")).ok).toBe(true);
+    await expect(f("http://169.254.169.254/")).rejects.toMatchObject({
+      code: "origin_not_allowed",
+    });
+    await expect(f("https://metadata.google.internal/")).rejects.toMatchObject({
+      code: "origin_not_allowed",
+    });
+    expect(() => createOriginFetch({ origins: [], httpOrigins: ["https://x.example"] })).toThrow();
+  });
+
   it("fetches an allowed origin", async () => {
     const transport = fakeTransport(() => json({ ok: true }));
     const f = createOriginFetch({ origins: [RDAP], transport });

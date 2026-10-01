@@ -1,20 +1,38 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalDependencies": ["biome.json", "tsconfig.base.json"],
+  "globalDependencies": [
+    "biome.json",
+    "tsconfig.base.json"
+  ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"]
+      "dependsOn": [
+        "^typecheck"
+      ]
     },
     "test": {
-      "dependsOn": ["^build"],
-      "outputs": []
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [],
+      "passThroughEnv": [
+        "DYNAMODB_ENDPOINT",
+        "FIRESTORE_EMULATOR_HOST",
+        "TITLESEARCH_REQUIRE_EMULATORS"
+      ]
     },
     "test:workers": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": []
     },
     "test:canary": {
