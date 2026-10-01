@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// titlesearch: check | mcp | serve (serve arrives in step 8).
+// titlesearch: check | mcp | serve | browser.
 
 import { parseArgs } from "node:util";
 import type { NameSuggestion } from "@titlesearch/assess";

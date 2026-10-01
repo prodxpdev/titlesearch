@@ -10,7 +10,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "docs": "npx --yes bun@1.4.2 scripts/write-reference.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.31.0",

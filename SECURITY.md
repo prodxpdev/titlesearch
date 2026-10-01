@@ -46,7 +46,32 @@ Titlesearch fetches pages from hosts that users name, passes third-party text to
 - Upstreams that expose account-changing or purchasing tools (for example, Porkbun's hosted MCP) aren't used.
 - A lint rule (`tools/biome-plugins/no-write-operations.grit`) flags identifiers and strings that name registration, transfer, purchase, or DNS-modification operations.
 
+### The site-preview browser
+
+**Threat.** Previews run a real browser on pages from domains users name, executing third-party JavaScript. A page could try to reach internal addresses itself (subresources, redirects, DNS rebinding, WebRTC), exploit the browser, or read credentials and cached data.
+
+**Controls.**
+- **All browser traffic goes through an egress proxy.** The proxy applies `safeFetch`'s address rules after DNS resolution and connects to the address it checked. Chromium flags leave no other path: loopback isn't bypassed, Chromium resolves no names itself, QUIC is off, and WebRTC can't use unproxied UDP.
+- **Each capture is fresh.** It gets a new browser context: no profile, cookies, or credentials. Downloads and permission prompts are denied; service workers, WebRTC, geolocation, and notifications are removed; only http(s) navigations are allowed.
+- **Deployed renderers stand alone.** In the container targets, the renderer is its own service, with an identity that has no permissions and no access to the cache. The API treats it as untrusted: every image must be a WebP of the expected size, and it's re-hashed before being stored.
+- **The UI never loads a third-party site.** There are no iframes and no hotlinked images. Previews are served from Titlesearch's own origin, with `nosniff` and a restrictive CSP.
+- **Tests.** An isolation suite drives a real browser against pages that load private subresources, redirect to metadata endpoints, use DNS rebinding, trigger downloads, and request permissions. Every one must be blocked.
+- **Known gap: Cloudflare Browser Rendering.** On Workers it can't be routed through the proxy. Requests are checked before they're sent, but DNS rebinding between that check and Chromium's own lookup isn't caught. `docs/decisions/0021-workers-deploy.md` lists what holds, and the setup guide offers the container renderer for full control.
+
+### Deployed authentication
+
+- A deployed server is an OAuth resource server: it validates the deployer's identity-provider tokens (issuer, audience, signature, asymmetric algorithms only). It never issues its own, except on Workers, where `workers-oauth-provider` is the authorization server.
+- An explicit allowlist (subjects, verified emails or domains, a scope, or a role) decides who gets in. A server configured without one refuses to start.
+- Browser sessions are signed `__Host-` cookies (`HttpOnly`, `Secure`, `SameSite=Strict`), and sign-in uses PKCE, `state`, and `nonce`. Only the configured host and origin are answered.
+
+### Supply chain
+
+- GitHub Actions and container base images are pinned by digest.
+- Release binaries ship with CycloneDX SBOMs, `SHA256SUMS`, and build-provenance attestations. Container images carry SBOM and provenance attestations, and the npm package is published with provenance through trusted publishing, with no stored token.
+- The pinned Chromium download is verified against a SHA-256 in the repository before use.
+
 ### Local surfaces and secrets
 
 - The local server binds to `127.0.0.1` only, requires a per-install bearer token, and checks the `Origin` header to block DNS rebinding.
+- The desktop app keeps the local token in the OS keychain, and its webview signs in with a one-time code passed outside any URL.
 - Registrar keys and the Anthropic API key come from the platform secret store, the OS keychain, or environment variables. They're never written to code, images, logs, or URLs, and they're redacted from log lines and error messages.

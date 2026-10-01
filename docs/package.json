@@ -1,0 +1,18 @@
+{
+  "name": "@titlesearch/docs",
+  "version": "0.0.0",
+  "description": "The Titlesearch documentation site (VitePress).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/schibsted-grotesk": "5.3.0",
+    "vitepress": "1.6.4"
+  }
+}

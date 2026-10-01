@@ -47,6 +47,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           gh label create contract-canary --color B60205 --description "Live contract drift" 2>/dev/null || true
+          # shellcheck disable=SC2016 # the backticks are a literal Markdown code fence
           body="$(printf 'The nightly contract canary failed: %s\n\n```\n%s\n```\n' "$RUN_URL" "$(tail -n 80 canary.log)")"
           existing="$(gh issue list --label contract-canary --state open --json number --jq '.[0].number')"
           if [ -n "$existing" ]; then

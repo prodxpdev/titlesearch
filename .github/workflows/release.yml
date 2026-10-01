@@ -1,0 +1,397 @@
+name: Release
+
+# Pushing a version tag (v1.2.3) builds and publishes everything:
+#   - CLI binaries for macOS (arm64, x64), Windows (x64), and Linux (x64, arm64),
+#     each with a CycloneDX SBOM, plus SHA256SUMS and build provenance;
+#   - the desktop app for each platform, with signed updater artifacts;
+#   - the API and renderer images on GHCR, with SBOM and provenance attestations;
+#   - the npm package, with provenance, through trusted publishing;
+#   - server.json to the MCP Registry.
+# Signing steps run when their secrets are set (docs/releasing.md); without
+# them, artifacts are published unsigned and the release notes say so.
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  BUN_VERSION: 1.4.2
+
+jobs:
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      release_id: ${{ steps.draft.outputs.id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: v
+        name: Check that the tag matches every manifest
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          node tools/set-version.mjs --check "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - id: draft
+        name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --draft --verify-tag --generate-notes --title "Titlesearch $GITHUB_REF_NAME"
+          echo "id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$GITHUB_REF_NAME\") | .id")" >> "$GITHUB_OUTPUT"
+
+  binaries:
+    name: CLI binaries
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: anchore/sbom-action/download-syft@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        id: syft
+      - name: Build, package, and describe each binary
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          SYFT: ${{ steps.syft.outputs.cmd }}
+        run: |
+          pnpm --filter @titlesearch/web build
+          node apps/cli/scripts/embed-ui.mjs
+          mkdir -p out
+          for target in darwin-arm64 darwin-x64 linux-x64 linux-arm64 windows-x64; do
+            ext=""; [ "$target" = windows-x64 ] && ext=".exe"
+            dir="titlesearch-$VERSION-$target"
+            mkdir -p "build/$dir"
+            npx --yes "bun@$BUN_VERSION" build --compile --target="bun-$target" apps/cli/src/main.ts \
+              --outfile "build/$dir/titlesearch$ext"
+            cp LICENSE NOTICE README.md "build/$dir/"
+            "$SYFT" scan "dir:build/$dir" -o cyclonedx-json="out/$dir.cdx.json"
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: binaries-unsigned
+          path: |
+            build/
+            out/
+
+  sign-macos:
+    name: Sign and notarize macOS binaries
+    needs: [prepare, binaries]
+    runs-on: macos-latest
+    env:
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: binaries-unsigned
+      - name: Sign and notarize
+        if: env.APPLE_CERTIFICATE != ''
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password="$(openssl rand -hex 24)"
+          echo "$APPLE_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$RUNNER_TEMP/cert.p12" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          security list-keychain -d user -s "$keychain"
+          for arch in arm64 x64; do
+            bin="build/titlesearch-$VERSION-darwin-$arch/titlesearch"
+            codesign --force --timestamp --options runtime \
+              --entitlements apps/desktop/src-tauri/entitlements.plist \
+              --sign "$APPLE_SIGNING_IDENTITY" "$bin"
+            ditto -c -k --keepParent "$bin" "$RUNNER_TEMP/notarize-$arch.zip"
+            xcrun notarytool submit "$RUNNER_TEMP/notarize-$arch.zip" \
+              --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          done
+          rm -f "$RUNNER_TEMP/cert.p12"
+      - name: Note unsigned binaries
+        if: env.APPLE_CERTIFICATE == ''
+        run: echo "::warning::APPLE_CERTIFICATE isn't set; macOS binaries are unsigned."
+      - name: Archive
+        run: |
+          mkdir -p dist
+          for arch in arm64 x64; do
+            tar -C build -czf "dist/titlesearch-$VERSION-darwin-$arch.tar.gz" "titlesearch-$VERSION-darwin-$arch"
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: archives-macos
+          path: dist/
+
+  sign-windows:
+    name: Sign the Windows binary
+    needs: [prepare, binaries]
+    runs-on: windows-latest
+    env:
+      WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: binaries-unsigned
+      - name: Sign
+        if: env.WINDOWS_CERTIFICATE != ''
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP "cert.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object FullName | Select-Object -Last 1
+          & $signtool.FullName sign /fd sha256 /tr http://timestamp.digicert.com /td sha256 `
+            /f $pfx /p $env:WINDOWS_CERTIFICATE_PASSWORD "build/titlesearch-$env:VERSION-windows-x64/titlesearch.exe"
+          Remove-Item $pfx
+      - name: Note an unsigned binary
+        if: env.WINDOWS_CERTIFICATE == ''
+        run: Write-Output "::warning::WINDOWS_CERTIFICATE isn't set; the Windows binary is unsigned."
+      - name: Archive
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path "build/titlesearch-$env:VERSION-windows-x64" -DestinationPath "dist/titlesearch-$env:VERSION-windows-x64.zip"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: archives-windows
+          path: dist/
+
+  archive-linux:
+    name: Archive Linux binaries
+    needs: [prepare, binaries]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: binaries-unsigned
+      - run: |
+          mkdir -p dist
+          for arch in x64 arm64; do
+            tar -C build -czf "dist/titlesearch-$VERSION-linux-$arch.tar.gz" "titlesearch-$VERSION-linux-$arch"
+          done
+          cp out/*.cdx.json dist/
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: archives-linux
+          path: dist/
+
+  desktop:
+    name: Desktop (${{ matrix.target }})
+    needs: prepare
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-latest, target: aarch64-apple-darwin }
+          - { os: macos-latest, target: x86_64-apple-darwin }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc }
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu }
+          - { os: ubuntu-22.04-arm, target: aarch64-unknown-linux-gnu }
+    runs-on: ${{ matrix.os }}
+    env:
+      TAURI_TARGET_TRIPLE: ${{ matrix.target }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      WINDOWS_CERTIFICATE_THUMBPRINT: ${{ secrets.WINDOWS_CERTIFICATE_THUMBPRINT }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Rust target
+        shell: bash
+        run: rustup target add "$TAURI_TARGET_TRIPLE"
+      - run: pnpm install --frozen-lockfile
+      - name: Build the sidecar for this target
+        run: pnpm --filter @titlesearch/desktop sidecar
+      - name: Import the Windows signing certificate
+        if: runner.os == 'Windows' && env.WINDOWS_CERTIFICATE_THUMBPRINT != ''
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP "cert.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $password = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+          Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password | Out-Null
+          Remove-Item $pfx
+      - name: Release configuration
+        id: config
+        shell: bash
+        # Updater artifacts need the signing key; Windows signing needs the thumbprint.
+        run: |
+          config='{}'
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            config=$(echo "$config" | jq '.bundle.createUpdaterArtifacts = true')
+          fi
+          if [ -n "$WINDOWS_CERTIFICATE_THUMBPRINT" ]; then
+            config=$(echo "$config" | jq --arg t "$WINDOWS_CERTIFICATE_THUMBPRINT" '.bundle.windows.certificateThumbprint = $t')
+          fi
+          echo "json=$(echo "$config" | jq -c .)" >> "$GITHUB_OUTPUT"
+      - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          projectPath: apps/desktop
+          tauriScript: pnpm tauri
+          args: --target ${{ matrix.target }} --config '${{ steps.config.outputs.json }}'
+          releaseId: ${{ needs.prepare.outputs.release_id }}
+          includeUpdaterJson: ${{ env.TAURI_SIGNING_PRIVATE_KEY != '' }}
+
+  container:
+    name: Container images
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    strategy:
+      matrix:
+        target: [api, renderer]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: deploy/container/Dockerfile
+          target: ${{ matrix.target }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          sbom: true
+          provenance: mode=max
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/titlesearch-${{ matrix.target }}:${{ needs.prepare.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/titlesearch-${{ matrix.target }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ needs.prepare.outputs.version }}
+            org.opencontainers.image.licenses=Apache-2.0
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/titlesearch-${{ matrix.target }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  npm:
+    name: npm package
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - name: Build
+        env:
+          TITLESEARCH_VERSION: ${{ needs.prepare.outputs.version }}
+        run: node apps/cli/scripts/build-npm.mjs
+      - name: Smoke-test the package under Node
+        run: |
+          cd apps/cli/dist/npm && npm pack --pack-destination "$RUNNER_TEMP"
+          mkdir "$RUNNER_TEMP/try" && cd "$RUNNER_TEMP/try" && npm init -y > /dev/null
+          npm install "$RUNNER_TEMP"/titlesearch-*.tgz
+          npx titlesearch --version
+      # Trusted publishing (OIDC): no npm token is stored anywhere.
+      - name: Publish with provenance
+        working-directory: apps/cli/dist/npm
+        run: npx --yes npm@11 publish --provenance --access public
+
+  registry:
+    name: MCP Registry
+    needs: [prepare, npm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install mcp-publisher (checksum-verified)
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/mcp-publisher.tar.gz" \
+            https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz
+          echo "a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc  $RUNNER_TEMP/mcp-publisher.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/mcp-publisher.tar.gz" -C "$RUNNER_TEMP" mcp-publisher
+      # GitHub OIDC proves this repository owns the io.github.prodxpdev namespace.
+      - run: |
+          "$RUNNER_TEMP/mcp-publisher" login github-oidc
+          "$RUNNER_TEMP/mcp-publisher" publish
+
+  publish:
+    name: Publish the release
+    needs: [prepare, sign-macos, sign-windows, archive-linux, desktop, container, npm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: archives-*
+          merge-multiple: true
+          path: dist
+      - name: Checksums
+        run: cd dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*
+      - name: Upload and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false

@@ -10,7 +10,8 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "demo": "playwright test -c playwright.demo.config.ts && node ../../tools/demo-gif.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "5.3.0",

@@ -4,3 +4,4 @@ packages:
   - "deploy/container"
   - "deploy/workers"
   - "tools"
+  - "docs"

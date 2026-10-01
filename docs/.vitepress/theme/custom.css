@@ -1,0 +1,24 @@
+/* The mockup's palette and type (CLAUDE.md, UI): survey blue on navy,
+   Schibsted Grotesk for text, IBM Plex Mono for code and domains. Fonts are
+   self-hosted (theme/index.ts), so the site makes no third-party requests. */
+:root {
+  --vp-c-brand-1: #2f5d8c;
+  --vp-c-brand-2: #244a71;
+  --vp-c-brand-3: #2f5d8c;
+  --vp-c-brand-soft: #e8eff7;
+  --vp-home-hero-name-color: #16233b;
+  --vp-font-family-base: "Schibsted Grotesk", system-ui, sans-serif;
+  --vp-font-family-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+.dark {
+  --vp-c-brand-1: #7fa8d6;
+  --vp-c-brand-2: #9cbde2;
+  --vp-c-brand-3: #2f5d8c;
+  --vp-c-brand-soft: #1b2c44;
+  --vp-home-hero-name-color: #e6ebf2;
+}
+.VPHome .vp-doc img {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  margin-top: 8px;
+}

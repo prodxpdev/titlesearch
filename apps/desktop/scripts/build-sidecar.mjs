@@ -26,7 +26,9 @@ const BUN_TARGETS = {
 const bunTarget = BUN_TARGETS[triple];
 if (!bunTarget) throw new Error(`No Bun target for ${triple}.`);
 
-const run = (cmd, args) => execFileSync(cmd, args, { cwd: root, stdio: "inherit" });
+// On Windows, pnpm and npx are .cmd shims, which need a shell to start.
+const run = (cmd, args) =>
+  execFileSync(cmd, args, { cwd: root, stdio: "inherit", shell: process.platform === "win32" });
 run("pnpm", ["--filter", "@titlesearch/web", "build"]);
 run("node", ["apps/cli/scripts/embed-ui.mjs"]);
 const outDir = join(here, "../src-tauri/binaries");

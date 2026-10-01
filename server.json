@@ -1,0 +1,54 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.prodxpdev/titlesearch",
+  "title": "Titlesearch",
+  "description": "Checks if a product name is free across domain extensions, and who holds the taken ones.",
+  "version": "0.0.0",
+  "websiteUrl": "https://github.com/prodxpdev/titlesearch",
+  "repository": {
+    "url": "https://github.com/prodxpdev/titlesearch",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "titlesearch",
+      "version": "0.0.0",
+      "runtimeHint": "npx",
+      "transport": { "type": "stdio" },
+      "packageArguments": [{ "type": "positional", "value": "mcp" }],
+      "environmentVariables": [
+        {
+          "name": "ANTHROPIC_API_KEY",
+          "description": "Optional. Lets the server judge market overlap and suggest names itself; otherwise Claude does.",
+          "isSecret": true,
+          "isRequired": false
+        },
+        {
+          "name": "PORKBUN_API_KEY",
+          "description": "Optional. With PORKBUN_SECRET_API_KEY, adds prices from Porkbun. A sandbox key (pk1_sb_) is recommended.",
+          "isSecret": true,
+          "isRequired": false
+        },
+        {
+          "name": "PORKBUN_SECRET_API_KEY",
+          "description": "Optional. Porkbun's secret API key.",
+          "isSecret": true,
+          "isRequired": false
+        },
+        {
+          "name": "NAMECOM_USERNAME",
+          "description": "Optional. With NAMECOM_TOKEN, adds prices from Name.com.",
+          "isRequired": false
+        },
+        {
+          "name": "NAMECOM_TOKEN",
+          "description": "Optional. Name.com API token.",
+          "isSecret": true,
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}
