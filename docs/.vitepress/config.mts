@@ -16,14 +16,27 @@ export default defineConfig({
   description:
     "Check whether a name is free across domain extensions, and who occupies the taken ones.",
   lang: "en-US",
-  // GitHub Pages serves the site under the repository name.
-  base: process.env.DOCS_BASE ?? "/titlesearch/",
+  // Served at the root of titlesearch.app (GitHub Pages, custom domain).
+  base: process.env.DOCS_BASE ?? "/",
+  sitemap: { hostname: "https://titlesearch.app" },
   cleanUrls: true,
   // GitHub shows README.md in a folder; the site uses it as the section's index.
   rewrites: { "setup/README.md": "setup/index.md" },
   lastUpdated: true,
   srcExclude: ["design/**", "**/README.md.bak"],
-  head: [["link", { rel: "icon", href: "/titlesearch/favicon.svg" }]],
+  head: [
+    ["link", { rel: "icon", href: "/favicon.svg" }],
+    ["meta", { property: "og:title", content: "Titlesearch" }],
+    [
+      "meta",
+      {
+        property: "og:description",
+        content: "Is the name free, and who lives next door? Free and open source.",
+      },
+    ],
+    ["meta", { property: "og:image", content: "https://titlesearch.app/screens/results.jpg" }],
+    ["meta", { property: "og:url", content: "https://titlesearch.app/" }],
+  ],
   themeConfig: {
     logo: "/favicon.svg",
     nav: [

@@ -6,7 +6,7 @@ It runs as a command-line tool, a local web app, a desktop app for macOS, Window
 
 ![A search for a field-service scheduling product: names suggested from the description, previews of the taken domains, a domain report, and a shortlist. Sample data.](https://raw.githubusercontent.com/prodxpdev/titlesearch/main/docs/public/demo.gif)
 
-**[Documentation](https://prodxpdev.github.io/titlesearch/)** · [Getting started](https://prodxpdev.github.io/titlesearch/guide/getting-started) · [Reading the results](https://prodxpdev.github.io/titlesearch/guide/results) · [Deploying](https://prodxpdev.github.io/titlesearch/setup/) · [MCP tools](https://prodxpdev.github.io/titlesearch/reference/mcp-tools)
+**[Documentation](https://titlesearch.app/)** · [Getting started](https://titlesearch.app/guide/getting-started) · [Reading the results](https://titlesearch.app/guide/results) · [Deploying](https://titlesearch.app/setup/) · [MCP tools](https://titlesearch.app/reference/mcp-tools)
 
 ## Install
 
@@ -38,7 +38,7 @@ Claude Code:
 claude mcp add titlesearch -- npx -y titlesearch mcp
 ```
 
-For a team, [deploy Titlesearch](https://prodxpdev.github.io/titlesearch/setup/) and add `https://<your server>/mcp` as a custom connector. People sign in with their organization's account.
+For a team, [deploy Titlesearch](https://titlesearch.app/setup/) and add `https://<your server>/mcp` as a custom connector. People sign in with their organization's account.
 
 The tools are:
 
@@ -71,7 +71,7 @@ Availability comes from registries and GoDaddy, neither of which reports prices;
 - **Porkbun:** use a sandbox key (prefixed `pk1_sb_`), which Porkbun says sees real availability and prices but only simulates purchases.
 - **Name.com:** tokens can't be scoped, so create a dedicated one.
 
-See [Prices](https://prodxpdev.github.io/titlesearch/guide/prices).
+See [Prices](https://titlesearch.app/guide/prices).
 
 ## Read-only, and not a trademark search
 
@@ -87,7 +87,7 @@ bun apps/cli/src/main.ts check acme --tlds com,io
 
 - [Contributing](https://github.com/prodxpdev/titlesearch/blob/main/CONTRIBUTING.md) (with DCO sign-off)
 - [Security policy](https://github.com/prodxpdev/titlesearch/blob/main/SECURITY.md)
-- [Design decisions](https://prodxpdev.github.io/titlesearch/decisions/0001-record-decisions)
+- [Design decisions](https://titlesearch.app/decisions/0001-record-decisions)
 
 ## License
 

@@ -4,7 +4,7 @@
   "title": "Titlesearch",
   "description": "Checks if a product name is free across domain extensions, and who holds the taken ones.",
   "version": "0.1.0",
-  "websiteUrl": "https://github.com/prodxpdev/titlesearch",
+  "websiteUrl": "https://titlesearch.app",
   "repository": {
     "url": "https://github.com/prodxpdev/titlesearch",
     "source": "github"
