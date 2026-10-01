@@ -212,15 +212,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       TAURI_TARGET_TRIPLE: ${{ matrix.target }}
-      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       WINDOWS_CERTIFICATE_THUMBPRINT: ${{ secrets.WINDOWS_CERTIFICATE_THUMBPRINT }}
+      # linuxdeploy is itself an AppImage; this runs it without FUSE.
+      APPIMAGE_EXTRACT_AND_RUN: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -232,7 +226,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libfuse2
       - name: Rust target
         shell: bash
         run: rustup target add "$TAURI_TARGET_TRIPLE"
@@ -254,9 +248,29 @@ jobs:
       - name: Release configuration
         id: config
         shell: bash
-        # Without an Apple certificate, macOS builds are signed ad hoc, so they
-        # still open (after "Open Anyway"). Updater artifacts need the update key.
+        # Tauri acts on signing variables that merely exist, even when empty,
+        # so only secrets that are actually set are passed on (GITHUB_ENV keeps
+        # them masked). Without an Apple certificate, macOS builds are signed
+        # ad hoc, so they open after "Open Anyway". Updater artifacts need the
+        # update key.
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID \
+            APPLE_PASSWORD APPLE_TEAM_ID TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD; do
+            value="${!name}"
+            if [ -n "$value" ]; then
+              delimiter="EOF_$(openssl rand -hex 8)"
+              printf '%s<<%s\n%s\n%s\n' "$name" "$delimiter" "$value" "$delimiter" >> "$GITHUB_ENV"
+            fi
+          done
           config='{}'
           if [ -z "$APPLE_CERTIFICATE" ]; then
             config=$(echo "$config" | jq '.bundle.macOS.signingIdentity = "-"')
@@ -281,7 +295,8 @@ jobs:
         run: |
           bundle="apps/desktop/src-tauri/target/$TAURI_TARGET_TRIPLE/release/bundle"
           mkdir -p installers
-          copy() { for f in $1; do [ -f "$f" ] && cp "$f" "installers/$2"; done; }
+          # A pattern that matches nothing (a .dmg on Windows) is skipped, not an error.
+          copy() { for f in $1; do if [ -f "$f" ]; then cp "$f" "installers/$2"; fi; done; }
           copy "$bundle/dmg/*.dmg"              "Titlesearch-$LABEL.dmg"
           copy "$bundle/nsis/*-setup.exe"       "Titlesearch-$LABEL-setup.exe"
           copy "$bundle/msi/*.msi"              "Titlesearch-$LABEL.msi"
