@@ -23,6 +23,7 @@ import {
 } from "@titlesearch/deploy";
 import { workersWhoisConnector } from "@titlesearch/providers/whois/workers";
 import { CloudflareBrowserRenderer } from "@titlesearch/render/cloudflare";
+import { RemoteRenderer } from "@titlesearch/render/remote";
 import type { OidcAuth, ServerAuth } from "@titlesearch/server";
 import { consentPage, escapeHtml } from "./consent.js";
 import { uiFromFiles } from "./ui.js";
@@ -101,13 +102,18 @@ function build(bindings: Env): Built {
   if (built) return built;
   const env = parseDeployEnv(bindings);
   const logger = jsonLogger(env.LOG_LEVEL, deploySecrets(env));
+  // The container's renderer service when configured (full egress control),
+  // otherwise Browser Rendering (ADR 21), otherwise share images only.
   const browser = bindings.BROWSER;
-  const renderer = browser
-    ? new CloudflareBrowserRenderer({
-        launch: () => puppeteer.launch(browser),
-        resolver: new DohResolver(),
-      })
-    : undefined;
+  const renderer =
+    env.RENDERER_URL && env.RENDERER_TOKEN
+      ? new RemoteRenderer({ url: env.RENDERER_URL, token: env.RENDERER_TOKEN })
+      : browser
+        ? new CloudflareBrowserRenderer({
+            launch: () => puppeteer.launch(browser),
+            resolver: new DohResolver(),
+          })
+        : undefined;
   let auth: WorkersAuth | undefined;
   const ui = uiFromFiles();
   const app = createDeployedApp(
