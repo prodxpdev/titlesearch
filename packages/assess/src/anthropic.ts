@@ -8,7 +8,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import {
   type Assessment,
-  createOriginFetch,
   type Logger,
   type PresenceEvidence,
   silentLogger,
@@ -16,9 +15,10 @@ import {
 } from "@titlesearch/core";
 import * as z from "zod";
 import type { ConflictClassifier } from "./classifier.js";
+import { ANTHROPIC_API_ORIGIN, createAnthropicClient } from "./client.js";
 import { buildUserMessage, SYSTEM_PROMPT } from "./prompt.js";
 
-export const ANTHROPIC_API_ORIGIN = "https://api.anthropic.com";
+export { ANTHROPIC_API_ORIGIN };
 export const DEFAULT_ANTHROPIC_MODEL = "claude-opus-5-5";
 /** Sites per request. assess_market_conflicts checks at most 20 extensions. */
 export const SITES_PER_REQUEST = 10;
@@ -65,30 +65,7 @@ export class AnthropicClassifier implements ConflictClassifier {
     this.#options = options;
     this.#logger = options.logger ?? silentLogger;
     this.id = `anthropic:${options.model}`;
-    const originFetch = createOriginFetch({
-      origins: [ANTHROPIC_API_ORIGIN],
-      timeoutMs: 120_000,
-      ...(options.transport ? { transport: options.transport } : {}),
-    });
-    this.#client = new Anthropic({
-      apiKey: options.apiKey,
-      baseURL: ANTHROPIC_API_ORIGIN,
-      maxRetries: options.maxRetries ?? 2,
-      fetch: async (input, init) => {
-        const url = typeof input === "string" || input instanceof URL ? input : input.url;
-        const method = (init?.method ?? "GET").toUpperCase();
-        if (method !== "GET" && method !== "POST") throw new Error(`Unsupported method ${method}.`);
-        if (init?.body !== undefined && init.body !== null && typeof init.body !== "string") {
-          throw new Error("Only string request bodies are supported.");
-        }
-        return originFetch(url, {
-          method,
-          ...(init?.headers ? { headers: init.headers } : {}),
-          ...(typeof init?.body === "string" ? { body: init.body } : {}),
-          ...(init?.signal ? { signal: init.signal } : {}),
-        });
-      },
-    });
+    this.#client = createAnthropicClient(options);
   }
 
   async assess(

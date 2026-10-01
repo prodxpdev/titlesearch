@@ -107,6 +107,7 @@ export function Results() {
     rows,
     searchedTlds: tlds,
     searchedMarket,
+    suggestError,
     shortlist,
     previewsOn,
     blurPreviews,
@@ -148,6 +149,11 @@ export function Results() {
         }
       />
       <main>
+        {suggestError && (
+          <p className="notice" role="status">
+            Names from your description weren't added: {suggestError}
+          </p>
+        )}
         {done < rows.length && (
           <div
             className="progress"
@@ -225,6 +231,11 @@ export function Results() {
                     <span className="v">
                       <b>{verdict}.</b> {note}
                     </span>
+                    {row.origin === "suggested" && row.rationale && (
+                      <span className="why">
+                        <span className="tag">Suggested</span> {row.rationale}
+                      </span>
+                    )}
                     <button
                       type="button"
                       className="star"

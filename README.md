@@ -78,6 +78,16 @@ Neither registrar offers a read-only key, so give Titlesearch a key that can't b
 
 Titlesearch only ever calls each registrar's availability check. Without a price source, results say "No price from this source." See [ADR 17](docs/decisions/0017-price-sources.md).
 
+### Names from a description
+
+Besides checking names you have, Titlesearch can suggest new ones from what you're building. Turn on "Names from your description" in the web UI, or from the CLI:
+
+```sh
+ANTHROPIC_API_KEY=... bun apps/cli/src/main.ts check --market "Scheduling software for field-service contractors" --suggest
+```
+
+This needs an Anthropic API key. In Claude, the `suggest_names` tool is offered when the server has a key; otherwise Claude suggests names itself. Suggested names are checked like any other, and they aren't trademark-cleared.
+
 Titlesearch is read-only. It never registers, renews, transfers, or modifies a domain or DNS record. It's also not a trademark search.
 
 - [Deploying to Cloud Run, AWS, or Cloudflare Workers](docs/setup/README.md)

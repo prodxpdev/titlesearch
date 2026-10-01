@@ -6,6 +6,8 @@ import { AuthError, api } from "./api";
 import { getState, type NameRow, setState } from "./store";
 
 const MAX_NAMES = 20;
+/** Names suggested from the description, at most. */
+const SUGGESTIONS = 10;
 
 /** "Acme.com" → "acme". Names are single labels; extensions come from the chips. */
 export function cleanName(raw: string): string {
@@ -22,14 +24,48 @@ export async function runSearch(): Promise<void> {
     MAX_NAMES,
   );
   const market = s.market.trim();
-  if (seeds.length === 0 || tlds.length === 0) return;
+  const suggest = s.variants.semantic && market.length > 0;
+  if ((seeds.length === 0 && !suggest) || tlds.length === 0) return;
 
   const strategies = (["prefix", "suffix", "plural"] as const).filter((k) => s.variants[k]);
-  const rows: NameRow[] = [];
-  const seen = new Set<string>();
+  const rows: NameRow[] = seeds.map((name) => ({
+    name,
+    origin: "seed",
+    status: "pending" as const,
+    results: [],
+  }));
+  const seen = new Set<string>(seeds);
+  setState({ suggestError: undefined });
+
+  // Names from the description come right after the user's own, so they
+  // aren't crowded out by variants.
+  if (suggest) {
+    const count = Math.min(SUGGESTIONS, MAX_NAMES - rows.length);
+    if (count > 0) {
+      try {
+        const { suggestions } = await api.suggest(market, count, seeds);
+        for (const sg of suggestions) {
+          if (seen.has(sg.name)) continue;
+          seen.add(sg.name);
+          rows.push({
+            name: sg.name,
+            origin: "suggested",
+            rationale: sg.rationale,
+            status: "pending",
+            results: [],
+          });
+        }
+      } catch (err) {
+        if (err instanceof AuthError) return setState({ authenticated: false });
+        setState({
+          suggestError: err instanceof Error ? err.message : "Couldn't get suggestions.",
+        });
+      }
+    }
+  }
+  if (rows.length === 0) return;
+
   for (const seed of seeds) {
-    if (!seen.has(seed)) rows.push({ name: seed, origin: "seed", status: "pending", results: [] });
-    seen.add(seed);
     if (strategies.length === 0) continue;
     try {
       const { candidates } = await api.variants(seed, [...strategies], [tlds[0] as string]);
@@ -83,6 +119,8 @@ export function rowVerdict(row: NameRow, tlds: string[]): { verdict: string; not
   if (row.status === "error") return { verdict: "Couldn't check", note: row.error ?? "" };
   const by = (t: string) => row.results.find((r) => r.domain === `${row.name}.${t}`);
   const open = tlds.filter((t) => ["available", "premium"].includes(by(t)?.availability ?? ""));
+  // No registry record, but no registrar confirmed it either (invariant 4): not "open", not "taken".
+  const unrecorded = tlds.filter((t) => by(t)?.availability === "unregistered_at_registry");
   const competitors = tlds.filter((t) => by(t)?.occupancy === "competitor");
   const overlaps = tlds.filter((t) => by(t)?.occupancy === "possible_overlap");
   const com = by("com");
@@ -102,7 +140,19 @@ export function rowVerdict(row: NameRow, tlds: string[]): { verdict: string; not
   else if (com?.occupancy === "unrelated") comText = "The .com is an unrelated site.";
   else if (com?.availability === "available") comText = "The .com is open.";
   else if (com?.availability === "unconfirmed") comText = "The .com's sources disagree.";
+  else if (com?.availability === "unregistered_at_registry")
+    comText = "The .com has no registry record.";
   const overlapText = overlaps.length ? `Possible overlap on .${overlaps.join(", .")}.` : "";
+  if (!open.length && unrecorded.length) {
+    const n =
+      unrecorded.length === 1 ? "One extension has" : `${unrecorded.length} extensions have`;
+    return {
+      verdict: "Not registered",
+      note: [comText, overlapText, `${n} no registry record, but no registrar confirmed it's open.`]
+        .filter(Boolean)
+        .join(" "),
+    };
+  }
   return {
     verdict: open.length ? "Viable" : "Taken",
     note: [comText, overlapText, openText].filter(Boolean).join(" "),

@@ -137,3 +137,12 @@ describe("price keys", () => {
     expect(await ids(both, off)).toEqual(["rdap", "godaddy", "namecom"]);
   });
 });
+
+describe("suggestion room", () => {
+  it("fits within 20 names and 50 domains", async () => {
+    const { suggestionRoom } = await import("../src/commands/suggest.js");
+    expect(suggestionRoom(0, 6)).toBe(8);
+    expect(suggestionRoom(2, 2)).toBe(18);
+    expect(suggestionRoom(8, 6)).toBe(0);
+  });
+});

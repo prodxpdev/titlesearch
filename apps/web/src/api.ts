@@ -63,6 +63,12 @@ export const api = {
   signIn: (code: string) =>
     request<{ authenticated: boolean }>("/api/session", { method: "POST", body: { code } }),
   signOut: () => request<{ authenticated: boolean }>("/api/session", { method: "DELETE" }),
+  suggest: (description: string, count: number, avoid: string[]) =>
+    request<{
+      suggestions: { name: string; rationale: string; style: string }[];
+      suggestedBy: string;
+      notice: string;
+    }>("/api/suggest", { method: "POST", body: { description, count, avoid } }),
   check: (names: string[], tlds: string[]) =>
     request<{ results: DomainResult[] }>("/api/check", { method: "POST", body: { names, tlds } }),
   assess: (name: string, market: string, tlds: string[]) =>

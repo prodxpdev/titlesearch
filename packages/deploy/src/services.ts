@@ -3,7 +3,7 @@
 // the WHOIS connector, the cache store, the preview renderer, and how
 // WebAssembly is loaded.
 
-import { AnthropicClassifier, type AssessmentMode } from "@titlesearch/assess";
+import { AnthropicClassifier, AnthropicSuggester, type AssessmentMode } from "@titlesearch/assess";
 import {
   type AvailabilityProvider,
   type BlobStore,
@@ -108,6 +108,16 @@ export function createDeployedServices(env: DeployEnv, rt: DeployRuntime): Title
         })
       : undefined;
 
+  const suggester = env.ANTHROPIC_API_KEY
+    ? new AnthropicSuggester({
+        apiKey: env.ANTHROPIC_API_KEY,
+        model: env.ASSESSMENT_MODEL,
+        effort: env.ASSESSMENT_EFFORT,
+        logger: rt.logger,
+        ...t,
+      })
+    : undefined;
+
   const rateLimiter = createDefaultRateLimiter();
   return {
     providers,
@@ -115,6 +125,7 @@ export function createDeployedServices(env: DeployEnv, rt: DeployRuntime): Title
     blobs: rt.store,
     probe,
     assessment: { mode, ...(classifier ? { classifier } : {}) },
+    ...(suggester ? { suggester } : {}),
     context: (signal: AbortSignal): ProviderContext => ({ signal, rateLimiter, logger: rt.logger }),
   };
 }
@@ -157,6 +168,7 @@ export function deployedSettings(
       model: env.ASSESSMENT_MODEL,
       keyConfigured: !!env.ANTHROPIC_API_KEY,
     },
+    suggestions: { available: !!services.suggester },
     previews: { mode: renderer ? "local" : "off", browser: null },
     siteChecks: { timeoutSeconds: 5, maxRedirects: 3, pageKilobytes: 512, cacheHours: 6 },
   };

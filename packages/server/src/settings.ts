@@ -16,6 +16,8 @@ export const Settings = z.object({
     /** Whether an Anthropic API key is available to this server. */
     keyConfigured: z.boolean(),
   }),
+  /** Name suggestions from the description: needs a model on the server. */
+  suggestions: z.object({ available: z.boolean() }),
   previews: z.object({
     mode: z.enum(["local", "off"]),
     /** "system": an installed Chrome or Edge. "downloaded": the pinned build. null: none. */

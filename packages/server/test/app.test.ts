@@ -326,6 +326,57 @@ describe("REST routes", () => {
   });
 });
 
+describe("/api/suggest", () => {
+  const suggester = {
+    id: "stub:model",
+    async suggest(description: string, o: { count?: number; avoid?: readonly string[] } = {}) {
+      if (description.includes("fail")) {
+        const { SuggestionError } = await import("@titlesearch/assess");
+        throw new SuggestionError("No usable names came back. Try again.");
+      }
+      return Array.from({ length: o.count ?? 2 }, (_, i) => ({
+        name: `crewly${i}`,
+        rationale: "Crews, dispatched.",
+        style: "coined" as const,
+      }));
+    },
+  };
+  const post = (s: ReturnType<typeof setup>, body: unknown) =>
+    s.post("/api/suggest", body, { origin: ORIGIN });
+
+  it("returns validated suggestions with the not-a-trademark notice", async () => {
+    const res = await post(setup({}, { suggester }), {
+      description: "Dispatch for crews",
+      count: 3,
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      suggestions: unknown[];
+      suggestedBy: string;
+      notice: string;
+    };
+    expect(body.suggestions).toHaveLength(3);
+    expect(body.suggestedBy).toBe("stub:model");
+    expect(body.notice).toMatch(/trademark/);
+  });
+
+  it("says why when the server has no model", async () => {
+    const res = await post(setup(), { description: "Dispatch for crews" });
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({ error: { code: "unavailable" } });
+  });
+
+  it("rejects a bad request and reports a failed suggestion", async () => {
+    expect((await post(setup({}, { suggester }), { description: "" })).status).toBe(400);
+    expect((await post(setup({}, { suggester }), { description: "x", count: 99 })).status).toBe(
+      400,
+    );
+    const failed = await post(setup({}, { suggester }), { description: "please fail" });
+    expect(failed.status).toBe(503);
+    expect(await failed.json()).toMatchObject({ error: { code: "suggestions_failed" } });
+  });
+});
+
 describe("settings", () => {
   const settings: Settings = {
     providers: {
@@ -335,6 +386,7 @@ describe("settings", () => {
       namecom: { enabled: false, configured: false },
     },
     assessment: { mode: "client", model: "claude-opus-5-5", keyConfigured: false },
+    suggestions: { available: false },
     previews: { mode: "local", browser: "system" },
     siteChecks: { timeoutSeconds: 5, maxRedirects: 3, pageKilobytes: 512, cacheHours: 6 },
   };

@@ -4,7 +4,11 @@
 // Workers. See docs/decisions/0015-http-server.md.
 
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { assessMarketConflicts, NOT_A_TRADEMARK_SEARCH } from "@titlesearch/assess";
+import {
+  assessMarketConflicts,
+  NOT_A_TRADEMARK_SEARCH,
+  SuggestionError,
+} from "@titlesearch/assess";
 import {
   checkDomains,
   DomainError,
@@ -21,6 +25,7 @@ import {
   CheckDomainsInput,
   createTitlesearchMcpServer,
   GenerateVariantsInput,
+  SuggestNamesInput,
   type TitlesearchServices,
 } from "@titlesearch/mcp";
 import { previewImageResponse } from "@titlesearch/render/preview-response";
@@ -301,6 +306,38 @@ export function createApp(options: AppOptions): Hono<Env> {
       } catch (err) {
         const m = inputError(err);
         if (m) return apiError(c, 400, "invalid_request", m);
+        throw err;
+      }
+    });
+  });
+
+  app.post("/api/suggest", async (c) => {
+    const body = await parseBody(c, {
+      description: SuggestNamesInput.description,
+      count: SuggestNamesInput.count,
+      avoid: SuggestNamesInput.avoid,
+    });
+    if (body.error) return body.error;
+    const suggester = options.services().suggester;
+    if (!suggester)
+      return apiError(
+        c,
+        503,
+        "unavailable",
+        "Name suggestions need an Anthropic API key on this server. In Claude, ask it to suggest names instead.",
+      );
+    return outboundWork(c, async () => {
+      try {
+        const suggestions = await suggester.suggest(body.data.description, {
+          ...(body.data.count !== undefined ? { count: body.data.count } : {}),
+          ...(body.data.avoid ? { avoid: body.data.avoid } : {}),
+          signal: c.req.raw.signal,
+        });
+        return c.json({ suggestions, suggestedBy: suggester.id, notice: NOT_A_TRADEMARK_SEARCH });
+      } catch (err) {
+        if (err instanceof RangeError) return apiError(c, 400, "invalid_request", err.message);
+        if (err instanceof SuggestionError)
+          return apiError(c, 503, "suggestions_failed", err.message);
         throw err;
       }
     });

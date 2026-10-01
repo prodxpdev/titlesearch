@@ -86,6 +86,7 @@ function toSettings(
       model: config.assessment.model,
       keyConfigured: hasKey,
     },
+    suggestions: { available: !!runtime.services.suggester },
     previews: { mode: config.previews.mode, browser: runtime.browser },
     siteChecks: { timeoutSeconds: 5, maxRedirects: 3, pageKilobytes: 512, cacheHours: 6 },
   };

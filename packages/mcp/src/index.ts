@@ -2,6 +2,7 @@ export {
   CHECK_DOMAINS_DESCRIPTION,
   GENERATE_VARIANTS_DESCRIPTION,
   INSPECT_DOMAIN_DESCRIPTION,
+  SUGGEST_NAMES_DESCRIPTION,
 } from "./descriptions.js";
 export {
   AssessMarketConflictsInput,
@@ -12,6 +13,8 @@ export {
   GenerateVariantsOutput,
   InspectDomainInput,
   InspectDomainOutput,
+  SuggestNamesInput,
+  SuggestNamesOutput,
   toolInputJsonSchemas,
 } from "./schemas.js";
 export {

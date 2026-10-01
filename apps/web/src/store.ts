@@ -8,8 +8,10 @@ import { useSyncExternalStore } from "react";
 
 export interface NameRow {
   name: string;
-  /** "seed" for a name the user typed; otherwise the variant strategy. */
+  /** "seed" for a name the user typed, "suggested" for one from the description; otherwise the variant strategy. */
   origin: string;
+  /** Why a suggested name fits the description. */
+  rationale?: string;
   status: "pending" | "done" | "error";
   error?: string;
   results: DomainResult[];
@@ -19,7 +21,11 @@ export interface State {
   names: string;
   market: string;
   tlds: Record<string, boolean>;
-  variants: { prefix: boolean; suffix: boolean; plural: boolean };
+  variants: { prefix: boolean; suffix: boolean; plural: boolean; semantic: boolean };
+  /** Whether this server can suggest names (it has a model). Unknown until settings load. */
+  suggestionsAvailable?: boolean | undefined;
+  /** Why the last search's suggestions didn't arrive, if they didn't. */
+  suggestError?: string | undefined;
   searchedTlds: string[];
   searchedMarket: string;
   rows: NameRow[];
@@ -58,7 +64,7 @@ let state: State = {
   names: "",
   market: "",
   tlds: Object.fromEntries(TLD_CHOICES.map((t) => [t, DEFAULT_TLDS.has(t)])),
-  variants: { prefix: false, suffix: false, plural: false },
+  variants: { prefix: false, suffix: false, plural: false, semantic: false },
   searchedTlds: [],
   searchedMarket: "",
   rows: [],

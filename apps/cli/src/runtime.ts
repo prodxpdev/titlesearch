@@ -2,7 +2,7 @@
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { AnthropicClassifier, type AssessmentMode } from "@titlesearch/assess";
+import { AnthropicClassifier, AnthropicSuggester, type AssessmentMode } from "@titlesearch/assess";
 import { MemoryStore, type SqliteDriver, SqliteStore } from "@titlesearch/cache";
 import {
   type AvailabilityProvider,
@@ -194,6 +194,17 @@ export async function createServices(options: RuntimeOptions): Promise<Runtime> 
     });
   }
 
+  // Name suggestions use the same model whenever a key is set, whatever the assessment mode.
+  const suggester = options.anthropicApiKey
+    ? new AnthropicSuggester({
+        apiKey: options.anthropicApiKey,
+        model: config.assessment.model,
+        effort: config.assessment.effort,
+        refusalFallback: config.assessment.refusalFallback,
+        logger,
+      })
+    : undefined;
+
   return {
     browser,
     services: {
@@ -201,6 +212,7 @@ export async function createServices(options: RuntimeOptions): Promise<Runtime> 
       probe,
       blobs,
       assessment: { mode, ...(classifier ? { classifier } : {}) },
+      ...(suggester ? { suggester } : {}),
       ...(cache ? { cache } : {}),
       context: (signal: AbortSignal): ProviderContext => ({ signal, rateLimiter, logger }),
     },

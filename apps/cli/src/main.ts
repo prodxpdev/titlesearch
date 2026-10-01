@@ -2,12 +2,14 @@
 // titlesearch: check | mcp | serve (serve arrives in step 8).
 
 import { parseArgs } from "node:util";
+import type { NameSuggestion } from "@titlesearch/assess";
 import pkg from "../package.json" with { type: "json" };
 import { runAssess } from "./commands/assess.js";
 import { runBrowser } from "./commands/browser.js";
 import { runCheck, UsageError } from "./commands/check.js";
 import { runMcp } from "./commands/mcp.js";
 import { DEFAULT_PORT, runServe } from "./commands/serve.js";
+import { formatSuggestions, suggestNames } from "./commands/suggest.js";
 import { ConfigError, loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
 import { resolvePaths } from "./paths.js";
@@ -19,6 +21,7 @@ Check whether a name is free across domain extensions.
 
 Usage:
   titlesearch check <names...> [--market <text>] [--tlds com,io] [--json]
+  titlesearch check [names...] --market <text> --suggest [--count 10]
   titlesearch mcp
   titlesearch serve [--port 4717]
   titlesearch browser install | status
@@ -36,6 +39,8 @@ Commands:
 
 Options:
   --market <text>  What the product is and who it's for; compares taken domains to it
+  --suggest        Also suggest names from the --market description (needs ANTHROPIC_API_KEY)
+  --count <n>      How many names --suggest adds (default 10)
   --tlds <list>    Comma-separated extensions (default: com,io,co,ai,app,dev)
   --json           Print results as JSON
   --port <number>  Port for serve (default 4717)
@@ -45,7 +50,7 @@ Options:
   -v, --version    Show the version
 
 Environment:
-  ANTHROPIC_API_KEY        Enables market-overlap judgment with --market
+  ANTHROPIC_API_KEY        Enables market-overlap judgment and --suggest
   PORKBUN_API_KEY          With PORKBUN_SECRET_API_KEY, adds Porkbun prices
   PORKBUN_SECRET_API_KEY   (the default price source)
   NAMECOM_USERNAME         With NAMECOM_TOKEN, adds Name.com prices
@@ -162,7 +167,7 @@ async function runCommand(
 ): Promise<number> {
   switch (command) {
     case "check": {
-      if (rest.length === 0) {
+      if (rest.length === 0 && !values.suggest) {
         process.stderr.write("Give at least one name, like: titlesearch check acme\n");
         return 2;
       }
@@ -173,6 +178,17 @@ async function runCommand(
           ?.split(",")
           .map((t) => t.trim())
           .filter(Boolean);
+        let names = rest;
+        let suggestions: NameSuggestion[] | undefined;
+        if (values.suggest) {
+          suggestions = await suggestNames(services, rest, values, tlds, controller.signal);
+          names = [...rest, ...suggestions.map((s) => s.name)];
+          if (!values.json) process.stdout.write(`${formatSuggestions(suggestions)}\n\n`);
+        }
+        const withSuggestions = (out: string) =>
+          suggestions && values.json
+            ? JSON.stringify({ suggestions, results: JSON.parse(out) }, null, 2)
+            : out;
         const common = {
           ...(tlds ? { tlds } : {}),
           json: values.json ?? false,
@@ -183,16 +199,16 @@ async function runCommand(
           if (!probe) throw new Error("The presence probe isn't configured.");
           const { out, notice } = await runAssess(
             { ...services, probe },
-            rest,
+            names,
             values.market,
             common,
           );
           if (notice) process.stderr.write(`${notice}\n`);
-          process.stdout.write(`${out}\n`);
+          process.stdout.write(`${withSuggestions(out)}\n`);
           return 0;
         }
-        const out = await runCheck(services, rest, common);
-        process.stdout.write(`${out}\n`);
+        const out = await runCheck(services, names, common);
+        process.stdout.write(`${withSuggestions(out)}\n`);
         return 0;
       } catch (err) {
         if (err instanceof UsageError) {
@@ -222,6 +238,8 @@ function parse(argv: string[]) {
       json: { type: "boolean" },
       "no-cache": { type: "boolean" },
       "no-godaddy": { type: "boolean" },
+      suggest: { type: "boolean" },
+      count: { type: "string" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
     },

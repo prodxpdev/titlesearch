@@ -17,4 +17,25 @@ export {
   type ConflictClassifier,
   NOT_A_TRADEMARK_SEARCH,
 } from "./classifier.js";
+export {
+  type AnthropicClientOptions,
+  createAnthropicClient,
+} from "./client.js";
 export { buildUserMessage, encodeForTag, SYSTEM_PROMPT, siteEvidence } from "./prompt.js";
+export {
+  AnthropicSuggester,
+  type AnthropicSuggesterOptions,
+  acceptSuggestions,
+  buildSuggestMessage,
+  DEFAULT_SUGGESTIONS,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_SUGGESTIONS,
+  type NameSuggester,
+  type NameSuggestion,
+  SUGGEST_SYSTEM_PROMPT,
+  SUGGESTED_NAME,
+  SuggestionError,
+  SuggestionStyle,
+  type SuggestOptions,
+  SuggestOutput,
+} from "./suggest.js";

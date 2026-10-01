@@ -1204,3 +1204,29 @@ dialog.pv::backdrop {
   border-radius: 8px;
   padding: 10px 12px;
 }
+/* A suggested name's reason, under its verdict. */
+.row-h .why {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.row-h .why .tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--survey);
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-right: 2px;
+}
+.notice {
+  background: var(--canvas);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--survey);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+}

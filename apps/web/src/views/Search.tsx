@@ -1,11 +1,24 @@
+import { useEffect } from "react";
+import { api } from "../api";
 import { Band } from "../components";
 import { go } from "../router";
 import { runSearch } from "../search";
 import { setState, TLD_CHOICES, useStore } from "../store";
 
 export function Search() {
-  const { names, market, tlds, variants } = useStore((s) => s);
-  const canRun = names.trim().length > 0 && Object.values(tlds).some(Boolean);
+  const { names, market, tlds, variants, suggestionsAvailable } = useStore((s) => s);
+  const suggesting = variants.semantic && suggestionsAvailable === true;
+  const canRun =
+    (names.trim().length > 0 || (suggesting && market.trim().length > 0)) &&
+    Object.values(tlds).some(Boolean);
+  // Whether this server can suggest names: it needs a model.
+  useEffect(() => {
+    if (suggestionsAvailable !== undefined) return;
+    api.settings().then(
+      (r) => setState({ suggestionsAvailable: r.settings.suggestions.available }),
+      () => setState({ suggestionsAvailable: false }),
+    );
+  }, [suggestionsAvailable]);
   return (
     <>
       <Band
@@ -34,7 +47,10 @@ export function Search() {
                 placeholder={"fieldloom\ncrewcadence"}
                 onChange={(e) => setState({ names: e.target.value })}
               />
-              <p className="hint">One per line. Leave off the extension.</p>
+              <p className="hint">
+                One per line. Leave off the extension.
+                {suggesting ? " Optional when suggesting names from your description." : ""}
+              </p>
             </div>
             <div className="field">
               <label className="f" htmlFor="market">
@@ -48,7 +64,10 @@ export function Search() {
                 placeholder="Scheduling and dispatch software for small field-service contractors"
                 onChange={(e) => setState({ market: e.target.value })}
               />
-              <p className="hint">Used to judge whether sites on taken domains compete with you.</p>
+              <p className="hint">
+                Used to judge whether sites on taken domains compete with you
+                {suggesting ? ", and to suggest names" : ""}.
+              </p>
             </div>
             <div className="field">
               <span className="f" id="tldl">
@@ -80,7 +99,7 @@ export function Search() {
           </div>
           <div className="panel">
             <h2>Also try</h2>
-            <p className="sub">Adds variations of each name to the search.</p>
+            <p className="sub">Adds more names to the search.</p>
             {(
               [
                 ["prefix", "Prefixes", "get, try, use"],
@@ -109,6 +128,25 @@ export function Search() {
                 </span>
               </label>
             ))}
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={suggesting}
+                disabled={suggestionsAvailable !== true}
+                onChange={(e) =>
+                  setState((s) => ({ variants: { ...s.variants, semantic: e.target.checked } }))
+                }
+              />{" "}
+              <span>
+                <b>Names from your description</b>
+                <br />
+                <span className="hint" style={{ margin: 0 }}>
+                  {suggestionsAvailable === false
+                    ? "Needs an Anthropic API key on this server. In Claude, ask it to suggest names."
+                    : "New names suggested from what you're building, not just variations."}
+                </span>
+              </span>
+            </label>
             <hr style={{ border: 0, borderTop: "1px solid var(--line)", margin: "20px 0" }} />
             <h2>Sources</h2>
             <p className="sub" style={{ marginBottom: 8 }}>

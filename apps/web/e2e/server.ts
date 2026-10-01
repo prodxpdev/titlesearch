@@ -196,6 +196,7 @@ let settings: Settings = {
     namecom: { enabled: false, configured: false },
   },
   assessment: { mode: "anthropic", model: "test-model", keyConfigured: true },
+  suggestions: { available: true },
   previews: { mode: "local", browser: "system" },
   siteChecks: { timeoutSeconds: 5, maxRedirects: 3, pageKilobytes: 512, cacheHours: 6 },
 };
@@ -213,7 +214,29 @@ const settingsHandler: SettingsHandler = {
   },
 };
 
+// Stands in for the model: three names that fit "dispatch software".
+const suggester = {
+  id: "anthropic:test-model",
+  async suggest(_description: string, options: { count?: number; avoid?: readonly string[] } = {}) {
+    const all = [
+      {
+        name: "crewcadence",
+        rationale: "A steady rhythm for field crews.",
+        style: "compound" as const,
+      },
+      {
+        name: "dispatchly",
+        rationale: "Says what it does: dispatching jobs.",
+        style: "descriptive" as const,
+      },
+      { name: "routewell", rationale: "Routes that work out well.", style: "compound" as const },
+    ];
+    return all.filter((s) => !options.avoid?.includes(s.name)).slice(0, options.count ?? 10);
+  },
+};
+
 const services = (): TitlesearchServices => ({
+  suggester,
   providers: settings.providers.godaddy.enabled ? [rdap, godaddy] : [rdap],
   probe,
   blobs,

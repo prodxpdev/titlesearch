@@ -89,6 +89,45 @@ export const AssessMarketConflictsOutput = {
   notice: z.string(),
 };
 
+export const SuggestNamesInput = {
+  description: z
+    .string()
+    .trim()
+    .min(1)
+    .max(1000)
+    .describe(
+      "What the product is and who it's for, in a sentence or two. Names are suggested from this.",
+    ),
+  count: z
+    .number()
+    .int()
+    .min(1)
+    .max(20)
+    .optional()
+    .describe("How many names to suggest. Default 10, at most 20."),
+  avoid: z
+    .array(z.string().min(1).max(63))
+    .max(50)
+    .optional()
+    .describe("Names already considered, so they aren't suggested again."),
+  tlds: Tlds.optional().describe(
+    "If given, also checks each suggested name on these extensions, as check_domains would.",
+  ),
+};
+
+export const SuggestNamesOutput = {
+  suggestions: z.array(
+    z.object({
+      name: z.string(),
+      rationale: z.string(),
+      style: z.enum(["descriptive", "compound", "evocative", "metaphor", "coined"]),
+    }),
+  ),
+  suggestedBy: z.string(),
+  results: z.array(DomainResult).optional(),
+  notice: z.string(),
+};
+
 /** JSON Schema for every tool input, for docs and non-MCP clients. */
 export function toolInputJsonSchemas(): Record<string, unknown> {
   return {
@@ -96,5 +135,6 @@ export function toolInputJsonSchemas(): Record<string, unknown> {
     generate_variants: z.toJSONSchema(z.object(GenerateVariantsInput)),
     inspect_domain: z.toJSONSchema(z.object(InspectDomainInput)),
     assess_market_conflicts: z.toJSONSchema(z.object(AssessMarketConflictsInput)),
+    suggest_names: z.toJSONSchema(z.object(SuggestNamesInput)),
   };
 }

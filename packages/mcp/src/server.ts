@@ -6,7 +6,9 @@ import {
   type AssessmentMode,
   assessMarketConflicts,
   type ConflictClassifier,
+  type NameSuggester,
   NOT_A_TRADEMARK_SEARCH,
+  SuggestionError,
 } from "@titlesearch/assess";
 import {
   type AvailabilityProvider,
@@ -19,6 +21,7 @@ import {
   expandCandidates,
   generateVariants,
   inspectDomain,
+  MAX_DOMAINS_PER_CALL,
   normalizeDomain,
   type PresenceProbe,
   type ProviderContext,
@@ -31,6 +34,7 @@ import {
   GENERATE_VARIANTS_DESCRIPTION,
   INSPECT_DOMAIN_DESCRIPTION,
   namingSessionPrompt,
+  SUGGEST_NAMES_DESCRIPTION,
 } from "./descriptions.js";
 import {
   AssessMarketConflictsInput,
@@ -41,6 +45,8 @@ import {
   GenerateVariantsOutput,
   InspectDomainInput,
   InspectDomainOutput,
+  SuggestNamesInput,
+  SuggestNamesOutput,
 } from "./schemas.js";
 
 export interface TitlesearchServices {
@@ -52,6 +58,11 @@ export interface TitlesearchServices {
   blobs?: BlobStore;
   /** How assess_market_conflicts judges sites. Defaults to "client": the MCP client judges. */
   assessment?: { mode: AssessmentMode; classifier?: ConflictClassifier };
+  /**
+   * Suggests names from a product description. Without one, suggest_names
+   * isn't offered, and the client model suggests names itself.
+   */
+  suggester?: NameSuggester;
   /** Builds a provider context for one tool call. */
   context(signal: AbortSignal): ProviderContext;
 }
@@ -153,8 +164,9 @@ export function createTitlesearchMcpServer(
   const server = new McpServer(
     { name: SERVER_NAME, version },
     {
-      instructions:
-        "Titlesearch checks domain availability for product names. It is read-only and isn't a trademark search. Use generate_variants for candidates, then check_domains.",
+      instructions: services.suggester
+        ? "Titlesearch checks domain availability for product names. It is read-only and isn't a trademark search. For candidates, use suggest_names (fresh names from a product description) and generate_variants (variations of a name), then check_domains."
+        : "Titlesearch checks domain availability for product names. It is read-only and isn't a trademark search. Suggest candidate names yourself from what the product is, widen them with generate_variants, then check_domains.",
     },
   );
 
@@ -210,6 +222,67 @@ export function createTitlesearchMcpServer(
       }
     },
   );
+
+  const suggester = services.suggester;
+  if (suggester) {
+    server.registerTool(
+      "suggest_names",
+      {
+        title: "Suggest names",
+        description: SUGGEST_NAMES_DESCRIPTION,
+        inputSchema: SuggestNamesInput,
+        outputSchema: SuggestNamesOutput,
+        annotations: READ_ONLY,
+      },
+      async ({ description, count, avoid, tlds }, extra) => {
+        let suggestions: Awaited<ReturnType<NameSuggester["suggest"]>>;
+        try {
+          // Suggestions times extensions stays within the per-call domain cap.
+          const fit = tlds ? Math.max(1, Math.floor(MAX_DOMAINS_PER_CALL / tlds.length)) : 20;
+          suggestions = await suggester.suggest(description, {
+            count: Math.min(count ?? 10, fit),
+            ...(avoid ? { avoid } : {}),
+            signal: extra.signal,
+          });
+        } catch (err) {
+          if (err instanceof SuggestionError || err instanceof RangeError)
+            return toolError(err.message);
+          throw err;
+        }
+        let results: DomainResult[] | undefined;
+        if (tlds) {
+          try {
+            const domains = expandCandidates(
+              suggestions.map((s) => s.name),
+              tlds,
+            );
+            results = await checkDomains(domains, services.context(extra.signal), {
+              providers: services.providers,
+              ...(services.cache ? { cache: services.cache } : {}),
+            });
+          } catch (err) {
+            const message = inputError(err);
+            if (message) return toolError(message);
+            throw err;
+          }
+        }
+        const text = [
+          suggestions.map((s) => `${s.name} (${s.style}): ${s.rationale}`).join("\n"),
+          ...(results ? [summarize(results)] : []),
+          NOT_A_TRADEMARK_SEARCH,
+        ].join("\n\n");
+        return {
+          content: [{ type: "text", text }],
+          structuredContent: {
+            suggestions,
+            suggestedBy: suggester.id,
+            ...(results ? { results } : {}),
+            notice: NOT_A_TRADEMARK_SEARCH,
+          },
+        };
+      },
+    );
+  }
 
   const probe = services.probe;
   if (probe) {
@@ -329,7 +402,10 @@ export function createTitlesearchMcpServer(
       },
       ({ product, audience }) => ({
         messages: [
-          { role: "user", content: { type: "text", text: namingSessionPrompt(product, audience) } },
+          {
+            role: "user",
+            content: { type: "text", text: namingSessionPrompt(product, audience, !!suggester) },
+          },
         ],
       }),
     );

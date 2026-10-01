@@ -175,6 +175,33 @@ test.describe("mockup routes", () => {
   });
 });
 
+test.describe("names from the description", () => {
+  test("suggests names from what you're building, with reasons", async ({ page }) => {
+    await signIn(page);
+    await page
+      .getByLabel("What are you building?")
+      .fill("Scheduling and dispatch software for field crews");
+    await page.getByLabel(/Names from your description/).check();
+    await page.getByRole("button", { name: "Run search" }).click();
+    await expect(page.getByRole("rowheader").filter({ hasText: "dispatchly" })).toContainText(
+      "Says what it does",
+    );
+    await expect(page.getByText("Suggested").first()).toBeVisible();
+  });
+
+  test("explains why the option is off when the server has no model", async ({ page }) => {
+    await page.route("**/api/settings", async (route) => {
+      const res = await route.fetch();
+      const body = await res.json();
+      body.settings.suggestions = { available: false };
+      await route.fulfill({ response: res, json: body });
+    });
+    await signIn(page);
+    await expect(page.getByLabel(/Names from your description/)).toBeDisabled();
+    await expect(page.getByText("Needs an Anthropic API key on this server")).toBeVisible();
+  });
+});
+
 test.describe("desktop sign-in", () => {
   test("signs in with the code the desktop app provides", async ({ page, request }) => {
     const code = await (await request.get("/__e2e/login-code")).text();
