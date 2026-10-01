@@ -47,7 +47,7 @@ Returns candidates, each with its domain and the strategy that produced it ("see
 
 ## `suggest_names`
 
-**Suggest names.** Offered: When the server has a model (an Anthropic API key). Otherwise the client model suggests names itself.
+**Suggest names.** Offered: When the server has a model: the Anthropic API, a local runtime such as Ollama, or an OpenAI-compatible server. Otherwise the client model suggests names itself.
 
 Suggest product names from a description of the product, using the server's own model. Use this for fresh ideas from what the product is, rather than variations of a name you already have (that's generate_variants).
 

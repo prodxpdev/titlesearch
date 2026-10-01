@@ -21,7 +21,7 @@ export const MAX_MARKET_LENGTH = 1000;
 
 export interface AssessOptions extends InspectOptions {
   mode: AssessmentMode;
-  /** Required when mode is "anthropic". */
+  /** Required when mode is "server". */
   classifier?: ConflictClassifier;
 }
 
@@ -76,14 +76,14 @@ export async function assessMarketConflicts(
   if (trimmed.length === 0 || trimmed.length > MAX_MARKET_LENGTH) {
     throw new RangeError(`Describe the market in 1 to ${MAX_MARKET_LENGTH} characters.`);
   }
-  if (options.mode === "anthropic" && !options.classifier) {
-    throw new Error('Assessment mode "anthropic" needs a classifier.');
+  if (options.mode === "server" && !options.classifier) {
+    throw new Error('Assessment mode "server" needs a classifier.');
   }
 
   const checked = await checkDomains(domains, ctx, options);
   const results = await mapLimit(checked, 4, (r) => withPresence(r, ctx, options));
 
-  const classifier = options.mode === "anthropic" ? options.classifier : undefined;
+  const classifier = options.mode === "server" ? options.classifier : undefined;
   if (!classifier) return { market: trimmed, mode: options.mode, results };
 
   // Only real sites are judged. Parked, for-sale, and empty domains already

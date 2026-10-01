@@ -304,7 +304,7 @@ export function createApp(options: AppOptions): Hono<Env> {
             providers: s.providers,
             probe: s.probe,
             // A browser has no client model: "client" means evidence only here.
-            mode: mode === "anthropic" && classifier ? "anthropic" : "off",
+            mode: mode === "server" && classifier ? "server" : "off",
             ...(classifier ? { classifier } : {}),
             ...(s.cache ? { cache: s.cache } : {}),
           },
@@ -438,6 +438,15 @@ export function createApp(options: AppOptions): Hono<Env> {
     return keyRoute(c, body.data.value);
   });
   app.delete("/api/keys/:name", (c) => keyRoute(c, null));
+
+  // Local model runtimes (Ollama, LM Studio) running on this machine, for the
+  // model picker. Only local servers offer this: a deployed server's "this
+  // machine" isn't the user's.
+  app.get("/api/models/local", async (c) => {
+    if (!options.settings?.detectModels)
+      return apiError(c, 404, "not_found", "Local model detection isn't available here.");
+    return c.json({ runtimes: await options.settings.detectModels() });
+  });
 
   app.post("/api/token/rotate", async (c) => {
     if (!options.rotateToken || !options.auth.setToken)

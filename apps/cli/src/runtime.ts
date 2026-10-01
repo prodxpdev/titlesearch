@@ -2,7 +2,17 @@
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { AnthropicClassifier, AnthropicSuggester, type AssessmentMode } from "@titlesearch/assess";
+import {
+  type AssessmentMode,
+  createJsonModel,
+  describeModel,
+  MODEL_PROVIDERS,
+  ModelChoice,
+  ModelClassifier,
+  type ModelDescriptor,
+  ModelSuggester,
+  modelUnavailable,
+} from "@titlesearch/assess";
 import { MemoryStore, type SqliteDriver, SqliteStore } from "@titlesearch/cache";
 import {
   type AvailabilityProvider,
@@ -46,6 +56,8 @@ export interface RuntimeOptions {
   command: "mcp" | "check";
   /** From ANTHROPIC_API_KEY. Never logged: it's registered with the redacting logger. */
   anthropicApiKey?: string;
+  /** From OPENAI_COMPATIBLE_API_KEY, for an OpenAI-compatible server. Also redacted. */
+  openaiCompatibleApiKey?: string;
   /** Price-source credentials from the environment; also registered with the logger. */
   priceKeys?: PriceKeys;
 }
@@ -75,15 +87,43 @@ export function priceSecrets(keys: PriceKeys): string[] {
   );
 }
 
-/** Resolves the assessment mode from config, the command, and whether a key is set. */
+/** Resolves the assessment mode from config, the command, and whether the model can be used. */
 export function resolveAssessmentMode(
   configured: AssessmentMode | undefined,
   command: "mcp" | "check",
-  hasKey: boolean,
+  modelReady: boolean,
 ): AssessmentMode {
   if (configured) return configured;
   if (command === "mcp") return "client";
-  return hasKey ? "anthropic" : "off";
+  return modelReady ? "server" : "off";
+}
+
+/**
+ * A model from TITLESEARCH_MODEL ("ollama:llama3.1:8b", "openai-compatible:<id>",
+ * or a bare Anthropic id) and TITLESEARCH_MODEL_URL, overriding config.json.
+ */
+export function modelFromEnv(env: Record<string, string | undefined>): ModelChoice | undefined {
+  const raw = env.TITLESEARCH_MODEL?.trim();
+  if (!raw) return undefined;
+  const colon = raw.indexOf(":");
+  const prefix = colon > 0 ? raw.slice(0, colon) : "";
+  const known = (MODEL_PROVIDERS as readonly string[]).includes(prefix);
+  const parsed = ModelChoice.safeParse({
+    provider: known ? prefix : "anthropic",
+    id: known ? raw.slice(colon + 1) : raw,
+    ...(env.TITLESEARCH_MODEL_URL?.trim() ? { baseUrl: env.TITLESEARCH_MODEL_URL.trim() } : {}),
+  });
+  if (!parsed.success)
+    throw new ConfigError(`TITLESEARCH_MODEL: ${parsed.error.issues[0]?.message ?? "invalid"}`);
+  return parsed.data;
+}
+
+export interface ModelStatus {
+  choice: ModelChoice;
+  descriptor: ModelDescriptor;
+  label: string;
+  /** Why the model can't be used yet, or undefined when it can. */
+  unavailable: string | undefined;
 }
 
 const isBun = typeof (globalThis as { Bun?: unknown }).Bun !== "undefined";
@@ -114,6 +154,8 @@ export interface Runtime {
   browser: "system" | "downloaded" | null;
   /** Stops the preview browser, if one started. */
   close(): Promise<void>;
+  /** The configured model, and whether it can be used. */
+  model: ModelStatus;
 }
 
 async function wasmLoader(): Promise<WasmLoader> {
@@ -175,35 +217,31 @@ export async function createServices(options: RuntimeOptions): Promise<Runtime> 
   });
   const probe: PresenceProbe = (domain, signal) =>
     probePresence(domain, { dns, signal, previewer });
-  const mode = resolveAssessmentMode(
-    config.assessment.mode,
-    options.command,
-    !!options.anthropicApiKey,
-  );
-  let classifier: AnthropicClassifier | undefined;
-  if (mode === "anthropic") {
-    if (!options.anthropicApiKey) {
-      throw new ConfigError('assessment.mode is "anthropic", but ANTHROPIC_API_KEY isn\'t set.');
-    }
-    classifier = new AnthropicClassifier({
-      apiKey: options.anthropicApiKey,
-      model: config.assessment.model,
-      effort: config.assessment.effort,
-      refusalFallback: config.assessment.refusalFallback,
-      logger,
-    });
+  const modelKeys = {
+    anthropic: options.anthropicApiKey,
+    openaiCompatible: options.openaiCompatibleApiKey,
+  };
+  const choice = config.assessment.model;
+  const model = createJsonModel(choice, modelKeys, {
+    effort: config.assessment.effort,
+    refusalFallback: config.assessment.refusalFallback,
+    logger,
+  });
+  const unavailable = modelUnavailable(choice, modelKeys);
+  const mode = resolveAssessmentMode(config.assessment.mode, options.command, !!model);
+  if (mode === "server" && !model) {
+    throw new ConfigError(
+      `assessment.mode is "server", but the model can't be used: ${unavailable}`,
+    );
   }
-
-  // Name suggestions use the same model whenever a key is set, whatever the assessment mode.
-  const suggester = options.anthropicApiKey
-    ? new AnthropicSuggester({
-        apiKey: options.anthropicApiKey,
-        model: config.assessment.model,
-        effort: config.assessment.effort,
-        refusalFallback: config.assessment.refusalFallback,
-        logger,
-      })
-    : undefined;
+  const classifier = mode === "server" && model ? new ModelClassifier(model, logger) : undefined;
+  // Name suggestions use the same model whenever it can be used, whatever the assessment mode.
+  const suggester = model ? new ModelSuggester(model, logger) : undefined;
+  const descriptor = model?.descriptor ?? {
+    provider: choice.provider,
+    id: choice.id,
+    locality: "remote" as const,
+  };
 
   return {
     browser,
@@ -219,5 +257,6 @@ export async function createServices(options: RuntimeOptions): Promise<Runtime> 
     close: async () => {
       await renderer?.close();
     },
+    model: { choice, descriptor, label: describeModel(descriptor), unavailable },
   };
 }

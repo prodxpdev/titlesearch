@@ -46,7 +46,7 @@ async function request<T>(
 
 export interface MarketAssessmentResponse {
   market: string;
-  mode: "anthropic" | "client" | "off";
+  mode: "server" | "client" | "off";
   assessedBy?: string;
   results: DomainResult[];
   notice: string;
@@ -83,6 +83,11 @@ export const api = {
       body: { seed, strategies, tlds },
     }),
   settings: () => request<{ settings: Settings; version: string }>("/api/settings"),
+  /** Ollama and LM Studio, if they're running on this computer. */
+  localModels: () =>
+    request<{ runtimes: { provider: "ollama" | "lmstudio"; baseUrl: string; models: string[] }[] }>(
+      "/api/models/local",
+    ),
   /** Saves a key to the keychain (desktop app). The value is never sent back. */
   setKey: (name: KeyName, value: string) =>
     request<{ settings: Settings }>(`/api/keys/${name}`, { method: "PUT", body: { value } }),

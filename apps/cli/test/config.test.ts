@@ -33,7 +33,11 @@ describe("loadConfig", () => {
       whois: { enable: [] },
       cache: { enabled: true },
       previews: { mode: "local" },
-      assessment: { model: "claude-opus-5-5", effort: "medium", refusalFallback: true },
+      assessment: {
+        model: { provider: "anthropic", id: "claude-opus-5-5" },
+        effort: "medium",
+        refusalFallback: true,
+      },
     });
   });
 
@@ -63,9 +67,9 @@ describe("resolveAssessmentMode", () => {
   it.each([
     [undefined, "mcp", true, "client"],
     [undefined, "mcp", false, "client"],
-    [undefined, "check", true, "anthropic"],
+    [undefined, "check", true, "server"],
     [undefined, "check", false, "off"],
-    ["anthropic", "mcp", true, "anthropic"],
+    ["server", "mcp", true, "server"],
     ["off", "check", true, "off"],
   ] as const)("config %s, command %s, key %s → %s", (configured, command, hasKey, expected) => {
     expect(resolveAssessmentMode(configured, command, hasKey)).toBe(expected);
@@ -144,5 +148,68 @@ describe("suggestion room", () => {
     expect(suggestionRoom(0, 6)).toBe(8);
     expect(suggestionRoom(2, 2)).toBe(18);
     expect(suggestionRoom(8, 6)).toBe(0);
+  });
+});
+
+describe("models", () => {
+  it("reads older configs: a model string and the anthropic mode", () => {
+    const c = CliConfig.parse({ assessment: { mode: "anthropic", model: "claude-opus-5-5" } });
+    expect(c.assessment.mode).toBe("server");
+    expect(c.assessment.model).toEqual({ provider: "anthropic", id: "claude-opus-5-5" });
+  });
+
+  it("accepts a local or OpenAI-compatible model", () => {
+    const c = CliConfig.parse({
+      assessment: {
+        model: {
+          provider: "openai-compatible",
+          id: "llama-3.3-70b",
+          baseUrl: "https://api.groq.com/openai/v1",
+        },
+      },
+    });
+    expect(c.assessment.model.provider).toBe("openai-compatible");
+    expect(() =>
+      CliConfig.parse({ assessment: { model: { provider: "openai-compatible", id: "x" } } }),
+    ).toThrow();
+  });
+
+  it("reads TITLESEARCH_MODEL", async () => {
+    const { modelFromEnv } = await import("../src/runtime.js");
+    expect(modelFromEnv({})).toBeUndefined();
+    expect(modelFromEnv({ TITLESEARCH_MODEL: "ollama:llama3.1:8b" })).toEqual({
+      provider: "ollama",
+      id: "llama3.1:8b",
+    });
+    expect(modelFromEnv({ TITLESEARCH_MODEL: "claude-opus-5-5" })).toEqual({
+      provider: "anthropic",
+      id: "claude-opus-5-5",
+    });
+    expect(
+      modelFromEnv({
+        TITLESEARCH_MODEL: "openai-compatible:m",
+        TITLESEARCH_MODEL_URL: "https://openrouter.ai/api/v1",
+      }),
+    ).toEqual({ provider: "openai-compatible", id: "m", baseUrl: "https://openrouter.ai/api/v1" });
+    expect(() => modelFromEnv({ TITLESEARCH_MODEL: "openai-compatible:m" })).toThrow(/base URL/);
+  });
+
+  it("judges with a local model by default when one is chosen, with no key", async () => {
+    const rt = await createServices({
+      config: CliConfig.parse({
+        previews: { mode: "off" },
+        assessment: { model: { provider: "ollama", id: "llama3.1:8b" } },
+      }),
+      cacheDir: "",
+      dataDir: "",
+      logger: silentLogger,
+      noCache: true,
+      command: "check",
+    });
+    await rt.close();
+    expect(rt.services.assessment?.mode).toBe("server");
+    expect(rt.services.assessment?.classifier?.id).toBe("ollama:llama3.1:8b");
+    expect(rt.services.suggester?.id).toBe("ollama:llama3.1:8b");
+    expect(rt.model.label).toBe("Ollama · llama3.1:8b (this computer)");
   });
 });

@@ -149,7 +149,7 @@ test.describe("mockup routes", () => {
     await expect(godaddy).toHaveAttribute("aria-checked", "true");
     await godaddy.click();
     await expect(godaddy).toHaveAttribute("aria-checked", "false");
-    await page.getByLabel("Leave it to Claude in chat").check();
+    await page.getByLabel(/Leave it to Claude in chat/).check();
     await expect(page.getByLabel("Leave it to Claude in chat")).toBeChecked();
     await expect(page.getByRole("switch", { name: "Use RDAP" })).toBeDisabled();
     const porkbun = page.getByRole("switch", { name: "Use Porkbun" });
@@ -183,6 +183,30 @@ test.describe("mockup routes", () => {
   });
 });
 
+test.describe("open models", () => {
+  test("chooses a model in Ollama on this computer", async ({ page }) => {
+    await signIn(page);
+    await page.getByRole("navigation").getByRole("link", { name: "Providers" }).click();
+    await page.getByLabel("Model", { exact: true }).selectOption("ollama");
+    const local = page.getByLabel("Ollama model");
+    await expect(local).toBeVisible();
+    await expect(page.getByText("never leave it")).toBeVisible();
+    await local.selectOption("llama3.1:8b");
+    await page.getByRole("button", { name: "Use this model" }).click();
+    await expect(page.getByText("Now: Ollama · llama3.1:8b (this computer)")).toBeVisible();
+    await expect(page.getByLabel(/An open model, on this computer/)).toBeEnabled();
+  });
+
+  test("says when a local runtime isn't running", async ({ page }) => {
+    await page.route("**/api/models/local", (route) => route.fulfill({ json: { runtimes: [] } }));
+    await signIn(page);
+    await page.getByRole("navigation").getByRole("link", { name: "Providers" }).click();
+    await page.getByLabel("Model", { exact: true }).selectOption("lmstudio");
+    await expect(page.getByText("LM Studio isn't running on this computer")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Use this model" })).toBeDisabled();
+  });
+});
+
 test.describe("names from the description", () => {
   test("suggests names from what you're building, with reasons", async ({ page }) => {
     await signIn(page);
@@ -206,7 +230,7 @@ test.describe("names from the description", () => {
     });
     await signIn(page);
     await expect(page.getByLabel(/Names from your description/)).toBeDisabled();
-    await expect(page.getByText("Needs an Anthropic API key on this server")).toBeVisible();
+    await expect(page.getByText(/Needs a model: choose Claude or an open model/)).toBeVisible();
   });
 });
 

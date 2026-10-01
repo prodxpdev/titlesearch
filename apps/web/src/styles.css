@@ -1245,3 +1245,14 @@ dialog.pv::backdrop {
   min-width: 180px;
   font-family: var(--mono);
 }
+/* The model picker under Market overlap. */
+.model-picker select,
+.model-picker input:not([type="password"]) {
+  width: 100%;
+}
+.model-picker .row-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}

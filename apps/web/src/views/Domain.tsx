@@ -2,7 +2,7 @@ import type { DomainResult, SourceResult } from "@titlesearch/core";
 import { useEffect, useState } from "react";
 import { AuthError, api } from "../api";
 import { Band, Kv, preview, previewCaption, Shot, Src, StatusPill } from "../components";
-import { formatMoney, LABEL, sourceName, statusOf, statusStyle } from "../labels";
+import { formatMoney, judgeLabel, LABEL, sourceName, statusOf, statusStyle } from "../labels";
 import { findResult, getState, setState, toast, upsertResult, useStore } from "../store";
 
 const REGISTRY = new Set(["rdap", "whois"]);
@@ -294,7 +294,7 @@ function MarketOverlap({ r, market }: { r: DomainResult; market: string }) {
           {market ? `Compared with: ${market}` : "No market description in this search."}
         </p>
         <p style={{ margin: 0 }}>
-          Not assessed. Leave it to Claude in chat, or choose the Anthropic API on the{" "}
+          Not assessed. Leave it to Claude in chat, or choose a model on the{" "}
           <a href="#/providers">Providers</a> screen.
         </p>
       </div>
@@ -328,7 +328,7 @@ function MarketOverlap({ r, market }: { r: DomainResult; market: string }) {
       </ul>
       <p className="hint" style={{ marginTop: 14 }}>
         {a
-          ? `Assessed by Claude through the Anthropic API (${a.assessedBy.replace(/^anthropic:/, "")}).`
+          ? `Assessed by ${judgeLabel(a.assessedBy)}.`
           : "From parking and sale signals, not a judgment."}{" "}
         This is not a trademark search.
       </p>

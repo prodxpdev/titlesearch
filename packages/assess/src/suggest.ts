@@ -1,15 +1,14 @@
 // Semantic name suggestions: names generated from what the product is,
 // rather than variations of a name the user already has. Like assessment,
-// generation is pluggable: the "anthropic" suggester calls the Messages API
-// with the user's key; under MCP the client model suggests names itself.
+// generation is pluggable: a server-side model (the Anthropic API, a local
+// runtime such as Ollama, or an OpenAI-compatible server) suggests names, or
+// under MCP the client model suggests names itself.
 // Every suggested name is validated as a domain label before anyone checks
 // it. See docs/decisions/0024-semantic-suggestions.md.
 
-import type Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { type Logger, silentLogger, type Transport } from "@titlesearch/core";
 import * as z from "zod";
-import { createAnthropicClient } from "./client.js";
+import { AnthropicJsonModel, type JsonModel } from "./json-model.js";
 import { encodeForTag } from "./prompt.js";
 
 /** Suggestions per request. Matches the 20-name cap on every tool call. */
@@ -129,17 +128,23 @@ export interface AnthropicSuggesterOptions {
   maxRetries?: number;
 }
 
-export class AnthropicSuggester implements NameSuggester {
+/**
+ * Suggests names with any model that answers in JSON: the Anthropic API, a
+ * local runtime such as Ollama, or an OpenAI-compatible server.
+ */
+export class ModelSuggester implements NameSuggester {
   readonly id: string;
-  readonly #client: Anthropic;
-  readonly #options: AnthropicSuggesterOptions;
+  readonly #model: JsonModel;
   readonly #logger: Logger;
 
-  constructor(options: AnthropicSuggesterOptions) {
-    this.#options = options;
-    this.#logger = options.logger ?? silentLogger;
-    this.id = `anthropic:${options.model}`;
-    this.#client = createAnthropicClient(options);
+  constructor(model: JsonModel, logger?: Logger) {
+    this.#model = model;
+    this.#logger = logger ?? silentLogger;
+    this.id = model.id;
+  }
+
+  get descriptor(): JsonModel["descriptor"] {
+    return this.#model.descriptor;
   }
 
   async suggest(description: string, options: SuggestOptions = {}): Promise<NameSuggestion[]> {
@@ -149,43 +154,30 @@ export class AnthropicSuggester implements NameSuggester {
       throw new RangeError(`Keep the description under ${MAX_DESCRIPTION_LENGTH} characters.`);
     const count = Math.min(Math.max(1, options.count ?? DEFAULT_SUGGESTIONS), MAX_SUGGESTIONS);
     const avoid = (options.avoid ?? []).slice(0, 50);
-    const fallback = this.#options.refusalFallback ?? true;
     // A few extra, since some may fail validation or repeat.
     const asked = Math.min(count + 4, MAX_SUGGESTIONS + 4);
 
-    let response: Awaited<ReturnType<Anthropic["beta"]["messages"]["parse"]>>;
-    try {
-      response = await this.#client.beta.messages.parse(
-        {
-          model: this.#options.model,
-          max_tokens: 8000,
-          ...(fallback
-            ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const }
-            : {}),
-          output_config: {
-            effort: this.#options.effort ?? "medium",
-            format: zodOutputFormat(SuggestOutput),
-          },
-          system: SUGGEST_SYSTEM_PROMPT,
-          messages: [{ role: "user", content: buildSuggestMessage(text, asked, avoid) }],
-        },
-        options.signal ? { signal: options.signal } : undefined,
-      );
-    } catch (err) {
-      options.signal?.throwIfAborted();
-      this.#logger.warn("Suggestion request failed", {
-        error: err instanceof Error ? err.message : String(err),
-      });
-      throw new SuggestionError("Couldn't get suggestions from the Anthropic API. Try again.");
+    const result = await this.#model.generate({
+      system: SUGGEST_SYSTEM_PROMPT,
+      user: buildSuggestMessage(text, asked, avoid),
+      schema: SuggestOutput,
+      schemaName: "name_suggestions",
+      maxTokens: 8000,
+      signal: options.signal,
+    });
+    if (!result.ok) {
+      this.#logger.warn("Suggestions didn't complete", { model: this.id, reason: result.reason });
+      throw new SuggestionError(`${result.reason} Try again.`);
     }
-    if (response.stop_reason !== "end_turn") {
-      this.#logger.warn("Suggestions didn't complete", { stopReason: response.stop_reason });
-      throw new SuggestionError("The model didn't finish its suggestions. Try again.");
-    }
-    const parsed = SuggestOutput.safeParse(response.parsed_output);
-    if (!parsed.success) throw new SuggestionError("The suggestions failed validation. Try again.");
-    const accepted = acceptSuggestions(parsed.data.names, count, avoid);
+    const accepted = acceptSuggestions(result.value.names, count, avoid);
     if (accepted.length === 0) throw new SuggestionError("No usable names came back. Try again.");
     return accepted;
+  }
+}
+
+/** Suggestions through the Anthropic API. */
+export class AnthropicSuggester extends ModelSuggester {
+  constructor(options: AnthropicSuggesterOptions) {
+    super(new AnthropicJsonModel(options), options.logger);
   }
 }

@@ -34,7 +34,7 @@ export async function runAssess(
       providers: services.providers,
       probe: services.probe,
       // In the CLI there's no client model to judge, so "client" means evidence only.
-      mode: mode === "anthropic" ? "anthropic" : "off",
+      mode: mode === "server" ? "server" : "off",
       ...(services.assessment?.classifier ? { classifier: services.assessment.classifier } : {}),
       ...(services.cache ? { cache: services.cache } : {}),
     });
@@ -43,9 +43,9 @@ export async function runAssess(
     throw err;
   }
   const notice =
-    mode === "anthropic"
+    mode === "server"
       ? undefined
-      : "Market overlap wasn't judged: set ANTHROPIC_API_KEY, or assessment.mode in config.json, to judge sites. Showing what's there.";
+      : "Market overlap wasn't judged. To judge sites, set ANTHROPIC_API_KEY, or use an open model: TITLESEARCH_MODEL=ollama:llama3.1:8b (see `titlesearch models`). Showing what's there.";
   const out = options.json
     ? JSON.stringify({ ...assessed, notice: NOT_A_TRADEMARK_SEARCH }, null, 2)
     : formatAssessment(assessed);

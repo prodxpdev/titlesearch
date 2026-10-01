@@ -385,13 +385,25 @@ describe("settings", () => {
       porkbun: { enabled: false, configured: false },
       namecom: { enabled: false, configured: false },
     },
-    assessment: { mode: "client", model: "claude-opus-5-5", keyConfigured: false },
+    assessment: {
+      mode: "client",
+      model: {
+        provider: "anthropic",
+        id: "claude-opus-5-5",
+        label: "Anthropic · claude-opus-5-5 (Anthropic API)",
+        local: false,
+      },
+      ready: false,
+      unavailableReason: "Add an Anthropic API key.",
+      keyConfigured: false,
+    },
     suggestions: { available: false },
     previews: { mode: "local", browser: "system" },
     keys: {
       storage: "keychain",
       set: {
         ANTHROPIC_API_KEY: false,
+        OPENAI_COMPATIBLE_API_KEY: false,
         PORKBUN_API_KEY: false,
         PORKBUN_SECRET_API_KEY: false,
         NAMECOM_USERNAME: false,
@@ -420,6 +432,43 @@ describe("settings", () => {
       },
     };
   };
+
+  it("accepts a model choice, and the old mode name", async () => {
+    const h = handler();
+    const { authed } = setup({ settings: h });
+    const res = await authed("/api/settings", {
+      method: "PATCH",
+      body: JSON.stringify({
+        assessment: { mode: "anthropic", model: { provider: "ollama", id: "llama3.1:8b" } },
+      }),
+    });
+    expect(res.status).toBe(200);
+    expect(h.patches).toEqual([
+      { assessment: { mode: "server", model: { provider: "ollama", id: "llama3.1:8b" } } },
+    ]);
+    const bad = await authed("/api/settings", {
+      method: "PATCH",
+      body: JSON.stringify({ assessment: { model: { provider: "openai-compatible", id: "x" } } }),
+    });
+    expect(bad.status).toBe(400);
+  });
+
+  it("lists local model runtimes where the server offers it", async () => {
+    const h = {
+      ...handler(),
+      detectModels: async () => [
+        { provider: "ollama" as const, baseUrl: "http://127.0.0.1:11434", models: ["llama3.1:8b"] },
+      ],
+    };
+    const { authed } = setup({ settings: h });
+    expect(await (await authed("/api/models/local")).json()).toEqual({
+      runtimes: [
+        { provider: "ollama", baseUrl: "http://127.0.0.1:11434", models: ["llama3.1:8b"] },
+      ],
+    });
+    const { authed: none } = setup({ settings: handler() });
+    expect((await none("/api/models/local")).status).toBe(404);
+  });
 
   it("saves and removes keys, and never returns them", async () => {
     const h = handler();

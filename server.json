@@ -33,6 +33,22 @@
           "isRequired": false
         },
         {
+          "name": "TITLESEARCH_MODEL",
+          "description": "Optional. An open model for judging and suggestions, such as ollama:llama3.1:8b, or openai-compatible:<model> with TITLESEARCH_MODEL_URL.",
+          "isRequired": false
+        },
+        {
+          "name": "TITLESEARCH_MODEL_URL",
+          "description": "Optional. The base URL of an OpenAI-compatible server, or of a local runtime on a non-default port.",
+          "isRequired": false
+        },
+        {
+          "name": "OPENAI_COMPATIBLE_API_KEY",
+          "description": "Optional. The key for that OpenAI-compatible server, if it needs one.",
+          "isSecret": true,
+          "isRequired": false
+        },
+        {
           "name": "PORKBUN_API_KEY",
           "description": "Optional. With PORKBUN_SECRET_API_KEY, adds prices from Porkbun. A sandbox key (pk1_sb_) is recommended.",
           "isSecret": true,

@@ -1,11 +1,13 @@
 // What the Providers screen shows and changes. Secrets are never part of
 // settings: the UI shows whether a key is configured, never the key.
 
+import { MODEL_PROVIDERS, ModelChoice } from "@titlesearch/assess";
 import * as z from "zod";
 
 /** The keys the app can hold. Values never appear in settings, only whether each is set. */
 export const KEY_NAMES = [
   "ANTHROPIC_API_KEY",
+  "OPENAI_COMPATIBLE_API_KEY",
   "PORKBUN_API_KEY",
   "PORKBUN_SECRET_API_KEY",
   "NAMECOM_USERNAME",
@@ -21,8 +23,20 @@ export const Settings = z.object({
     namecom: z.object({ enabled: z.boolean(), configured: z.boolean() }),
   }),
   assessment: z.object({
-    mode: z.enum(["anthropic", "client", "off"]),
-    model: z.string(),
+    mode: z.enum(["server", "client", "off"]),
+    /** The model "server" mode uses, and that suggests names. Never holds a key. */
+    model: z.object({
+      provider: z.enum(MODEL_PROVIDERS),
+      id: z.string(),
+      baseUrl: z.string().optional(),
+      /** "Ollama · llama3.1:8b (this computer)". */
+      label: z.string(),
+      /** Runs on this machine: site text and descriptions don't leave it. */
+      local: z.boolean(),
+    }),
+    /** The model can be used now. When not, unavailableReason says what's missing. */
+    ready: z.boolean(),
+    unavailableReason: z.string().optional(),
     /** Whether an Anthropic API key is available to this server. */
     keyConfigured: z.boolean(),
   }),
@@ -63,7 +77,14 @@ export const SettingsPatch = z
       .strict()
       .optional(),
     assessment: z
-      .object({ mode: z.enum(["anthropic", "client", "off"]) })
+      .object({
+        // "anthropic" is the old name for "server".
+        mode: z
+          .enum(["server", "client", "off", "anthropic"])
+          .transform((m) => (m === "anthropic" ? "server" : m))
+          .optional(),
+        model: ModelChoice.optional(),
+      })
       .strict()
       .optional(),
     previews: z
@@ -80,6 +101,10 @@ export interface SettingsHandler {
   update(patch: SettingsPatch): Promise<Settings>;
   /** Saves or removes a key (null), where keys.storage is "keychain". Returns the new settings. */
   setKey?(name: KeyName, value: string | null): Promise<Settings>;
+  /** Model runtimes running on this machine (Ollama, LM Studio). Local servers only. */
+  detectModels?(): Promise<
+    { provider: "ollama" | "lmstudio"; baseUrl: string; models: string[] }[]
+  >;
 }
 
 /** What a key may look like: printable ASCII, no spaces, of a sensible length. */

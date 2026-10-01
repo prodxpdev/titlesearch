@@ -9,12 +9,13 @@ import { runAssess } from "./commands/assess.js";
 import { runBrowser } from "./commands/browser.js";
 import { runCheck, UsageError } from "./commands/check.js";
 import { runMcp } from "./commands/mcp.js";
+import { runModels } from "./commands/models.js";
 import { DEFAULT_PORT, runServe } from "./commands/serve.js";
 import { formatSuggestions, suggestNames } from "./commands/suggest.js";
 import { ConfigError, loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
 import { resolvePaths } from "./paths.js";
-import { createServices, priceKeysFromEnv, priceSecrets } from "./runtime.js";
+import { createServices, modelFromEnv, priceKeysFromEnv, priceSecrets } from "./runtime.js";
 import { loadUiAssets } from "./ui-assets.js";
 
 const HELP = `titlesearch ${pkg.version}
@@ -25,6 +26,7 @@ Usage:
   titlesearch check [names...] --market <text> --suggest [--count 10]
   titlesearch mcp
   titlesearch serve [--port 4717]
+  titlesearch models
   titlesearch browser install | status
   titlesearch --version
 
@@ -35,6 +37,8 @@ Commands:
   mcp     Run the MCP server over stdio, for Claude Desktop and Claude Code.
   serve   Run the web UI and API at http://127.0.0.1:4717, for this computer
           only. Sign in with the one-time code it prints.
+  models  Show the model that judges overlap and suggests names, and any local
+          runtimes (Ollama, LM Studio) running on this computer.
   browser Site previews need Chrome or Edge. Without one, \`browser install\`
           downloads a pinned, checksum-verified build (about 100 MB) once.
 
@@ -51,7 +55,11 @@ Options:
   -v, --version    Show the version
 
 Environment:
-  ANTHROPIC_API_KEY        Enables market-overlap judgment and --suggest
+  ANTHROPIC_API_KEY        Enables market-overlap judgment and --suggest with Claude
+  TITLESEARCH_MODEL        Use another model: ollama:<model>, lmstudio:<model>,
+                           or openai-compatible:<model> (with TITLESEARCH_MODEL_URL)
+  TITLESEARCH_MODEL_URL    The server's base URL, for openai-compatible or a moved runtime
+  OPENAI_COMPATIBLE_API_KEY  Key for an OpenAI-compatible server, if it needs one
   PORKBUN_API_KEY          With PORKBUN_SECRET_API_KEY, adds Porkbun prices
   PORKBUN_SECRET_API_KEY   (the default price source)
   NAMECOM_USERNAME         With NAMECOM_TOKEN, adds Name.com prices
@@ -82,6 +90,7 @@ async function main(argv: string[]): Promise<number> {
   }
 
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY?.trim() || undefined;
+  const openaiCompatibleApiKey = process.env.OPENAI_COMPATIBLE_API_KEY?.trim() || undefined;
   // Every secret is registered with the logger so it's redacted from every line.
   const paths = resolvePaths();
   if (command === "browser") return runBrowser(rest[0], paths.dataDir);
@@ -89,11 +98,16 @@ async function main(argv: string[]): Promise<number> {
   const priceKeys = priceKeysFromEnv(process.env);
   const logger = createLogger(process.env.TITLESEARCH_LOG, [
     ...(anthropicApiKey ? [anthropicApiKey] : []),
+    ...(openaiCompatibleApiKey ? [openaiCompatibleApiKey] : []),
     ...priceSecrets(priceKeys),
   ]);
   let runtime: Awaited<ReturnType<typeof createServices>>;
   try {
     const config = await loadConfig(paths.configDir);
+    // TITLESEARCH_MODEL picks the model for this run without editing config.json.
+    const envModel = modelFromEnv(process.env);
+    if (envModel) config.assessment.model = envModel;
+    if (command === "models") return await runModels(config.assessment.model);
     if (command === "serve") {
       const ui = await loadUiAssets();
       const desktopToken = process.env.TITLESEARCH_TOKEN?.trim();
@@ -126,6 +140,7 @@ async function main(argv: string[]): Promise<number> {
           command: "check",
           priceKeys,
           ...(anthropicApiKey ? { anthropicApiKey } : {}),
+          ...(openaiCompatibleApiKey ? { openaiCompatibleApiKey } : {}),
         },
         keys: Object.fromEntries(
           KEY_NAMES.flatMap((n) => {
@@ -148,6 +163,7 @@ async function main(argv: string[]): Promise<number> {
       command: command === "mcp" ? "mcp" : "check",
       priceKeys,
       ...(anthropicApiKey ? { anthropicApiKey } : {}),
+      ...(openaiCompatibleApiKey ? { openaiCompatibleApiKey } : {}),
     });
   } catch (err) {
     if (err instanceof ConfigError) {

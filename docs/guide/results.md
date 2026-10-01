@@ -19,7 +19,7 @@ Every domain gets one status. Each fact shown carries a tag naming its source (R
 
 ## Market overlap
 
-When you describe what you're building, Titlesearch compares each taken domain's site with it. On your own computer that's done by Claude through your Anthropic API key, or by Claude in chat. The verdict comes with two to four plain reasons. Site text is treated as third-party data: it's never followed as instructions, and a verdict that doesn't validate is left as "Taken", never guessed.
+When you describe what you're building, Titlesearch compares each taken domain's site with it. The judge is the model you choose on the Providers page: Claude through your Anthropic API key, an open model in Ollama or LM Studio on your own computer, or any OpenAI-compatible server. You can also leave it to Claude in chat. Each assessment names the model that made it. Smaller open models are faster to set up but judge less reliably. The verdict comes with two to four plain reasons. Site text is treated as third-party data: it's never followed as instructions, and a verdict that doesn't validate is left as "Taken", never guessed.
 
 ## Previews
 

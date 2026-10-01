@@ -78,10 +78,10 @@ describe("assess_market_conflicts", () => {
     expect(out.notice).toMatch(/isn't a trademark search/);
   });
 
-  it("in anthropic mode returns the classifier's assessments", async () => {
-    const client = await connect({ assessment: { mode: "anthropic", classifier } });
+  it("in server mode returns the classifier's assessments", async () => {
+    const client = await connect({ assessment: { mode: "server", classifier } });
     const tool = (await client.listTools()).tools.find((t) => t.name === "assess_market_conflicts");
-    expect(tool?.description).toMatch(/judges real sites with a classifier/);
+    expect(tool?.description).toMatch(/judges real sites with its own model/);
     const res = await client.callTool({ name: "assess_market_conflicts", arguments: args });
     const out = res.structuredContent as { assessedBy: string; results: DomainResult[] };
     expect(out.assessedBy).toBe("anthropic:test-model");
@@ -109,13 +109,13 @@ describe("assess_market_conflicts", () => {
     expect(res.isError).toBe(true);
   });
 
-  it("refuses to start in anthropic mode without a classifier", () => {
+  it("refuses to start in server mode without a classifier", () => {
     expect(() =>
       createTitlesearchMcpServer({
         providers: [rdap],
         probe,
         context,
-        assessment: { mode: "anthropic" },
+        assessment: { mode: "server" },
       }),
     ).toThrow(/classifier/);
   });

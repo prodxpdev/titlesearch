@@ -83,7 +83,7 @@ export const AssessMarketConflictsInput = {
 
 export const AssessMarketConflictsOutput = {
   market: z.string(),
-  mode: z.enum(["anthropic", "client", "off"]),
+  mode: z.enum(["server", "client", "off"]),
   assessedBy: z.string().optional(),
   results: z.array(DomainResult),
   notice: z.string(),

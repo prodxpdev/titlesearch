@@ -35,8 +35,11 @@ Every target reads the same settings. They're environment variables on Cloud Run
 | `PORKBUN_API_KEY`, `PORKBUN_SECRET_API_KEY` | Secrets | Prices from Porkbun. A sandbox key (`pk1_sb_…`) is recommended: see ADR 17. |
 | `NAMECOM_USERNAME`, `NAMECOM_TOKEN` | Token is a secret | Prices from Name.com. `NAMECOM_ENVIRONMENT=test` uses its sandbox. |
 | `ANTHROPIC_API_KEY` | Secret | Server-side market-overlap judgment. Without it, Claude judges in chat. |
-| `ASSESSMENT_MODE` | | `anthropic`, `client`, or `off`. |
+| `ASSESSMENT_MODE` | | `server` (a model here judges), `client`, or `off`. `anthropic` is the old name for `server`. |
+| `ASSESSMENT_PROVIDER` | | `anthropic` (default) or `openai-compatible`, for OpenRouter, Groq, Together, or your own vLLM or llama.cpp server. |
 | `ASSESSMENT_MODEL`, `ASSESSMENT_EFFORT` | | Defaults: `claude-opus-5-5`, `medium`. |
+| `ASSESSMENT_BASE_URL` | For `openai-compatible` | The server's base URL, such as `https://vllm.internal.example/v1`. |
+| `OPENAI_COMPATIBLE_API_KEY` | Secret | That server's key, if it needs one. Sent only over HTTPS. |
 | `RENDERER_URL`, `RENDERER_TOKEN` | Token is a secret | The renderer service, for screenshots. |
 | `RATE_LIMIT_PER_MINUTE`, `CONCURRENCY` | | Per-user request limit (default 120 a minute) and outbound ceiling (default 8). |
 | `LOG_LEVEL` | | `error`, `warn`, `info` (default), or `debug`. Logs are JSON, with secrets redacted. |

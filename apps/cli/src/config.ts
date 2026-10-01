@@ -4,6 +4,7 @@
 
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { DEFAULT_ANTHROPIC_MODEL, ModelChoice } from "@titlesearch/assess";
 import * as z from "zod";
 
 export const CliConfig = z
@@ -45,16 +46,37 @@ export const CliConfig = z
       .object({
         /**
          * Unset: `mcp` uses "client" (Claude judges), and `check --market`
-         * uses "anthropic" when ANTHROPIC_API_KEY is set, otherwise "off".
+         * uses "server" when the model can be used, otherwise "off".
+         * "anthropic" is the old name for "server".
          */
-        mode: z.enum(["anthropic", "client", "off"]).optional(),
-        model: z.string().min(1).default("claude-opus-5-5"),
+        mode: z
+          .preprocess(
+            (v) => (v === "anthropic" ? "server" : v),
+            z.enum(["server", "client", "off"]),
+          )
+          .optional(),
+        /**
+         * The model "server" mode uses, and that suggests names: Anthropic
+         * (with ANTHROPIC_API_KEY), a local runtime ("ollama", "lmstudio"), or
+         * any "openai-compatible" server at baseUrl. A plain string is an
+         * Anthropic model id, as older configs wrote it.
+         */
+        model: z
+          .preprocess(
+            (v) => (typeof v === "string" ? { provider: "anthropic", id: v } : v),
+            ModelChoice,
+          )
+          .default({ provider: "anthropic", id: DEFAULT_ANTHROPIC_MODEL }),
         effort: z.enum(["low", "medium", "high", "xhigh", "max"]).default("medium"),
         /** Server-side refusal fallback on the Anthropic API (beta). */
         refusalFallback: z.boolean().default(true),
       })
       .strict()
-      .default({ model: "claude-opus-5-5", effort: "medium", refusalFallback: true }),
+      .default({
+        model: { provider: "anthropic", id: DEFAULT_ANTHROPIC_MODEL },
+        effort: "medium",
+        refusalFallback: true,
+      }),
   })
   .strict();
 export type CliConfig = z.infer<typeof CliConfig>;

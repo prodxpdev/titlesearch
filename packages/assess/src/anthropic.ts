@@ -1,11 +1,10 @@
-// The "anthropic" classifier: the Anthropic Messages API, with the user's
-// key, through the official SDK. The SDK's fetch is routed through core's
-// fixed-origin fetch, so every request stays on api.anthropic.com
-// (invariant 2). Anything short of a valid, complete answer leaves sites
-// unassessed. See docs/decisions/0013-market-assessment.md.
+// The server-side market-overlap classifier. It runs on any JsonModel
+// (json-model.ts): the Anthropic API with the user's key, a local runtime such
+// as Ollama, or an OpenAI-compatible server. Every request goes through core's
+// origin-locked fetch (invariant 2), and anything short of a valid, complete
+// answer leaves sites unassessed. See docs/decisions/0013-market-assessment.md
+// and 0025-open-models.md.
 
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import {
   type Assessment,
   type Logger,
@@ -15,11 +14,12 @@ import {
 } from "@titlesearch/core";
 import * as z from "zod";
 import type { ConflictClassifier } from "./classifier.js";
-import { ANTHROPIC_API_ORIGIN, createAnthropicClient } from "./client.js";
+import { ANTHROPIC_API_ORIGIN } from "./client.js";
+import { AnthropicJsonModel, type JsonModel } from "./json-model.js";
 import { buildUserMessage, SYSTEM_PROMPT } from "./prompt.js";
 
+export { DEFAULT_ANTHROPIC_MODEL } from "./models.js";
 export { ANTHROPIC_API_ORIGIN };
-export const DEFAULT_ANTHROPIC_MODEL = "claude-opus-5-5";
 /** Sites per request. assess_market_conflicts checks at most 20 extensions. */
 export const SITES_PER_REQUEST = 10;
 
@@ -55,17 +55,24 @@ export interface AnthropicClassifierOptions {
   maxRetries?: number;
 }
 
-export class AnthropicClassifier implements ConflictClassifier {
+/**
+ * The server-side classifier, over any model that answers in JSON: the
+ * Anthropic API, a local runtime such as Ollama, or an OpenAI-compatible
+ * server. Anything short of a valid, complete answer leaves sites unassessed.
+ */
+export class ModelClassifier implements ConflictClassifier {
   readonly id: string;
-  readonly #client: Anthropic;
-  readonly #options: AnthropicClassifierOptions;
+  readonly #model: JsonModel;
   readonly #logger: Logger;
 
-  constructor(options: AnthropicClassifierOptions) {
-    this.#options = options;
-    this.#logger = options.logger ?? silentLogger;
-    this.id = `anthropic:${options.model}`;
-    this.#client = createAnthropicClient(options);
+  constructor(model: JsonModel, logger?: Logger) {
+    this.#model = model;
+    this.#logger = logger ?? silentLogger;
+    this.id = model.id;
+  }
+
+  get descriptor(): JsonModel["descriptor"] {
+    return this.#model.descriptor;
   }
 
   async assess(
@@ -88,55 +95,26 @@ export class AnthropicClassifier implements ConflictClassifier {
     signal?: AbortSignal,
   ): Promise<Assessment[]> {
     if (batch.length === 0) return [];
-    const fallback = this.#options.refusalFallback ?? true;
-    const request = () =>
-      this.#client.beta.messages.parse(
-        {
-          model: this.#options.model,
-          max_tokens: 16000,
-          ...(fallback
-            ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const }
-            : {}),
-          output_config: {
-            effort: this.#options.effort ?? "medium",
-            format: zodOutputFormat(ModelOutput),
-          },
-          system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content: buildUserMessage(market, batch) }],
-        },
-        signal ? { signal } : undefined,
-      );
-    let response: Awaited<ReturnType<typeof request>>;
-    try {
-      response = await request();
-    } catch (err) {
-      signal?.throwIfAborted();
-      // The SDK's error messages don't include the API key; the logger redacts it regardless.
-      const status = err instanceof Anthropic.APIError ? err.status : undefined;
-      this.#logger.warn("Assessment request failed; sites stay unassessed", {
-        status,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      return [];
-    }
-
-    if (response.stop_reason !== "end_turn") {
+    const result = await this.#model.generate({
+      system: SYSTEM_PROMPT,
+      user: buildUserMessage(market, batch),
+      schema: ModelOutput,
+      schemaName: "market_assessments",
+      maxTokens: 16000,
+      signal,
+    });
+    if (!result.ok) {
       this.#logger.warn("Assessment didn't complete; sites stay unassessed", {
-        stopReason: response.stop_reason,
-        ...(response.stop_details ? { category: response.stop_details.category } : {}),
+        model: this.id,
+        reason: result.reason,
       });
-      return [];
-    }
-    const parsed = ModelOutput.safeParse(response.parsed_output);
-    if (!parsed.success) {
-      this.#logger.warn("Assessment output failed validation; sites stay unassessed");
       return [];
     }
 
     const wanted = new Set(batch.map((e) => e.domain));
     const seen = new Set<string>();
     const out: Assessment[] = [];
-    for (const item of parsed.data.assessments) {
+    for (const item of result.value.assessments) {
       const strict = StrictItem.safeParse(item);
       const domain = item.domain.trim().toLowerCase();
       // Unknown or repeated domains, and items that fail the strict schema, are dropped.
@@ -151,5 +129,12 @@ export class AnthropicClassifier implements ConflictClassifier {
       });
     }
     return out;
+  }
+}
+
+/** The classifier through the Anthropic API. */
+export class AnthropicClassifier extends ModelClassifier {
+  constructor(options: AnthropicClassifierOptions) {
+    super(new AnthropicJsonModel(options), options.logger);
   }
 }

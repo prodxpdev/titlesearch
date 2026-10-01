@@ -1,6 +1,7 @@
 // `titlesearch serve`: the local UI and API on 127.0.0.1 (invariant 5).
 
 import { createInterface } from "node:readline";
+import { detectLocalRuntimes, modelUnavailable } from "@titlesearch/assess";
 import type { RedactingLogger } from "@titlesearch/core";
 import {
   createApp,
@@ -88,7 +89,15 @@ function toSettings(
     },
     assessment: {
       mode: runtime.services.assessment?.mode ?? "client",
-      model: config.assessment.model,
+      model: {
+        provider: runtime.model.choice.provider,
+        id: runtime.model.choice.id,
+        ...(runtime.model.choice.baseUrl ? { baseUrl: runtime.model.choice.baseUrl } : {}),
+        label: runtime.model.label,
+        local: runtime.model.descriptor.locality === "local",
+      },
+      ready: !runtime.model.unavailable,
+      ...(runtime.model.unavailable ? { unavailableReason: runtime.model.unavailable } : {}),
       keyConfigured: hasKey,
     },
     suggestions: { available: !!runtime.services.suggester },
@@ -108,12 +117,19 @@ export async function runServe(options: ServeOptions): Promise<void> {
   let config = options.config;
   // The current keys. In the desktop app, the page can change them (setKey).
   const values: Partial<Record<KeyName, string>> = { ...options.keys };
+  const modelKeys = () => ({
+    anthropic: values.ANTHROPIC_API_KEY,
+    openaiCompatible: values.OPENAI_COMPATIBLE_API_KEY,
+  });
   const build = (c: CliConfig) =>
     options.build({
       ...options.runtimeOptions,
       config: c,
       priceKeys: priceKeysFromEnv(values),
       ...(values.ANTHROPIC_API_KEY ? { anthropicApiKey: values.ANTHROPIC_API_KEY } : {}),
+      ...(values.OPENAI_COMPATIBLE_API_KEY
+        ? { openaiCompatibleApiKey: values.OPENAI_COMPATIBLE_API_KEY }
+        : {}),
     });
   let runtime = await build(config);
   const desktop = options.desktop;
@@ -137,6 +153,8 @@ export async function runServe(options: ServeOptions): Promise<void> {
   };
   const settings: SettingsHandler = {
     get: current,
+    // This server runs on the user's machine, so its local runtimes are theirs.
+    detectModels: () => detectLocalRuntimes(),
     async update(patch) {
       const keys = priceKeysFromEnv(values);
       const next: CliConfig = structuredClone(config);
@@ -153,11 +171,13 @@ export async function runServe(options: ServeOptions): Promise<void> {
         next.providers.namecom.enabled = patch.providers.namecom.enabled;
       }
       if (patch.previews) next.previews.mode = patch.previews.mode;
-      if (patch.assessment) {
-        if (patch.assessment.mode === "anthropic" && !values.ANTHROPIC_API_KEY) {
-          throw new SettingsError("Add an Anthropic API key before choosing the Anthropic API.");
-        }
-        next.assessment.mode = patch.assessment.mode;
+      if (patch.assessment?.model) next.assessment.model = patch.assessment.model;
+      if (patch.assessment?.mode) next.assessment.mode = patch.assessment.mode;
+      // "server" needs a model that can be used now; say what's missing instead of failing later.
+      const missing = modelUnavailable(next.assessment.model, modelKeys());
+      if (next.assessment.mode === "server" && missing) {
+        if (patch.assessment?.mode === "server") throw new SettingsError(missing);
+        next.assessment.mode = "client";
       }
       return apply(next);
     },
@@ -174,8 +194,11 @@ export async function runServe(options: ServeOptions): Promise<void> {
               delete values[name];
             }
             const next: CliConfig = structuredClone(config);
-            // Without its key, the Anthropic mode can't stay selected.
-            if (!values.ANTHROPIC_API_KEY && next.assessment.mode === "anthropic")
+            // Without the key its model needs, "server" can't stay selected.
+            if (
+              next.assessment.mode === "server" &&
+              modelUnavailable(next.assessment.model, modelKeys())
+            )
               next.assessment.mode = "client";
             const result = await apply(next);
             emit({ event: "key", name, value });

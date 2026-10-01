@@ -41,7 +41,16 @@ describe("parseDeployEnv", () => {
       "RENDERER_TOKEN",
     ],
     ["a short session secret", { ...BASE, SESSION_SECRET: "short" }, "SESSION_SECRET"],
-    ["anthropic without a key", { ...BASE, ASSESSMENT_MODE: "anthropic" }, "ANTHROPIC_API_KEY"],
+    [
+      "anthropic without a key",
+      { ...BASE, ASSESSMENT_MODE: "anthropic" },
+      "Add an Anthropic API key",
+    ],
+    [
+      "an OpenAI-compatible model without its URL",
+      { ...BASE, ASSESSMENT_PROVIDER: "openai-compatible", ASSESSMENT_MODEL: "llama-3.3-70b" },
+      "base URL",
+    ],
   ])("refuses %s", (_l, env, message) => {
     expect(() => parseDeployEnv(env)).toThrow(message);
   });
@@ -106,8 +115,27 @@ describe("createDeployedServices", () => {
       parseDeployEnv({ ...BASE, ANTHROPIC_API_KEY: "sk-ant-x" }),
       rt(),
     );
-    expect(withKey.assessment?.mode).toBe("anthropic");
+    expect(withKey.assessment?.mode).toBe("server");
     expect(withKey.assessment?.classifier?.id).toBe("anthropic:claude-opus-5-5");
+  });
+});
+
+describe("open models on a deployment", () => {
+  it("judges and suggests with the team's own OpenAI-compatible server", () => {
+    const env = parseDeployEnv({
+      ...BASE,
+      ASSESSMENT_PROVIDER: "openai-compatible",
+      ASSESSMENT_MODEL: "meta-llama/Llama-3.3-70B-Instruct",
+      ASSESSMENT_BASE_URL: "https://vllm.internal.acme.dev/v1",
+      OPENAI_COMPATIBLE_API_KEY: "vllm-token-0123456789",
+    });
+    const s = createDeployedServices(env, rt());
+    expect(s.assessment?.mode).toBe("server");
+    expect(s.assessment?.classifier?.id).toBe(
+      "openai-compatible:meta-llama/Llama-3.3-70B-Instruct",
+    );
+    expect(s.suggester).toBeDefined();
+    expect(deploySecrets(env)).toContain("vllm-token-0123456789");
   });
 });
 

@@ -3,6 +3,12 @@
 // share one table. Secrets come from the platform's secret store, injected
 // as environment variables; they're never logged (invariant 6).
 
+import {
+  DEFAULT_ANTHROPIC_MODEL,
+  MODEL_PROVIDERS,
+  ModelChoice,
+  modelUnavailable,
+} from "@titlesearch/assess";
 import * as z from "zod";
 
 const list = z
@@ -60,8 +66,16 @@ export const DeployEnv = z
 
     // Market-overlap assessment.
     ANTHROPIC_API_KEY: optional,
-    ASSESSMENT_MODE: z.enum(["anthropic", "client", "off"]).optional(),
-    ASSESSMENT_MODEL: z.string().min(1).default("claude-opus-5-5"),
+    // "anthropic" is the old name for "server".
+    ASSESSMENT_MODE: z
+      .enum(["server", "client", "off", "anthropic"])
+      .transform((m) => (m === "anthropic" ? "server" : m))
+      .optional(),
+    /** Which model judges and suggests: anthropic, or any OpenAI-compatible server (vLLM, OpenRouter, ...). */
+    ASSESSMENT_PROVIDER: z.enum(MODEL_PROVIDERS).default("anthropic"),
+    ASSESSMENT_MODEL: z.string().min(1).default(DEFAULT_ANTHROPIC_MODEL),
+    ASSESSMENT_BASE_URL: optional,
+    OPENAI_COMPATIBLE_API_KEY: optional,
     ASSESSMENT_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).default("medium"),
 
     // Previews: the separate render service (container targets).
@@ -100,12 +114,29 @@ export const DeployEnv = z
         path: ["RENDERER_TOKEN"],
         message: "Use at least 32 characters.",
       });
-    if (e.ASSESSMENT_MODE === "anthropic" && !e.ANTHROPIC_API_KEY)
+    const choice = ModelChoice.safeParse({
+      provider: e.ASSESSMENT_PROVIDER,
+      id: e.ASSESSMENT_MODEL,
+      ...(e.ASSESSMENT_BASE_URL ? { baseUrl: e.ASSESSMENT_BASE_URL } : {}),
+    });
+    if (!choice.success)
       ctx.addIssue({
         code: "custom",
-        path: ["ANTHROPIC_API_KEY"],
-        message: 'ASSESSMENT_MODE is "anthropic", but ANTHROPIC_API_KEY isn\'t set.',
+        path: ["ASSESSMENT_BASE_URL"],
+        message: choice.error.issues[0]?.message ?? "Check the model settings.",
       });
+    else if (e.ASSESSMENT_MODE === "server") {
+      const missing = modelUnavailable(choice.data, {
+        anthropic: e.ANTHROPIC_API_KEY,
+        openaiCompatible: e.OPENAI_COMPATIBLE_API_KEY,
+      });
+      if (missing)
+        ctx.addIssue({
+          code: "custom",
+          path: ["ASSESSMENT_MODE"],
+          message: `ASSESSMENT_MODE is "server", but the model can't be used: ${missing}`,
+        });
+    }
     const rules =
       e.ALLOWED_SUBJECTS.length + e.ALLOWED_EMAILS.length + e.ALLOWED_EMAIL_DOMAINS.length;
     if (rules === 0 && !e.REQUIRED_SCOPE && !e.REQUIRED_ROLE)
@@ -127,6 +158,7 @@ export function deploySecrets(e: DeployEnv): string[] {
     e.PORKBUN_SECRET_API_KEY,
     e.NAMECOM_TOKEN,
     e.ANTHROPIC_API_KEY,
+    e.OPENAI_COMPATIBLE_API_KEY,
     e.RENDERER_TOKEN,
   ].filter((s): s is string => !!s);
 }

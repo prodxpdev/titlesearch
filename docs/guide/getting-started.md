@@ -49,7 +49,8 @@ None are needed to start. With them, Titlesearch can do more. **In the desktop a
 
 | Variable | Adds |
 |---|---|
-| `ANTHROPIC_API_KEY` | Market-overlap judgment and name suggestions on the server. Without it, Claude does both in chat. |
+| `ANTHROPIC_API_KEY` | Market-overlap judgment and name suggestions with Claude. Without a model, Claude does both in chat. |
+| `TITLESEARCH_MODEL` | An open model instead, such as `ollama:llama3.1:8b` for Ollama on this computer: no key, and nothing leaves your machine. Or `openai-compatible:<model>` with `TITLESEARCH_MODEL_URL` (and `OPENAI_COMPATIBLE_API_KEY` if needed) for OpenRouter, Groq, Together, or your own vLLM server. In the desktop app, choose it on the Providers page. Run `titlesearch models` to see what's installed. |
 | `PORKBUN_API_KEY`, `PORKBUN_SECRET_API_KEY` | Prices and premium status from Porkbun. See [Prices](/guide/prices). |
 | `NAMECOM_USERNAME`, `NAMECOM_TOKEN` | Prices from Name.com. |
 

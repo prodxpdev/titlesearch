@@ -335,8 +335,8 @@ export function createTitlesearchMcpServer(
   if (probe) {
     const mode = services.assessment?.mode ?? "client";
     const classifier = services.assessment?.classifier;
-    if (mode === "anthropic" && !classifier)
-      throw new Error('Assessment mode "anthropic" needs a classifier.');
+    if (mode === "server" && !classifier)
+      throw new Error('Assessment mode "server" needs a classifier.');
     server.registerTool(
       "assess_market_conflicts",
       {

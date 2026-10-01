@@ -45,7 +45,7 @@ const TOOLS: ToolDoc[] = [
     name: "suggest_names",
     title: "Suggest names",
     offered:
-      "When the server has a model (an Anthropic API key). Otherwise the client model suggests names itself.",
+      "When the server has a model: the Anthropic API, a local runtime such as Ollama, or an OpenAI-compatible server. Otherwise the client model suggests names itself.",
     description: SUGGEST_NAMES_DESCRIPTION,
     input: SuggestNamesInput,
   },

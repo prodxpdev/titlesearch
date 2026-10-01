@@ -75,7 +75,7 @@ describe("assessMarketConflicts", () => {
       ctx(),
       {
         ...base,
-        mode: "anthropic",
+        mode: "server",
         classifier,
       },
     );
@@ -109,7 +109,7 @@ describe("assessMarketConflicts", () => {
     const classifier: ConflictClassifier = { id: "fake", assess: async () => [] };
     const r = await assessMarketConflicts(["real.com"], "m", ctx(), {
       ...base,
-      mode: "anthropic",
+      mode: "server",
       classifier,
     });
     expect(r.results[0]?.occupancy).toBe("unassessed");
@@ -119,7 +119,7 @@ describe("assessMarketConflicts", () => {
   it("caches assessments per domain, market, and classifier", async () => {
     const cache = mapCache();
     const classifier = fakeClassifier();
-    const opts = { ...base, cache, mode: "anthropic" as const, classifier };
+    const opts = { ...base, cache, mode: "server" as const, classifier };
     await assessMarketConflicts(["real.com"], "Invoicing for freelancers", ctx(), opts);
     await assessMarketConflicts(["real.com"], "  invoicing FOR freelancers ", ctx(), opts);
     expect(classifier.calls).toHaveLength(1);
@@ -136,9 +136,18 @@ describe("assessMarketConflicts", () => {
     ).rejects.toThrow(RangeError);
   });
 
-  it("requires a classifier in anthropic mode", async () => {
+  it("requires a classifier in server mode", async () => {
     await expect(
-      assessMarketConflicts(["real.com"], "m", ctx(), { ...base, mode: "anthropic" }),
+      assessMarketConflicts(["real.com"], "m", ctx(), { ...base, mode: "server" }),
     ).rejects.toThrow(/classifier/);
+  });
+});
+
+describe("parseAssessmentMode", () => {
+  it('reads "anthropic", the old name, as "server"', async () => {
+    const { parseAssessmentMode } = await import("../src/classifier.js");
+    expect(parseAssessmentMode("anthropic")).toBe("server");
+    expect(parseAssessmentMode("client")).toBe("client");
+    expect(parseAssessmentMode("nonsense")).toBeUndefined();
   });
 });

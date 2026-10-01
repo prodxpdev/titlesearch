@@ -3,7 +3,16 @@
 // the WHOIS connector, the cache store, the preview renderer, and how
 // WebAssembly is loaded.
 
-import { AnthropicClassifier, AnthropicSuggester, type AssessmentMode } from "@titlesearch/assess";
+import {
+  type AssessmentMode,
+  createJsonModel,
+  describeChoice,
+  describeModel,
+  type ModelChoice,
+  ModelClassifier,
+  ModelSuggester,
+  modelUnavailable,
+} from "@titlesearch/assess";
 import {
   type AvailabilityProvider,
   type BlobStore,
@@ -53,8 +62,29 @@ export interface DeployRuntime {
   transport?: Transport;
 }
 
+export function deployedChoice(env: DeployEnv): ModelChoice {
+  return {
+    provider: env.ASSESSMENT_PROVIDER,
+    id: env.ASSESSMENT_MODEL,
+    ...(env.ASSESSMENT_BASE_URL ? { baseUrl: env.ASSESSMENT_BASE_URL } : {}),
+  };
+}
+
+/** The model the deployment judges and suggests with, when it can be used. */
+export function deployedModel(env: DeployEnv, rt?: Pick<DeployRuntime, "logger" | "transport">) {
+  return createJsonModel(
+    deployedChoice(env),
+    { anthropic: env.ANTHROPIC_API_KEY, openaiCompatible: env.OPENAI_COMPATIBLE_API_KEY },
+    {
+      effort: env.ASSESSMENT_EFFORT,
+      ...(rt?.logger ? { logger: rt.logger } : {}),
+      ...(rt?.transport ? { transport: rt.transport } : {}),
+    },
+  );
+}
+
 export function assessmentMode(env: DeployEnv): AssessmentMode {
-  return env.ASSESSMENT_MODE ?? (env.ANTHROPIC_API_KEY ? "anthropic" : "client");
+  return env.ASSESSMENT_MODE ?? (deployedModel(env) ? "server" : "client");
 }
 
 export function createDeployedServices(env: DeployEnv, rt: DeployRuntime): TitlesearchServices {
@@ -97,26 +127,10 @@ export function createDeployedServices(env: DeployEnv, rt: DeployRuntime): Title
     probePresence(domain, { dns, signal, previewer, ...t });
 
   const mode = assessmentMode(env);
-  const classifier =
-    mode === "anthropic" && env.ANTHROPIC_API_KEY
-      ? new AnthropicClassifier({
-          apiKey: env.ANTHROPIC_API_KEY,
-          model: env.ASSESSMENT_MODEL,
-          effort: env.ASSESSMENT_EFFORT,
-          logger: rt.logger,
-          ...t,
-        })
-      : undefined;
-
-  const suggester = env.ANTHROPIC_API_KEY
-    ? new AnthropicSuggester({
-        apiKey: env.ANTHROPIC_API_KEY,
-        model: env.ASSESSMENT_MODEL,
-        effort: env.ASSESSMENT_EFFORT,
-        logger: rt.logger,
-        ...t,
-      })
-    : undefined;
+  const model = deployedModel(env, rt);
+  const classifier = mode === "server" && model ? new ModelClassifier(model, rt.logger) : undefined;
+  // Name suggestions use the same model whenever it can be used.
+  const suggester = model ? new ModelSuggester(model, rt.logger) : undefined;
 
   const rateLimiter = createDefaultRateLimiter();
   return {
@@ -163,11 +177,27 @@ export function deployedSettings(
       porkbun: { enabled: !!env.PORKBUN_API_KEY, configured: !!env.PORKBUN_API_KEY },
       namecom: { enabled: !!env.NAMECOM_TOKEN, configured: !!env.NAMECOM_TOKEN },
     },
-    assessment: {
-      mode: services.assessment?.mode ?? "client",
-      model: env.ASSESSMENT_MODEL,
-      keyConfigured: !!env.ANTHROPIC_API_KEY,
-    },
+    assessment: (() => {
+      const choice = deployedChoice(env);
+      const descriptor = describeChoice(choice);
+      const missing = modelUnavailable(choice, {
+        anthropic: env.ANTHROPIC_API_KEY,
+        openaiCompatible: env.OPENAI_COMPATIBLE_API_KEY,
+      });
+      return {
+        mode: services.assessment?.mode ?? "client",
+        model: {
+          provider: choice.provider,
+          id: choice.id,
+          ...(choice.baseUrl ? { baseUrl: choice.baseUrl } : {}),
+          label: describeModel(descriptor),
+          local: descriptor.locality === "local",
+        },
+        ready: !missing,
+        ...(missing ? { unavailableReason: missing } : {}),
+        keyConfigured: !!env.ANTHROPIC_API_KEY,
+      };
+    })(),
     suggestions: { available: !!services.suggester },
     previews: { mode: renderer ? "local" : "off", browser: null },
     // A deployment's keys come from its secret store; the page can't change them.
@@ -175,6 +205,7 @@ export function deployedSettings(
       storage: "environment",
       set: {
         ANTHROPIC_API_KEY: !!env.ANTHROPIC_API_KEY,
+        OPENAI_COMPATIBLE_API_KEY: !!env.OPENAI_COMPATIBLE_API_KEY,
         PORKBUN_API_KEY: !!env.PORKBUN_API_KEY,
         PORKBUN_SECRET_API_KEY: !!env.PORKBUN_SECRET_API_KEY,
         NAMECOM_USERNAME: !!env.NAMECOM_USERNAME,

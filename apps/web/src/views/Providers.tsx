@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ApiError, AuthError, api, type ProviderHealth } from "../api";
 import { Band, Kv } from "../components";
 import { setState, toast, useStore } from "../store";
+import { ModelPicker } from "./ModelPicker";
 
 function State({ on }: { on: boolean }) {
   return <span className={`state ${on ? "on" : "off"}`}>{on ? "On" : "Off"}</span>;
@@ -427,16 +428,22 @@ export function Providers() {
             </p>
             {radio(
               "assess",
-              "anthropic",
+              "server",
               settings.assessment.mode,
-              "Claude, through the Anthropic API",
-              "Uses your API key. Reports show a verdict and reasons.",
+              settings.assessment.model.local
+                ? "An open model, on this computer"
+                : settings.assessment.model.provider === "anthropic"
+                  ? "Claude, through the Anthropic API"
+                  : "The model below",
+              settings.assessment.ready
+                ? `${settings.assessment.model.label}. Reports show a verdict and reasons.`
+                : `Choose a model below first. ${settings.assessment.unavailableReason ?? ""}`,
               () =>
                 void update(
-                  { assessment: { mode: "anthropic" } },
-                  "Assessment uses the Anthropic API",
+                  { assessment: { mode: "server" } },
+                  `Assessment uses ${settings.assessment.model.label}`,
                 ),
-              !settings.assessment.keyConfigured,
+              !settings.assessment.ready,
             )}
             {radio(
               "assess",
@@ -456,19 +463,20 @@ export function Providers() {
               () => void update({ assessment: { mode: "off" } }, "Assessment turned off"),
             )}
             <div style={{ marginTop: 14 }}>
-              <KeyField
-                name="ANTHROPIC_API_KEY"
-                label="Anthropic API key"
-                placeholder="sk-ant-…"
+              <ModelPicker
                 settings={settings}
-                onChange={setSettings}
+                onSave={(model) => void update({ assessment: { model } }, "Model saved")}
+                keyField={(name, label, placeholder) => (
+                  <KeyField
+                    name={name}
+                    label={label}
+                    placeholder={placeholder}
+                    settings={settings}
+                    onChange={setSettings}
+                  />
+                )}
               />
-              {!settings.assessment.keyConfigured && settings.keys.storage === "keychain" && (
-                <p className="hint" style={{ marginTop: 0 }}>
-                  Create one at console.anthropic.com. It also turns on names suggested from your
-                  description.
-                </p>
-              )}
+              <p className="hint">The same model suggests names from your description.</p>
             </div>
           </div>
           <div className="panel" style={{ margin: 0 }}>

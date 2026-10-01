@@ -142,7 +142,7 @@ export function Search() {
                 <br />
                 <span className="hint" style={{ margin: 0 }}>
                   {suggestionsAvailable === false
-                    ? "Needs an Anthropic API key on this server. In Claude, ask it to suggest names."
+                    ? "Needs a model: choose Claude or an open model on the Providers page. In Claude, ask it to suggest names."
                     : "New names suggested from what you're building, not just variations."}
                 </span>
               </span>

@@ -153,3 +153,22 @@ export function relativeTime(iso: string, now = Date.now()): string {
   const hours = Math.round(mins / 60);
   return `${hours} hour${hours === 1 ? "" : "s"} ago`;
 }
+
+/** Who judged a site, from an assessment's assessedBy: "ollama:llama3.1:8b" → "Ollama · llama3.1:8b". */
+export function judgeLabel(assessedBy: string): string {
+  const colon = assessedBy.indexOf(":");
+  const provider = colon > 0 ? assessedBy.slice(0, colon) : "";
+  const id = colon > 0 ? assessedBy.slice(colon + 1) : assessedBy;
+  switch (provider) {
+    case "anthropic":
+      return `Claude through the Anthropic API (${id})`;
+    case "ollama":
+      return `Ollama · ${id}, on this computer`;
+    case "lmstudio":
+      return `LM Studio · ${id}, on this computer`;
+    case "openai-compatible":
+      return `${id}, through an OpenAI-compatible server`;
+    default:
+      return assessedBy;
+  }
+}

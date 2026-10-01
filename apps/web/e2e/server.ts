@@ -228,11 +228,22 @@ let settings: Settings = {
     porkbun: { enabled: true, configured: true },
     namecom: { enabled: false, configured: false },
   },
-  assessment: { mode: "anthropic", model: "test-model", keyConfigured: true },
+  assessment: {
+    mode: "server",
+    model: {
+      provider: "anthropic",
+      id: "test-model",
+      label: "Anthropic · test-model (Anthropic API)",
+      local: false,
+    },
+    ready: true,
+    keyConfigured: true,
+  },
   keys: {
     storage: "keychain",
     set: {
       ANTHROPIC_API_KEY: true,
+      OPENAI_COMPATIBLE_API_KEY: false,
       PORKBUN_API_KEY: true,
       PORKBUN_SECRET_API_KEY: true,
       NAMECOM_USERNAME: false,
@@ -251,10 +262,28 @@ const settingsHandler: SettingsHandler = {
       settings.providers.godaddy.enabled = patch.providers.godaddy.enabled;
     if (patch.providers?.porkbun)
       settings.providers.porkbun.enabled = patch.providers.porkbun.enabled;
-    if (patch.assessment) settings.assessment.mode = patch.assessment.mode;
+    if (patch.assessment?.mode) settings.assessment.mode = patch.assessment.mode;
+    if (patch.assessment?.model) {
+      const m = patch.assessment.model;
+      const local = m.provider === "ollama" || m.provider === "lmstudio";
+      settings.assessment.model = {
+        ...m,
+        label: local ? `Ollama · ${m.id} (this computer)` : `${m.provider} · ${m.id}`,
+        local,
+      };
+      settings.assessment.ready = local || settings.keys.set.ANTHROPIC_API_KEY;
+    }
     if (patch.previews) settings.previews.mode = patch.previews.mode;
     return settings;
   },
+  // A pretend Ollama with two chat models.
+  detectModels: async () => [
+    {
+      provider: "ollama" as const,
+      baseUrl: "http://127.0.0.1:11434",
+      models: ["llama3.1:8b", "mistral-small3.2:24b"],
+    },
+  ],
   // Like the desktop app, minus the keychain: only whether each key is set.
   setKey: async (name, value) => {
     settings = structuredClone(settings);
@@ -294,8 +323,8 @@ const services = (): TitlesearchServices => ({
   probe,
   blobs,
   assessment:
-    settings.assessment.mode === "anthropic"
-      ? { mode: "anthropic", classifier }
+    settings.assessment.mode === "server"
+      ? { mode: "server", classifier }
       : { mode: settings.assessment.mode },
   context: (signal) => ({ signal, rateLimiter: unlimited, logger: silentLogger }),
 });

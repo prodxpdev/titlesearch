@@ -59,8 +59,9 @@ enum SidecarEvent {
 
 /// The keys the app keeps in the keychain, one entry each, named as the
 /// environment variables the sidecar reads.
-const KEY_NAMES: [&str; 5] = [
+const KEY_NAMES: [&str; 6] = [
     "ANTHROPIC_API_KEY",
+    "OPENAI_COMPATIBLE_API_KEY",
     "PORKBUN_API_KEY",
     "PORKBUN_SECRET_API_KEY",
     "NAMECOM_USERNAME",
