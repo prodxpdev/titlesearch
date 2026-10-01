@@ -208,7 +208,8 @@ jobs:
           - { os: macos-latest, target: x86_64-apple-darwin, label: macOS-Intel }
           - { os: windows-latest, target: x86_64-pc-windows-msvc, label: Windows-x64 }
           - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu, label: Linux-x64 }
-          - { os: ubuntu-22.04-arm, target: aarch64-unknown-linux-gnu, label: Linux-arm64 }
+          # AppImage tooling (linuxdeploy) fails on arm64 runners: .deb and .rpm only.
+          - { os: ubuntu-22.04-arm, target: aarch64-unknown-linux-gnu, label: Linux-arm64, bundles: "deb,rpm" }
     runs-on: ${{ matrix.os }}
     env:
       TAURI_TARGET_TRIPLE: ${{ matrix.target }}
@@ -286,7 +287,7 @@ jobs:
         with:
           projectPath: apps/desktop
           tauriScript: pnpm tauri
-          args: --target ${{ matrix.target }} --config '${{ steps.config.outputs.json }}'
+          args: --target ${{ matrix.target }} ${{ matrix.bundles && format('--bundles {0}', matrix.bundles) || '' }} --config '${{ steps.config.outputs.json }}'
       # Stable names, so releases/latest/download/<name> always means the newest version.
       - name: Collect installers
         shell: bash

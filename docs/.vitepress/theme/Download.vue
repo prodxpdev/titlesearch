@@ -49,9 +49,9 @@ const OPTIONS: Option[] = [
   },
   {
     id: "linux-arm",
-    label: "Linux (arm64 AppImage)",
-    file: "Titlesearch-Linux-arm64.AppImage",
-    note: "arm64",
+    label: "Linux (arm64 .deb)",
+    file: "Titlesearch-Linux-arm64.deb",
+    note: "Debian and Ubuntu, arm64",
   },
 ];
 
