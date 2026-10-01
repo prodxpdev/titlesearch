@@ -1,0 +1,30 @@
+// The Titlesearch Worker. See docs/setup/cloudflare-workers.md.
+// Fill in the IDs from `wrangler d1 create` and `wrangler kv namespace create`,
+// and set PUBLIC_URL and OIDC_ISSUER. Secrets go in with `wrangler secret put`.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "titlesearch",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-22",
+  // nodejs_compat: @cloudflare/puppeteer. global_fetch_strictly_public: the
+  // OAuth provider fetches Client ID Metadata Documents from public hosts only.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "titlesearch",
+      "database_id": "REPLACE_WITH_D1_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "REPLACE_WITH_KV_ID" }],
+  // Site previews through Cloudflare Browser Rendering, billed to this account.
+  // Remove to show share images only.
+  "browser": { "binding": "BROWSER" },
+  "vars": {
+    "PUBLIC_URL": "https://titlesearch.example.com",
+    "OIDC_ISSUER": "https://accounts.google.com",
+    "ALLOWED_EMAIL_DOMAINS": "example.com"
+  },
+  "observability": { "enabled": true }
+}

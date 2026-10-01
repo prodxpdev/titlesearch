@@ -32,6 +32,7 @@ import type { PreviewRenderer } from "@titlesearch/render/renderer";
 import {
   createApp,
   OidcAuth,
+  type ServerAuth,
   type Settings,
   SettingsError,
   type SettingsHandler,
@@ -171,13 +172,15 @@ export function deployedSettings(
 export interface DeployedAppOptions {
   version: string;
   ui?: UiAssets;
+  /** Wraps the OIDC auth, as the Workers target does to accept its own OAuth tokens on /mcp. */
+  auth?: (oidc: OidcAuth) => ServerAuth;
 }
 
 export function createDeployedApp(env: DeployEnv, rt: DeployRuntime, options: DeployedAppOptions) {
   const services = createDeployedServices(env, rt);
   return createApp({
     services: () => services,
-    auth: createDeployedAuth(env, rt.transport),
+    auth: (options.auth ?? ((a: OidcAuth) => a))(createDeployedAuth(env, rt.transport)),
     version: options.version,
     settings: deployedSettings(env, services, !!rt.renderer),
     logger: rt.logger,

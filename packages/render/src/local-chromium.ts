@@ -18,21 +18,23 @@ import { type Logger, type Resolver, silentLogger } from "@titlesearch/core";
 import puppeteer, { type Browser, type CDPSession, type Page } from "puppeteer-core";
 import { type EgressProxy, startEgressProxy } from "./egress-proxy.js";
 import {
+  CAPTURE_CAP_MS,
+  captureScreens,
+  HARDEN_PAGE,
+  MAX_FONT_BYTES,
+  NETWORK_IDLE_CAP_MS,
+  readRenderedText,
+  USER_AGENT_SUFFIX,
+} from "./page-capture.js";
+import {
   CaptureError,
   type PreviewCapture,
   type PreviewRenderer,
   type RenderContext,
-  sha256Hex,
-  THUMBNAIL,
   VIEWPORT,
 } from "./renderer.js";
 
 export const LOCAL_CHROMIUM = "local-chromium";
-const NETWORK_IDLE_CAP_MS = 8_000;
-const CAPTURE_CAP_MS = 20_000;
-const MAX_FONT_BYTES = 2 * 1024 * 1024;
-const MAX_RENDERED_TEXT = 100_000;
-const USER_AGENT_SUFFIX = " Titlesearch/0.1 (preview)";
 
 export interface LocalChromiumOptions {
   executablePath: string;
@@ -82,34 +84,6 @@ export function chromiumArgs(proxyUrl: string): string[] {
     "--mute-audio",
     "--hide-scrollbars",
   ];
-}
-
-// Runs before any page script in every frame: removes APIs a preview never needs.
-const HARDEN_PAGE = `(() => {
-  const drop = (o, k) => { try { Object.defineProperty(o, k, { get: () => undefined, configurable: false }); } catch {} };
-  drop(Navigator.prototype, "serviceWorker");
-  drop(Navigator.prototype, "geolocation");
-  drop(Navigator.prototype, "mediaDevices");
-  drop(Navigator.prototype, "clipboard");
-  for (const k of ["RTCPeerConnection", "webkitRTCPeerConnection", "RTCDataChannel", "Notification", "PushManager"]) drop(window, k);
-})();`;
-
-async function readRenderedText(cdp: CDPSession): Promise<string> {
-  try {
-    const { frameTree } = await cdp.send("Page.getFrameTree");
-    const { executionContextId } = await cdp.send("Page.createIsolatedWorld", {
-      frameId: frameTree.frame.id,
-      worldName: "titlesearch-text",
-    });
-    const { result } = await cdp.send("Runtime.evaluate", {
-      expression: `(document.body ? document.body.innerText : "").slice(0, ${MAX_RENDERED_TEXT})`,
-      contextId: executionContextId,
-      returnByValue: true,
-    });
-    return typeof result.value === "string" ? result.value : "";
-  } catch {
-    return "";
-  }
 }
 
 class Semaphore {
@@ -220,30 +194,13 @@ export class LocalChromiumRenderer implements PreviewRenderer {
       }
       signal.throwIfAborted();
 
-      // CDP directly: puppeteer ignores clip.scale when captureBeyondViewport is
-      // false, which silently produced full-size "thumbnails".
-      const shoot = async (scale: number, quality: number) => {
-        const { data } = await cdp.send("Page.captureScreenshot", {
-          format: "webp",
-          quality,
-          clip: { x: 0, y: 0, ...VIEWPORT, scale },
-          captureBeyondViewport: false,
-        });
-        return Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
-      };
-      const full = await shoot(1, 80);
-      const thumb = await shoot(THUMBNAIL.width / VIEWPORT.width, 75);
+      const { full, thumbnail } = await captureScreens(cdp);
       // Read text in an isolated world: it shares the DOM but not the page's
       // JavaScript, so page scripts can't patch the getters used here.
       const renderedText = await readRenderedText(cdp);
       return {
-        full: { bytes: full, contentHash: await sha256Hex(full), ...VIEWPORT, format: "webp" },
-        thumbnail: {
-          bytes: thumb,
-          contentHash: await sha256Hex(thumb),
-          ...THUMBNAIL,
-          format: "webp",
-        },
+        full,
+        thumbnail,
         finalUrl: page.url(),
         status,
         renderedText,

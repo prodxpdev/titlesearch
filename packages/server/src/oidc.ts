@@ -294,37 +294,113 @@ export class OidcAuth implements ServerAuth {
     ];
   }
 
-  async #login(): Promise<Response> {
+  /**
+   * The identity provider's authorization URL for a sign-in (code flow, PKCE
+   * S256). Shared by the browser sign-in and the Workers authorization
+   * server's upstream step.
+   */
+  async authorizationUrl(p: {
+    redirectUri: string;
+    state: string;
+    nonce: string;
+    verifier: string;
+  }): Promise<string> {
     const clientId = this.#options.clientId;
-    if (!clientId)
-      return new Response("Browser sign-in isn't configured on this server.", { status: 404 });
+    if (!clientId) throw new Error("Sign-in through the identity provider needs OIDC_CLIENT_ID.");
     const { doc } = await this.#discover();
-    const state = random();
-    const nonce = random();
-    const verifier = random(48);
     const challenge = b64url(
-      new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))),
-    );
-    const login = await this.#sign(
-      { state, nonce, verifier },
-      "titlesearch-login",
-      LOGIN_TTL_SECONDS,
+      new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(p.verifier))),
     );
     const url = new URL(doc.authorization_endpoint);
     url.search = new URLSearchParams({
       response_type: "code",
       client_id: clientId,
-      redirect_uri: `${this.#public.origin}/auth/callback`,
+      redirect_uri: p.redirectUri,
       scope: "openid email",
-      state,
-      nonce,
+      state: p.state,
+      nonce: p.nonce,
       code_challenge: challenge,
       code_challenge_method: "S256",
     }).toString();
+    return url.href;
+  }
+
+  /**
+   * Redeems the provider's code, verifies the identity token (issuer,
+   * audience, signature, nonce), and applies the allowlist.
+   */
+  async redeemCode(p: {
+    code: string;
+    redirectUri: string;
+    verifier: string;
+    nonce: string;
+  }): Promise<{ ok: true; subject: string } | { ok: false; status: 400 | 403; message: string }> {
+    const clientId = this.#options.clientId;
+    if (!clientId) return { ok: false, status: 400, message: "browser sign-in isn't configured." };
+    const { doc, idpFetch } = await this.#discover();
+    const form = new URLSearchParams({
+      grant_type: "authorization_code",
+      code: p.code,
+      redirect_uri: p.redirectUri,
+      code_verifier: p.verifier,
+      client_id: clientId,
+    });
+    const headers: Record<string, string> = {
+      "content-type": "application/x-www-form-urlencoded",
+      accept: "application/json",
+    };
+    if (this.#options.clientSecret) {
+      const basic = `${encodeURIComponent(clientId)}:${encodeURIComponent(this.#options.clientSecret)}`;
+      headers.authorization = `Basic ${btoa(basic)}`;
+    }
+    const res = await idpFetch(doc.token_endpoint, {
+      method: "POST",
+      headers,
+      body: form.toString(),
+    });
+    if (!res.ok)
+      return { ok: false, status: 400, message: "the identity provider didn't accept the code." };
+    const tokens = TokenResponse.safeParse(await res.json().catch(() => undefined));
+    if (!tokens.success)
+      return {
+        ok: false,
+        status: 400,
+        message: "the identity provider's answer failed validation.",
+      };
+    let claims: JWTPayload;
+    try {
+      claims = await this.#verifyIdp(tokens.data.id_token, clientId);
+    } catch {
+      return { ok: false, status: 400, message: "the identity token didn't verify." };
+    }
+    if (claims.nonce !== p.nonce || typeof claims.sub !== "string")
+      return { ok: false, status: 400, message: "the identity token didn't match this sign-in." };
+    if (!this.allowed(claims))
+      return { ok: false, status: 403, message: "This account isn't allowed to use this server." };
+    return { ok: true, subject: claims.sub };
+  }
+
+  async #login(): Promise<Response> {
+    if (!this.#options.clientId)
+      return new Response("Browser sign-in isn't configured on this server.", { status: 404 });
+    const state = random();
+    const nonce = random();
+    const verifier = random(48);
+    const login = await this.#sign(
+      { state, nonce, verifier },
+      "titlesearch-login",
+      LOGIN_TTL_SECONDS,
+    );
+    const location = await this.authorizationUrl({
+      redirectUri: `${this.#public.origin}/auth/callback`,
+      state,
+      nonce,
+      verifier,
+    });
     return new Response(null, {
       status: 302,
       headers: {
-        location: url.href,
+        location,
         // Lax: the IdP's redirect back is a cross-site top-level navigation.
         "set-cookie": this.#cookie(OidcAuth.LOGIN_COOKIE, login, LOGIN_TTL_SECONDS, "Lax"),
         "cache-control": "no-store",
@@ -333,16 +409,13 @@ export class OidcAuth implements ServerAuth {
   }
 
   async #callback(request: Request): Promise<Response> {
-    const fail = (message: string) =>
-      new Response(`Sign-in failed: ${message}`, {
-        status: 400,
-        headers: {
-          "content-type": "text/plain; charset=utf-8",
-          "set-cookie": this.#cookie(OidcAuth.LOGIN_COOKIE, "", 0, "Lax"),
-        },
+    const clear = this.#cookie(OidcAuth.LOGIN_COOKIE, "", 0, "Lax");
+    const fail = (message: string, status = 400) =>
+      new Response(status === 403 ? message : `Sign-in failed: ${message}`, {
+        status,
+        headers: { "content-type": "text/plain; charset=utf-8", "set-cookie": clear },
       });
-    const clientId = this.#options.clientId;
-    if (!clientId) return fail("browser sign-in isn't configured.");
+    if (!this.#options.clientId) return fail("browser sign-in isn't configured.");
     const params = new URL(request.url).searchParams;
     if (params.get("error")) return fail("the identity provider refused.");
     const code = params.get("code");
@@ -363,50 +436,23 @@ export class OidcAuth implements ServerAuth {
     } catch {
       return fail("the sign-in expired. Try again.");
     }
-    if (login.state !== state || typeof login.verifier !== "string")
+    if (
+      login.state !== state ||
+      typeof login.verifier !== "string" ||
+      typeof login.nonce !== "string"
+    )
       return fail("the sign-in didn't match. Try again.");
 
-    const { doc, idpFetch } = await this.#discover();
-    const form = new URLSearchParams({
-      grant_type: "authorization_code",
+    const result = await this.redeemCode({
       code,
-      redirect_uri: `${this.#public.origin}/auth/callback`,
-      code_verifier: login.verifier,
-      client_id: clientId,
+      redirectUri: `${this.#public.origin}/auth/callback`,
+      verifier: login.verifier,
+      nonce: login.nonce,
     });
-    const headers: Record<string, string> = {
-      "content-type": "application/x-www-form-urlencoded",
-      accept: "application/json",
-    };
-    if (this.#options.clientSecret) {
-      const basic = `${encodeURIComponent(clientId)}:${encodeURIComponent(this.#options.clientSecret)}`;
-      headers.authorization = `Basic ${btoa(basic)}`;
-    }
-    const res = await idpFetch(doc.token_endpoint, {
-      method: "POST",
-      headers,
-      body: form.toString(),
-    });
-    if (!res.ok) return fail("the identity provider didn't accept the code.");
-    const tokens = TokenResponse.safeParse(await res.json().catch(() => undefined));
-    if (!tokens.success) return fail("the identity provider's answer failed validation.");
-
-    let claims: JWTPayload;
-    try {
-      claims = await this.#verifyIdp(tokens.data.id_token, clientId);
-    } catch {
-      return fail("the identity token didn't verify.");
-    }
-    if (claims.nonce !== login.nonce || typeof claims.sub !== "string")
-      return fail("the identity token didn't match this sign-in.");
-    if (!this.allowed(claims))
-      return new Response("This account isn't allowed to use this server.", {
-        status: 403,
-        headers: { "set-cookie": this.#cookie(OidcAuth.LOGIN_COOKIE, "", 0, "Lax") },
-      });
+    if (!result.ok) return fail(result.message, result.status);
 
     const session = await this.#sign(
-      { sub: claims.sub },
+      { sub: result.subject },
       "titlesearch-session",
       SESSION_TTL_SECONDS,
     );
@@ -415,7 +461,7 @@ export class OidcAuth implements ServerAuth {
       "set-cookie",
       this.#cookie(this.sessionCookie.name, session, SESSION_TTL_SECONDS, "Strict"),
     );
-    out.append("set-cookie", this.#cookie(OidcAuth.LOGIN_COOKIE, "", 0, "Lax"));
+    out.append("set-cookie", clear);
     return new Response(null, { status: 302, headers: out });
   }
 }

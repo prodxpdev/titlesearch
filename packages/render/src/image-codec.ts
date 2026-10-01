@@ -110,7 +110,7 @@ export function createWebpEncoder(load: WasmLoader): WebpEncoder {
           "image/jpeg": (b) => jpeg.default(b),
           "image/webp": (b) => webpDec.default(b),
         },
-        encode: (img, opts) => webpEnc.default(img as ImageData, opts),
+        encode: (img, opts) => webpEnc.default(img as Parameters<typeof webpEnc.default>[0], opts),
       };
     })();
     return ready;

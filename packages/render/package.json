@@ -11,7 +11,9 @@
     "./image-codec": "./src/image-codec.ts",
     "./previewer": "./src/previewer.ts",
     "./remote": "./src/remote.ts",
-    "./renderer": "./src/renderer.ts"
+    "./renderer": "./src/renderer.ts",
+    "./cloudflare": "./src/cloudflare.ts",
+    "./page-capture": "./src/page-capture.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

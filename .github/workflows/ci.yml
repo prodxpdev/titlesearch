@@ -115,6 +115,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:workers
+      - name: Bundle the Worker (wrangler dry run)
+        env:
+          WRANGLER_SEND_METRICS: "false"
+        run: |
+          pnpm --filter @titlesearch/web build
+          pnpm --filter @titlesearch/workers embed-ui
+          pnpm --filter @titlesearch/workers exec wrangler deploy --dry-run --outdir "$RUNNER_TEMP/worker"
 
   container:
     name: Container images
