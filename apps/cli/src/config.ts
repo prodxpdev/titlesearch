@@ -11,8 +11,22 @@ export const CliConfig = z
     providers: z
       .object({
         godaddy: z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
+        /** Used only when PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY are set. */
+        porkbun: z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
+        /** Used only when NAMECOM_USERNAME and NAMECOM_TOKEN are set. */
+        namecom: z
+          .object({
+            enabled: z.boolean().default(true),
+            /** "test" uses Name.com's sandbox, api.dev.name.com. */
+            environment: z.enum(["production", "test"]).default("production"),
+          })
+          .default({ enabled: true, environment: "production" }),
       })
-      .default({ godaddy: { enabled: true } }),
+      .default({
+        godaddy: { enabled: true },
+        porkbun: { enabled: true },
+        namecom: { enabled: true, environment: "production" },
+      }),
     whois: z
       .object({
         /** Extensions to enable beyond the defaults, such as "de". See ADR 8. */

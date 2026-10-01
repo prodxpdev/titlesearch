@@ -11,7 +11,7 @@ import { DEFAULT_PORT, runServe } from "./commands/serve.js";
 import { ConfigError, loadConfig } from "./config.js";
 import { createLogger } from "./logger.js";
 import { resolvePaths } from "./paths.js";
-import { createServices } from "./runtime.js";
+import { createServices, priceKeysFromEnv, priceSecrets } from "./runtime.js";
 import { loadUiAssets } from "./ui-assets.js";
 
 const HELP = `titlesearch ${pkg.version}
@@ -40,12 +40,16 @@ Options:
   --json           Print results as JSON
   --port <number>  Port for serve (default 4717)
   --no-cache       Don't read or write the local cache
-  --no-godaddy     Don't ask GoDaddy; registry sources only
+  --no-godaddy     Don't ask GoDaddy
   -h, --help       Show this help
   -v, --version    Show the version
 
 Environment:
   ANTHROPIC_API_KEY        Enables market-overlap judgment with --market
+  PORKBUN_API_KEY          With PORKBUN_SECRET_API_KEY, adds Porkbun prices
+  PORKBUN_SECRET_API_KEY   (the default price source)
+  NAMECOM_USERNAME         With NAMECOM_TOKEN, adds Name.com prices
+  NAMECOM_TOKEN
   TITLESEARCH_LOG          error, warn (default), info, or debug; logs go to stderr
   TITLESEARCH_CONFIG_DIR   Override the config directory
   TITLESEARCH_CACHE_DIR    Override the cache directory
@@ -76,10 +80,11 @@ async function main(argv: string[]): Promise<number> {
   const paths = resolvePaths();
   if (command === "browser") return runBrowser(rest[0], paths.dataDir);
 
-  const logger = createLogger(
-    process.env.TITLESEARCH_LOG,
-    anthropicApiKey ? [anthropicApiKey] : [],
-  );
+  const priceKeys = priceKeysFromEnv(process.env);
+  const logger = createLogger(process.env.TITLESEARCH_LOG, [
+    ...(anthropicApiKey ? [anthropicApiKey] : []),
+    ...priceSecrets(priceKeys),
+  ]);
   let runtime: Awaited<ReturnType<typeof createServices>>;
   try {
     const config = await loadConfig(paths.configDir);
@@ -102,6 +107,7 @@ async function main(argv: string[]): Promise<number> {
           dataDir: paths.dataDir,
           logger,
           command: "check",
+          priceKeys,
           ...(anthropicApiKey ? { anthropicApiKey } : {}),
         },
         hasAnthropicKey: !!anthropicApiKey,
@@ -117,6 +123,7 @@ async function main(argv: string[]): Promise<number> {
       noCache: values["no-cache"] ?? false,
       noGodaddy: values["no-godaddy"] ?? false,
       command: command === "mcp" ? "mcp" : "check",
+      priceKeys,
       ...(anthropicApiKey ? { anthropicApiKey } : {}),
     });
   } catch (err) {

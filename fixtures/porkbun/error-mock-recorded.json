@@ -1,0 +1,11 @@
+{
+  "_source": "Recorded 2026-10-01 from Porkbun's credential-free mock server: POST /api/json/v3/mock/domain/checkDomain?status=error (header X-Porkbun-Mock: true). HTTP 400.",
+  "status": "ERROR",
+  "message": "Invalid domain.",
+  "code": "INVALID_DOMAIN",
+  "next_action": {
+    "type": "fix_request",
+    "hint": "Re-fetch the price via /domain/checkDomain and resend the matching cost.",
+    "url": "https://porkbun.com/account/api"
+  }
+}

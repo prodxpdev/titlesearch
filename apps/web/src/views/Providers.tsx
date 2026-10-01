@@ -8,6 +8,43 @@ function State({ on }: { on: boolean }) {
   return <span className={`state ${on ? "on" : "off"}`}>{on ? "On" : "Off"}</span>;
 }
 
+function PriceSource({
+  name,
+  state,
+  env,
+  onToggle,
+  children,
+}: {
+  name: string;
+  state: { enabled: boolean; configured: boolean };
+  env: string;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="prov">
+      <h3>{name}</h3>
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        {state.configured ? (
+          <State on={state.enabled} />
+        ) : (
+          <span className="state off">No key</span>
+        )}
+        <Switch
+          on={state.enabled}
+          label={`Use ${name}`}
+          disabled={!state.configured}
+          onToggle={onToggle}
+        />
+      </div>
+      <p>
+        {children}
+        {state.configured ? null : ` To turn it on, set ${env} and restart Titlesearch.`}
+      </p>
+    </div>
+  );
+}
+
 function Switch({
   on,
   label,
@@ -188,25 +225,35 @@ export function Providers() {
               />
             </div>
           </div>
-          <div className="prov">
-            <h3>Porkbun</h3>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <State on={settings.providers.porkbun.enabled} />
-              <Switch on={settings.providers.porkbun.enabled} label="Use Porkbun" disabled />
-            </div>
-            <p>
-              Prices and premium status from Porkbun using your API key. Use a key without purchase
-              permission if your account allows it. Coming next.
-            </p>
-          </div>
-          <div className="prov">
-            <h3>Name.com</h3>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <State on={settings.providers.namecom.enabled} />
-              <Switch on={settings.providers.namecom.enabled} label="Use Name.com" disabled />
-            </div>
-            <p>Prices from Name.com using your API token. Coming after Porkbun.</p>
-          </div>
+          <PriceSource
+            name="Porkbun"
+            state={settings.providers.porkbun}
+            env="PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY"
+            onToggle={() =>
+              void update(
+                { providers: { porkbun: { enabled: !settings.providers.porkbun.enabled } } },
+                settings.providers.porkbun.enabled ? "Porkbun turned off" : "Porkbun turned on",
+              )
+            }
+          >
+            The default price source: prices and premium status from Porkbun's availability check.
+            Porkbun keys can't be limited to read-only use, so restrict yours by IP address in
+            Porkbun's dashboard. Titlesearch only ever checks availability.
+          </PriceSource>
+          <PriceSource
+            name="Name.com"
+            state={settings.providers.namecom}
+            env="NAMECOM_USERNAME and NAMECOM_TOKEN"
+            onToggle={() =>
+              void update(
+                { providers: { namecom: { enabled: !settings.providers.namecom.enabled } } },
+                settings.providers.namecom.enabled ? "Name.com turned off" : "Name.com turned on",
+              )
+            }
+          >
+            Prices and premium status from Name.com's availability check, as an alternative or a
+            second opinion. Titlesearch only ever checks availability.
+          </PriceSource>
           <div className="prov">
             <h3>Another MCP server</h3>
             <div />

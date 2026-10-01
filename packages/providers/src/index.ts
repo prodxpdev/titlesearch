@@ -7,6 +7,25 @@ export {
   GoDaddySingleCheck,
   godaddyMapping,
 } from "./godaddy/godaddy.js";
+export {
+  NAMECOM_API,
+  NAMECOM_BATCH,
+  NAMECOM_ID,
+  NAMECOM_TEST_API,
+  NamecomCheckResponse,
+  type NamecomOptions,
+  NamecomProvider,
+  NamecomSearchResult,
+} from "./namecom/namecom.js";
+export {
+  PORKBUN_API,
+  PORKBUN_BATCH,
+  PORKBUN_ID,
+  PorkbunBulkResponse,
+  PorkbunDomainEntry,
+  type PorkbunOptions,
+  PorkbunProvider,
+} from "./porkbun/porkbun.js";
 export { createDefaultRateLimiter } from "./rate-limits.js";
 export {
   BOOTSTRAP_TTL_SECONDS,

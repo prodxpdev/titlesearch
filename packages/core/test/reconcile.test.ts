@@ -160,3 +160,45 @@ describe("reconcile: several registrars", () => {
     });
   });
 });
+
+describe("reconcile: availability-only sources", () => {
+  const gd = src("godaddy", "available", { availabilityOnly: true });
+  const porkbun = {
+    available: src("porkbun", "available", {
+      price: { amount: 11.08, currency: "USD", period: "first_year" },
+    }),
+    premium: src("porkbun", "premium", {
+      price: { amount: 2450, currency: "USD", period: "first_year" },
+    }),
+    taken: src("porkbun", "registered"),
+  };
+
+  it("agrees with a price source's premium", () => {
+    expect(reconcile([rdap.notFound, gd, porkbun.premium])).toEqual({
+      availability: "premium",
+      reason: "agreed",
+    });
+  });
+
+  it("agrees with a price source's standard price", () => {
+    expect(reconcile([rdap.notFound, gd, porkbun.available])).toEqual({
+      availability: "available",
+      reason: "agreed",
+    });
+  });
+
+  it("alone, still confirms the name can be registered", () => {
+    expect(reconcile([rdap.notFound, gd])).toEqual({ availability: "available", reason: "agreed" });
+  });
+
+  it("disagrees with a registrar that says taken", () => {
+    expect(reconcile([rdap.notFound, gd, porkbun.taken])).toEqual({
+      availability: "unconfirmed",
+      reason: "registrars_disagree",
+    });
+  });
+
+  it("still disagrees with a registry that says registered (a resale listing)", () => {
+    expect(reconcile([rdap.registered, gd]).reason).toBe("registry_taken_registrar_free");
+  });
+});

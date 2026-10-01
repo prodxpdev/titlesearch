@@ -1,0 +1,7 @@
+{
+  "_source": "Built from Porkbun's OpenAPI spec v3.48 (fixtures/porkbun/spec-contract.json), not recorded: no API key was available.",
+  "status": "ERROR",
+  "code": "RATE_LIMIT_EXCEEDED",
+  "message": "Rate limit exceeded. Please try again later.",
+  "ttlRemaining": 30
+}

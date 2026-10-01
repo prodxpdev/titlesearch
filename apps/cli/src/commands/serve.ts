@@ -11,7 +11,7 @@ import {
   type UiAssets,
 } from "@titlesearch/server";
 import { type CliConfig, saveConfig } from "../config.js";
-import type { Runtime, RuntimeOptions } from "../runtime.js";
+import type { PriceKeys, Runtime, RuntimeOptions } from "../runtime.js";
 import { loadOrCreateToken, rotateToken, tokenPath } from "../token.js";
 
 export const DEFAULT_PORT = 4717;
@@ -39,13 +39,24 @@ export interface ServeOptions {
   hasAnthropicKey: boolean;
 }
 
-function toSettings(config: CliConfig, runtime: Runtime, hasKey: boolean): Settings {
+function toSettings(
+  config: CliConfig,
+  runtime: Runtime,
+  hasKey: boolean,
+  keys: PriceKeys,
+): Settings {
   return {
     providers: {
       rdap: { enabled: true },
       godaddy: { enabled: config.providers.godaddy.enabled },
-      porkbun: { enabled: false, configured: false },
-      namecom: { enabled: false, configured: false },
+      porkbun: {
+        enabled: !!keys.porkbun && config.providers.porkbun.enabled,
+        configured: !!keys.porkbun,
+      },
+      namecom: {
+        enabled: !!keys.namecom && config.providers.namecom.enabled,
+        configured: !!keys.namecom,
+      },
     },
     assessment: {
       mode: runtime.services.assessment?.mode ?? "client",
@@ -66,12 +77,23 @@ export async function runServe(options: ServeOptions): Promise<void> {
   const token = await loadOrCreateToken(options.configDir);
   const auth = new LocalAuth({ token, port: options.port });
 
+  const keys = options.runtimeOptions.priceKeys ?? {};
   const settings: SettingsHandler = {
-    get: () => toSettings(config, runtime, options.hasAnthropicKey),
+    get: () => toSettings(config, runtime, options.hasAnthropicKey, keys),
     async update(patch) {
       const next: CliConfig = structuredClone(config);
       if (patch.providers?.godaddy)
         next.providers.godaddy.enabled = patch.providers.godaddy.enabled;
+      if (patch.providers?.porkbun) {
+        if (patch.providers.porkbun.enabled && !keys.porkbun)
+          throw new SettingsError("Set PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY first.");
+        next.providers.porkbun.enabled = patch.providers.porkbun.enabled;
+      }
+      if (patch.providers?.namecom) {
+        if (patch.providers.namecom.enabled && !keys.namecom)
+          throw new SettingsError("Set NAMECOM_USERNAME and NAMECOM_TOKEN first.");
+        next.providers.namecom.enabled = patch.providers.namecom.enabled;
+      }
       if (patch.previews) next.previews.mode = patch.previews.mode;
       if (patch.assessment) {
         if (patch.assessment.mode === "anthropic" && !options.hasAnthropicKey) {
@@ -85,7 +107,7 @@ export async function runServe(options: ServeOptions): Promise<void> {
       config = next;
       runtime = rebuilt;
       await old.close();
-      return toSettings(config, runtime, options.hasAnthropicKey);
+      return toSettings(config, runtime, options.hasAnthropicKey, keys);
     },
   };
 

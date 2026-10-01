@@ -1,0 +1,258 @@
+{
+  "source": "https://docs.name.com/api/v1/namecom.api.yaml",
+  "specVersion": "1.35.0",
+  "recordedAt": "2026-10-01",
+  "note": "The parts of Name.com's Core API spec that Titlesearch depends on. No account was available, so Name.com responses in fixtures are built from these documented shapes, not recorded. The contract canary compares the live spec with this file.",
+  "servers": [
+    {
+      "description": "Testing",
+      "url": "https://api.dev.name.com"
+    }
+  ],
+  "infoDescription": "RESTful API for managing domains, DNS records, and related services at name.com.  Access via HTTPS at api.name.com (production) or api.dev.name.com (testing).  Supports standard authentication, rate-limited to 20 requests/second.",
+  "securitySchemes": {
+    "BasicAuth": {
+      "scheme": "basic",
+      "type": "http",
+      "description": "Authenticate via HTTP Basic with your account username and API token. Examples use an explicit 'Authorization: Basic <base64(username:token)>' header; 'curl -u username:token' is equivalent. For sandbox, append \"-test\" to your username and use your sandbox token on api.dev.name.com."
+    }
+  },
+  "checkAvailability": {
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "description": "Checks if one or more domain names are available for registration (up to 50 domains). Important: Do not encode the `:` in the path. Use `/core/v1/domains:checkAvailability`, not `/core/v1/domains%3AcheckAvailability`.",
+            "properties": {
+              "domainNames": {
+                "description": "DomainNames is the list of domains to check if they are available.",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "type": "array",
+                "maxItems": 50,
+                "minItems": 1
+              },
+              "purchaseType": {
+                "description": "Optional filter. **Recommended:** `registration` for most integrations — omit only if you support acquisition types. Non-matching domains are returned with `purchasable: false` (Search omits them instead). See the [Domain purchase pricing guide](/guides/domain-pricing).",
+                "allOf": [
+                  {
+                    "description": "Purchase Type indicates what kind of purchase a discovery result represents.\nReturned by [Search](/api/v1/reference/domains/search) and [Check Availability](/api/v1/reference/domains/check-availability) — not [Zone Check](/api/v1/reference/domains/zone-check).\n\nCopy the value to [Create Domain](/api/v1/reference/domains/create-domain) as `purchaseType`.\n\n**Recommendation:** Pass `registration` on Search and Check Availability unless you choose to support acquisition inventory. Other values are supported but add integration complexity.\n\n**Pricing by type:**\n\n- `registration` — Standard or registry premium. Check the `premium` flag: when `false`, omit `purchasePrice` on create (Get Pricing with matching `years` is optional for preview only); when `true`, `purchasePrice` is required from Get Pricing with matching `years`. `years` controls price and registration length.\n- `aftermarket_s`, `aftermarket_b`, `aftermarket_i` — Flat acquisition fee from Search or Check Availability; `purchasePrice` required. `years` does not multiply price or guarantee registration length — omit or pass TLD default.\n- `expiring`, `backorder` — Flat acquisition fee from Search or Check Availability; `purchasePrice` required. Get Pricing does not return these prices. `years` does not multiply price or guarantee registration length — omit or pass TLD default. Renew after acquisition to extend registration.\n\nSee the [Domain pricing guide](/guides/domain-pricing).\n",
+                    "type": "string",
+                    "enum": [
+                      "registration",
+                      "aftermarket_i",
+                      "expiring",
+                      "backorder",
+                      "aftermarket_s",
+                      "aftermarket_b"
+                    ]
+                  }
+                ]
+              }
+            },
+            "type": "object",
+            "required": [
+              "domainNames"
+            ]
+          }
+        }
+      },
+      "description": "AvailabilityRequest is used to list the domain names to check availability for.",
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "description": "SearchResponse returns a list of search results.",
+              "properties": {
+                "results": {
+                  "description": "Results of the search are returned here, the order should not be relied upon.",
+                  "items": {
+                    "description": "SearchResult is returned by the CheckAvailability and Search endpoints.",
+                    "properties": {
+                      "domainName": {
+                        "description": "DomainName is the punycode encoding of the result domain name.",
+                        "type": "string",
+                        "example": "example.com"
+                      },
+                      "premium": {
+                        "description": "Premium indicates whether this discovery result has premium or non-standard pricing. Only returned for purchasable domains. When `true` with `purchaseType: registration` → registry premium (use [Get Pricing](/api/v1/reference/domains/get-pricing-for-domain) for multi-year totals). When `true` with aftermarket, expiring, or backorder `purchaseType` values → flat acquisition fee (use discovery `purchasePrice`; `years` on create does not multiply price or guarantee registration length). When `true`, `purchasePrice` must be passed on Create Domain.",
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "purchasable": {
+                        "description": "Purchasable indicates whether the search result is available for purchase.",
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "purchasePrice": {
+                        "description": "PurchasePrice is the minimum-term list or flat acquisition price from discovery, in USD. Only returned for purchasable domains. For `purchaseType: registration` when `purchasePrice` is required on create, use [Get Pricing](/api/v1/reference/domains/get-pricing-for-domain) with matching `years` instead. For aftermarket, expiring, and backorder types, pass this flat acquisition fee on Create Domain — not affected by `years`. Get Pricing does not return these acquisition prices. Recommended to re-check with Check Availability immediately before create for all types — prices can change.",
+                        "format": "double",
+                        "type": "number",
+                        "example": 10.99
+                      },
+                      "purchaseType": {
+                        "description": "PurchaseType indicates what kind of purchase this discovery result is for. Only returned for purchasable domains. Pass to Create Domain as `purchaseType`. See [SearchPurchaseType](#/components/schemas/SearchPurchaseType) for pricing behavior per value. When `premium: true` or the type is not `registration`, follow the [Domain pricing guide](/guides/domain-pricing).",
+                        "allOf": [
+                          {
+                            "description": "Purchase Type indicates what kind of purchase a discovery result represents.\nReturned by [Search](/api/v1/reference/domains/search) and [Check Availability](/api/v1/reference/domains/check-availability) — not [Zone Check](/api/v1/reference/domains/zone-check).\n\nCopy the value to [Create Domain](/api/v1/reference/domains/create-domain) as `purchaseType`.\n\n**Recommendation:** Pass `registration` on Search and Check Availability unless you choose to support acquisition inventory. Other values are supported but add integration complexity.\n\n**Pricing by type:**\n\n- `registration` — Standard or registry premium. Check the `premium` flag: when `false`, omit `purchasePrice` on create (Get Pricing with matching `years` is optional for preview only); when `true`, `purchasePrice` is required from Get Pricing with matching `years`. `years` controls price and registration length.\n- `aftermarket_s`, `aftermarket_b`, `aftermarket_i` — Flat acquisition fee from Search or Check Availability; `purchasePrice` required. `years` does not multiply price or guarantee registration length — omit or pass TLD default.\n- `expiring`, `backorder` — Flat acquisition fee from Search or Check Availability; `purchasePrice` required. Get Pricing does not return these prices. `years` does not multiply price or guarantee registration length — omit or pass TLD default. Renew after acquisition to extend registration.\n\nSee the [Domain pricing guide](/guides/domain-pricing).\n",
+                            "type": "string",
+                            "enum": [
+                              "registration",
+                              "aftermarket_i",
+                              "expiring",
+                              "backorder",
+                              "aftermarket_s",
+                              "aftermarket_b"
+                            ]
+                          }
+                        ]
+                      },
+                      "renewalPrice": {
+                        "description": "RenewalPrice is the minimum-term renewal total for this domain (typically 1 year; varies by TLD). Only returned for purchasable domains. Informational for standard [Renew Domain](/api/v1/reference/domains/renew-domain) flows — do **not** use to calculate Create Domain `purchasePrice` or multi-year create totals. For premium renewals, use `renewalPrice` from [Get Pricing](/api/v1/reference/domains/get-pricing-for-domain) with matching `years`, not this discovery value.",
+                        "format": "double",
+                        "type": "number",
+                        "example": 10.99
+                      },
+                      "sld": {
+                        "description": "SLD is first portion of the domain_name.",
+                        "type": "string",
+                        "example": "example"
+                      },
+                      "tld": {
+                        "description": "TLD is the rest of the domain_name after the SLD.",
+                        "type": "string",
+                        "example": "com"
+                      },
+                      "reason": {
+                        "description": "Reason provides additional context when unavailable (e.g. registry is in maintenance).",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object",
+                    "required": [
+                      "domainName",
+                      "sld",
+                      "tld",
+                      "purchasable"
+                    ]
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "A successful response."
+      },
+      "401": {
+        "description": "Unauthorized.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "message"
+              ],
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "A human-readable message providing more details about the error",
+                  "example": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Forbidden - you do not have permission to perform this action.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "message"
+              ],
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "A human-readable message providing more details about the error",
+                  "example": "Permission denied"
+                },
+                "details": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Additional context or information about the error",
+                  "example": "Failed authentication"
+                }
+              }
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "The request was well-formed but contains no valid domains to check. This occurs when all provided domain names contain TLDs that are not supported or available for registration. The request must contain at least one domain with a valid TLD.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "message"
+              ],
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "A human-readable message providing more details about the error",
+                  "example": "Unprocessable Entity"
+                },
+                "details": {
+                  "type": "string",
+                  "description": "Additional context or information about the pricing error",
+                  "example": "The pricing information required to process this request is temporarily unavailable. This is an internal system error. Please try again in a few minutes or contact support if the issue persists."
+                }
+              }
+            }
+          }
+        }
+      },
+      "429": {
+        "description": "Rate limit has been exceeded.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "message",
+                "details"
+              ],
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "### Too Many Requests\nYou have exceeded the rate limit.\n\n**Headers returned:**\n* 'X-RateLimit-Reset': An integer (UTC epoch) indicating when you can retry.",
+                  "example": "Rate Limit Exceeded"
+                }
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-ratelimit-reset": {
+            "description": "Unix timestamp for the time at which the current rate limit will reset.",
+            "schema": {
+              "type": "number",
+              "example": 1747668270
+            }
+          }
+        }
+      }
+    }
+  }
+}

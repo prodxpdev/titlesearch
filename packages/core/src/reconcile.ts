@@ -31,8 +31,13 @@ export function reconcile(sources: readonly SourceResult[]): Reconciliation {
   }
 
   const registrarViews = new Set<RegistrarView>();
+  // "Purchasable, premium unknown" from availability-only sources: it agrees
+  // with either a standard or a premium answer from a price source.
+  let purchasableOnly = false;
   for (const s of registrars) {
-    if (
+    if (s.availability === "available" && s.availabilityOnly === true) {
+      purchasableOnly = true;
+    } else if (
       s.availability === "available" ||
       s.availability === "premium" ||
       s.availability === "registered"
@@ -41,6 +46,13 @@ export function reconcile(sources: readonly SourceResult[]): Reconciliation {
     } else {
       return { availability: "unconfirmed", reason: "invalid_source_state" };
     }
+  }
+  if (purchasableOnly) {
+    if (registrarViews.has("registered")) {
+      return { availability: "unconfirmed", reason: "registrars_disagree" };
+    }
+    // Alone, it confirms the name can be registered; the price is unknown.
+    if (registrarViews.size === 0) registrarViews.add("available");
   }
 
   if (registryViews.size > 1) return { availability: "unconfirmed", reason: "registries_disagree" };

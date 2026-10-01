@@ -5,7 +5,12 @@ import type { Price } from "@titlesearch/core";
 import type { CallToolResult } from "./client.js";
 
 export type MappingOutcome =
-  | { availability: "available" | "premium" | "registered"; price?: Price }
+  | {
+      availability: "available" | "premium" | "registered";
+      price?: Price;
+      /** The source can't tell premium from standard: see SourceResult.availabilityOnly. */
+      availabilityOnly?: boolean;
+    }
   | { error: { code: string; message: string } };
 
 export interface UpstreamMapping {

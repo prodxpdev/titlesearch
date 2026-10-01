@@ -1,0 +1,13 @@
+{
+  "_source": "Recorded 2026-10-01 from the live API: POST /api/json/v3/domain/checkDomain with deliberately invalid keys. HTTP 400.",
+  "status": "ERROR",
+  "message": "Invalid API key. (001)",
+  "code": "INVALID_API_KEYS_001",
+  "next_action": {
+    "type": "authenticate",
+    "hint": "Your API key or secret is invalid. Verify them, or create a new key.",
+    "retryable": false,
+    "url": "https://porkbun.com/account/api"
+  },
+  "requestId": "01a0f8f8-a328-774d-9a7a-9089267f050f"
+}

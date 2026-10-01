@@ -96,7 +96,7 @@ export const godaddyMapping: UpstreamMapping = {
       // (bank.app in the fixtures). RDAP then says registered, and
       // reconciliation makes the result unconfirmed.
       case "Premium":
-        return { availability: "available" };
+        return { availability: "available", availabilityOnly: true };
       case "Auction":
         // Sold at auction, not at registry price: not available to register.
         return { availability: "registered" };

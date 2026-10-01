@@ -1,0 +1,374 @@
+{
+  "source": "https://porkbun.com/api/json/v3/spec",
+  "specVersion": "3.48",
+  "recordedAt": "2026-10-01",
+  "note": "The parts of Porkbun's OpenAPI spec that Titlesearch depends on. No API key was available, so Porkbun responses in fixtures are built from these documented shapes, not recorded. The contract canary compares the live spec with this file.",
+  "servers": [
+    {
+      "url": "https://api.porkbun.com/api/json/v3",
+      "description": "Production"
+    },
+    {
+      "url": "https://api-ipv4.porkbun.com/api/json/v3",
+      "description": "Production (IPv4 only \u2014 use this if your client is on an IPv6 network and needs to reach the API over IPv4)"
+    }
+  ],
+  "checkDomainBulk": {
+    "tags": [
+      "Domain"
+    ],
+    "summary": "Check several domains at once",
+    "description": "Check availability and pricing for up to 25 domains in one call. Same endpoint as the single check, with a `domains` array in the body and no domain in the path.\n\n**Prefer this over looping the single check.** Checks are chunked per registry, so a batch is materially less work for us than the same names one at a time, and the budget reflects that: this draws on a separate allowance of **200 domains per 60 seconds** per account, against 10 checks per 10 seconds for the single form. Counting is per DOMAIN, not per request, so 25 domains spends 25 of the 200.\n\n**Partial results are normal and must be read.** Three lists come back and they mean different things:\n- `domains` - answered, keyed by domain name, each value identical in shape to the single-check `response`.\n- `invalid` - entries that are not checkable at all (not a domain, unsupported TLD). One typo does not fail the call; the other names are still answered.\n- `unresolved` - the registry did not answer in time. These are **neither available nor taken**; treating them as unavailable is wrong. Retry them.\n\nDuplicates are removed before the budget is charged. If more than 25 remain, nothing is checked and `BULK_CHECK_TOO_MANY` is returned rather than a truncated answer.\n\n**Latency.** This is synchronous: one request, one complete answer, no polling. 25 domains across 25 different TLDs measures around 3 seconds, because the connection manager fans a batch that fits under every registry's cap out as a single command. A few registries cap low and **.de accepts one domain per command**, so a batch heavy in those becomes several sequential commands; if that would need more than 4, the call is refused with `BULK_CHECK_TOO_SLOW` rather than left to time out mid-response.",
+    "operationId": "domainCheckDomainBulk",
+    "x-ratelimit": {
+      "requests": 200,
+      "window": 60,
+      "windowUnit": "seconds",
+      "scope": "account",
+      "note": "Counted in DOMAINS, not requests, in its own bucket (Redis key API:bulkCheckDomains:{accountId}) separate from the single-check budget. Max 25 domains per call."
+    },
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "allOf": [
+              {
+                "type": "object",
+                "description": "API credentials. Provide `apikey`/`secretapikey` in the request body, OR supply them as `X-API-Key`/`X-Secret-API-Key` request headers. One of the two methods is required.",
+                "properties": {
+                  "apikey": {
+                    "type": "string",
+                    "description": "Your API key. Required in body when not using header auth.",
+                    "example": "pk1_..."
+                  },
+                  "secretapikey": {
+                    "type": "string",
+                    "description": "Your secret API key. Required in body when providing apikey.",
+                    "example": "sk1_..."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "domains"
+                ],
+                "properties": {
+                  "domains": {
+                    "type": "array",
+                    "maxItems": 25,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Domains to check, e.g. [\"example.com\", \"example.net\"]. Duplicates are removed.",
+                    "example": [
+                      "example.com",
+                      "example.net",
+                      "example.dev"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Per-domain availability and pricing, plus any invalid or unresolved entries",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "SUCCESS"
+                },
+                "checked": {
+                  "type": "integer",
+                  "description": "How many domains were answered",
+                  "example": 3
+                },
+                "domains": {
+                  "type": "object",
+                  "description": "Keyed by domain name; each value has the same shape as the single-check `response` object",
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                },
+                "unresolved": {
+                  "type": "array",
+                  "description": "The registry did not answer for these. NOT a statement of availability - retry them.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "invalid": {
+                  "type": "array",
+                  "description": "Entries that could not be checked, each with a reason",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "limits": {
+                  "type": "object",
+                  "description": "Bulk budget usage; `countedIn` is \"domains\""
+                }
+              }
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "No checkable domains, or more than 25 supplied (BULK_CHECK_TOO_MANY)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "status",
+                "message"
+              ],
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ERROR"
+                  ],
+                  "example": "ERROR"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Human-readable description of the error",
+                  "example": "Invalid domain."
+                },
+                "code": {
+                  "type": "string",
+                  "description": "Machine-readable error code. Use for programmatic handling; use `message` for display. See the Error codes section in the API description for a full list.",
+                  "example": "INVALID_DOMAIN"
+                },
+                "next_action": {
+                  "type": "object",
+                  "description": "Present on many errors: a machine-readable remediation hint so an agent can self-correct without parsing the message. Absent when no specific action applies.",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "description": "Stable action category an agent can branch on.",
+                      "enum": [
+                        "fix_request",
+                        "authenticate",
+                        "enable_setting",
+                        "verify_account",
+                        "add_funds",
+                        "top_up",
+                        "retry",
+                        "wait_and_retry",
+                        "use_website",
+                        "choose_alternative",
+                        "contact_support",
+                        "none"
+                      ],
+                      "example": "fix_request"
+                    },
+                    "hint": {
+                      "type": "string",
+                      "description": "Human-readable instruction.",
+                      "example": "Re-fetch the price via /domain/checkDomain and resend the matching cost."
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "Where to take the action, when applicable.",
+                      "example": "https://porkbun.com/account/api"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "429": {
+        "description": "Bulk check budget exhausted",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "status",
+                "message"
+              ],
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ERROR"
+                  ],
+                  "example": "ERROR"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Rate limit exceeded. Please try again later."
+                },
+                "code": {
+                  "type": "string",
+                  "example": "RATE_LIMIT_EXCEEDED"
+                },
+                "ttlRemaining": {
+                  "type": "integer",
+                  "description": "Seconds until the rate limit window resets. Present on some endpoints."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "x-codeSamples": [
+      {
+        "lang": "curl",
+        "label": "curl",
+        "source": "curl -X POST https://api.porkbun.com/api/json/v3/domain/checkDomain \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"apikey\":\"pk1_...\",\"secretapikey\":\"sk1_...\",\"domains\":[\"example.com\",\"example.net\"]}'"
+      }
+    ],
+    "x-porkbun-agent": {
+      "safe": true,
+      "cost": false,
+      "destructive": false,
+      "reversible": true,
+      "requiresConfirmation": false
+    }
+  },
+  "checkDomainSingleResponse": {
+    "description": "Availability and pricing",
+    "content": {
+      "application/json": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "example": "SUCCESS"
+            },
+            "response": {
+              "type": "object",
+              "properties": {
+                "avail": {
+                  "type": "string",
+                  "enum": [
+                    "yes",
+                    "no"
+                  ],
+                  "description": "Whether the domain is available for registration"
+                },
+                "type": {
+                  "type": "string",
+                  "example": "registration",
+                  "description": "The price type (always 'registration' for the primary price)"
+                },
+                "price": {
+                  "type": "string",
+                  "description": "Registration price per year in USD",
+                  "example": "9.73"
+                },
+                "firstYearPromo": {
+                  "type": "string",
+                  "enum": [
+                    "yes",
+                    "no"
+                  ],
+                  "description": "Whether the returned price is a first-year promotional price"
+                },
+                "regularPrice": {
+                  "type": "string",
+                  "description": "Standard (non-promo) registration price in USD",
+                  "example": "9.73"
+                },
+                "premium": {
+                  "type": "string",
+                  "enum": [
+                    "yes",
+                    "no"
+                  ],
+                  "description": "Whether this is a premium domain"
+                },
+                "minDuration": {
+                  "type": "integer",
+                  "description": "Minimum registration duration in years required by the registry",
+                  "example": 1
+                },
+                "additional": {
+                  "type": "object",
+                  "description": "Renewal and transfer pricing for this domain",
+                  "properties": {
+                    "renewal": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "price": {
+                          "type": "string"
+                        },
+                        "regularPrice": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "transfer": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "price": {
+                          "type": "string"
+                        },
+                        "regularPrice": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "description": "Current rate limit usage for this account",
+              "properties": {
+                "TTL": {
+                  "type": "integer",
+                  "description": "Rate limit window in seconds"
+                },
+                "limit": {
+                  "type": "integer",
+                  "description": "Maximum checks allowed in the window"
+                },
+                "used": {
+                  "type": "integer",
+                  "description": "Number of checks used so far in the current window"
+                },
+                "naturalLanguage": {
+                  "type": "string",
+                  "description": "Human-readable rate limit summary",
+                  "example": "1 out of 10 checks within 10 seconds used."
+                }
+              }
+            },
+            "ttlRemaining": {
+              "type": "integer",
+              "description": "Seconds remaining until the rate limit window resets"
+            }
+          },
+          "required": [
+            "status",
+            "response"
+          ]
+        }
+      }
+    }
+  }
+}

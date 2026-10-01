@@ -1,6 +1,9 @@
 name: Contract canary
 
-# Live checks against GoDaddy's MCP server and the IANA RDAP bootstrap.
+# Live checks against GoDaddy's MCP server, the IANA RDAP bootstrap, and the
+# Porkbun and Name.com API specs. Porkbun and Name.com are also checked live
+# when their keys are set as repository secrets; use keys restricted by IP
+# address where the registrar allows it, or Name.com's sandbox.
 # Runs nightly and on demand, never on pull requests. On failure it opens (or
 # comments on) an issue labeled contract-canary.
 
@@ -29,6 +32,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Run canary
         id: canary
+        env:
+          PORKBUN_API_KEY: ${{ secrets.PORKBUN_API_KEY }}
+          PORKBUN_SECRET_API_KEY: ${{ secrets.PORKBUN_SECRET_API_KEY }}
+          NAMECOM_USERNAME: ${{ secrets.NAMECOM_USERNAME }}
+          NAMECOM_TOKEN: ${{ secrets.NAMECOM_TOKEN }}
+          NAMECOM_ENVIRONMENT: ${{ vars.NAMECOM_ENVIRONMENT }}
         run: pnpm --filter @titlesearch/providers test:canary 2>&1 | tee canary.log
         shell: bash -o pipefail {0}
       - name: Open or update an issue on failure

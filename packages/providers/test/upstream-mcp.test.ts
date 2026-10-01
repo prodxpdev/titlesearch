@@ -211,10 +211,18 @@ describe("GoDaddy mapping against recorded responses", () => {
 
   it.each([
     ["check-single-registered", "google.com", { availability: "registered" }],
-    ["check-single-available", `${NX}.com`, { availability: "available" }],
+    ["check-single-available", `${NX}.com`, { availability: "available", availabilityOnly: true }],
     // GoDaddy is availability-only: its "Registry Premium" and "Premium" map to available.
-    ["check-single-premium-shoes.online", "shoes.online", { availability: "available" }],
-    ["check-single-premium-bank.app", "bank.app", { availability: "available" }],
+    [
+      "check-single-premium-shoes.online",
+      "shoes.online",
+      { availability: "available", availabilityOnly: true },
+    ],
+    [
+      "check-single-premium-bank.app",
+      "bank.app",
+      { availability: "available", availabilityOnly: true },
+    ],
   ])("%s", (file, domain, expected) => {
     expect(godaddyMapping.interpret(result(file), domain)).toEqual(expected);
   });

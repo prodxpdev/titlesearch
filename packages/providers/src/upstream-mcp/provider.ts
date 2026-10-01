@@ -92,6 +92,7 @@ export class UpstreamMcpProvider implements AvailabilityProvider {
         source: this.id,
         availability: outcome.availability,
         ...(outcome.price ? { price: outcome.price } : {}),
+        ...(outcome.availabilityOnly ? { availabilityOnly: true } : {}),
         checkedAt: new Date().toISOString(),
         latencyMs: Date.now() - t0,
       };

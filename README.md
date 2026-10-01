@@ -60,6 +60,24 @@ From the CLI, `--market` compares taken domains with your product. Set `ANTHROPI
 ANTHROPIC_API_KEY=... bun apps/cli/src/main.ts check acme --tlds com,io --market "Invoicing for freelance designers"
 ```
 
+### Prices
+
+Availability comes from registry RDAP and GoDaddy, neither of which reports prices. For prices and premium status, add a price source. Porkbun is the default:
+
+```sh
+export PORKBUN_API_KEY=pk1_sb_...         # a sandbox key is recommended; see below
+export PORKBUN_SECRET_API_KEY=sk1_sb_...
+export NAMECOM_USERNAME=...               # optional: Name.com as well, or instead
+export NAMECOM_TOKEN=...
+```
+
+Neither registrar offers a read-only key, so give Titlesearch a key that can't buy anything:
+
+- **Porkbun:** use a sandbox key (prefixed `pk1_sb_`), created at porkbun.com/account/api. Porkbun says sandbox availability and prices match production, while purchases are only simulated. If you use a live key, restrict it to your IP address.
+- **Name.com:** tokens can't be scoped, so create a dedicated one.
+
+Titlesearch only ever calls each registrar's availability check. Without a price source, results say "No price from this source." See [ADR 17](docs/decisions/0017-price-sources.md).
+
 Titlesearch is read-only. It never registers, renews, transfers, or modifies a domain or DNS record. It's also not a trademark search.
 
 - [Contributing](CONTRIBUTING.md)

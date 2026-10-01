@@ -192,7 +192,7 @@ let settings: Settings = {
   providers: {
     rdap: { enabled: true },
     godaddy: { enabled: true },
-    porkbun: { enabled: false, configured: false },
+    porkbun: { enabled: true, configured: true },
     namecom: { enabled: false, configured: false },
   },
   assessment: { mode: "anthropic", model: "test-model", keyConfigured: true },
@@ -205,6 +205,8 @@ const settingsHandler: SettingsHandler = {
     settings = structuredClone(settings);
     if (patch.providers?.godaddy)
       settings.providers.godaddy.enabled = patch.providers.godaddy.enabled;
+    if (patch.providers?.porkbun)
+      settings.providers.porkbun.enabled = patch.providers.porkbun.enabled;
     if (patch.assessment) settings.assessment.mode = patch.assessment.mode;
     if (patch.previews) settings.previews.mode = patch.previews.mode;
     return settings;

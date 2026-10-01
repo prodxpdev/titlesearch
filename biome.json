@@ -79,6 +79,7 @@
         "!packages/core/src/extract/**",
         "!packages/server/src/static/**",
         "!**/test/**",
+        "!**/test-canary/**",
         "!**/e2e/**"
       ],
       "plugins": ["./tools/biome-plugins/no-raw-site-content.grit"]

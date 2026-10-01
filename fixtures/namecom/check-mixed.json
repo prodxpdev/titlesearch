@@ -1,0 +1,33 @@
+{
+  "_source": "Built from Name.com's Core API spec 1.35.0 (fixtures/namecom/spec-contract.json), not recorded: no account was available.",
+  "results": [
+    {
+      "domainName": "dispatchwell.com",
+      "purchasable": true,
+      "premium": true,
+      "purchasePrice": 2450,
+      "purchaseType": "registration"
+    },
+    {
+      "domainName": "fieldloom.io",
+      "purchasable": true,
+      "premium": false,
+      "purchasePrice": 39.99,
+      "purchaseType": "registration"
+    },
+    {
+      "domainName": "google.com",
+      "purchasable": false
+    },
+    {
+      "domainName": "xn--mnchen-3ya.de",
+      "purchasable": true,
+      "premium": false,
+      "purchaseType": "registration"
+    },
+    {
+      "domainName": "bank.app",
+      "purchasable": false
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "_source": "Built from Porkbun's OpenAPI spec v3.48 (fixtures/porkbun/spec-contract.json), not recorded: no API key was available.",
+  "status": "SUCCESS",
+  "checked": 5,
+  "domains": {
+    "fieldloom.io": {
+      "avail": "yes",
+      "type": "registration",
+      "price": "28.12",
+      "firstYearPromo": "no",
+      "regularPrice": "28.12",
+      "premium": "no",
+      "minDuration": 1,
+      "additional": {
+        "renewal": {
+          "type": "renewal",
+          "price": "28.12",
+          "regularPrice": "28.12"
+        },
+        "transfer": {
+          "type": "transfer",
+          "price": "28.12",
+          "regularPrice": "28.12"
+        }
+      }
+    },
+    "dispatchwell.com": {
+      "avail": "yes",
+      "type": "registration",
+      "price": "2450.00",
+      "firstYearPromo": "no",
+      "regularPrice": "2450.00",
+      "premium": "yes",
+      "minDuration": 1,
+      "additional": {
+        "renewal": {
+          "type": "renewal",
+          "price": "2450.00",
+          "regularPrice": "2450.00"
+        },
+        "transfer": {
+          "type": "transfer",
+          "price": "2450.00",
+          "regularPrice": "2450.00"
+        }
+      }
+    },
+    "acme.dev": {
+      "avail": "yes",
+      "type": "registration",
+      "price": "9.73",
+      "firstYearPromo": "yes",
+      "regularPrice": "12.87",
+      "premium": "no",
+      "minDuration": 1,
+      "additional": {
+        "renewal": {
+          "type": "renewal",
+          "price": "12.87",
+          "regularPrice": "12.87"
+        },
+        "transfer": {
+          "type": "transfer",
+          "price": "12.87",
+          "regularPrice": "12.87"
+        }
+      }
+    },
+    "google.com": {
+      "avail": "no",
+      "type": "registration",
+      "price": "11.08",
+      "firstYearPromo": "no",
+      "regularPrice": "11.08",
+      "premium": "no",
+      "minDuration": 1,
+      "additional": {
+        "renewal": {
+          "type": "renewal",
+          "price": "11.08",
+          "regularPrice": "11.08"
+        },
+        "transfer": {
+          "type": "transfer",
+          "price": "11.08",
+          "regularPrice": "11.08"
+        }
+      }
+    },
+    "xn--mnchen-3ya.de": {
+      "avail": "yes",
+      "type": "registration",
+      "price": "5.99",
+      "firstYearPromo": "no",
+      "regularPrice": "5.99",
+      "premium": "no",
+      "minDuration": 1,
+      "additional": {
+        "renewal": {
+          "type": "renewal",
+          "price": "5.99",
+          "regularPrice": "5.99"
+        },
+        "transfer": {
+          "type": "transfer",
+          "price": "5.99",
+          "regularPrice": "5.99"
+        }
+      }
+    }
+  },
+  "unresolved": [
+    "slowregistry.example"
+  ],
+  "invalid": [
+    {
+      "domain": "not a domain",
+      "reason": "Invalid domain."
+    }
+  ],
+  "limits": {
+    "TTL": 60,
+    "limit": 200,
+    "used": 7,
+    "countedIn": "domains",
+    "naturalLanguage": "7 out of 200 domains within 60 seconds used."
+  }
+}

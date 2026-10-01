@@ -152,6 +152,12 @@ test.describe("mockup routes", () => {
     await page.getByLabel("Leave it to Claude in chat").check();
     await expect(page.getByLabel("Leave it to Claude in chat")).toBeChecked();
     await expect(page.getByRole("switch", { name: "Use RDAP" })).toBeDisabled();
+    const porkbun = page.getByRole("switch", { name: "Use Porkbun" });
+    await expect(porkbun).toHaveAttribute("aria-checked", "true");
+    await porkbun.click();
+    await expect(porkbun).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByRole("switch", { name: "Use Name.com" })).toBeDisabled();
+    await expect(page.getByText("set NAMECOM_USERNAME and NAMECOM_TOKEN")).toBeVisible();
     await page.getByLabel("Blur previews until opened").check();
     await page.getByRole("link", { name: "Results" }).click();
     await expect(page.locator(".lot .shot-frame.shot-blur").first()).toBeVisible();

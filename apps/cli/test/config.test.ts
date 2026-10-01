@@ -1,10 +1,16 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { silentLogger } from "@titlesearch/core";
 import { afterEach, describe, expect, it } from "vitest";
-import { ConfigError, loadConfig } from "../src/config.js";
+import { CliConfig, ConfigError, loadConfig } from "../src/config.js";
 import { resolvePaths } from "../src/paths.js";
-import { resolveAssessmentMode } from "../src/runtime.js";
+import {
+  createServices,
+  priceKeysFromEnv,
+  priceSecrets,
+  resolveAssessmentMode,
+} from "../src/runtime.js";
 
 describe("loadConfig", () => {
   const dirs: string[] = [];
@@ -19,7 +25,11 @@ describe("loadConfig", () => {
 
   it("defaults everything when there's no file", async () => {
     await expect(loadConfig(dir())).resolves.toEqual({
-      providers: { godaddy: { enabled: true } },
+      providers: {
+        godaddy: { enabled: true },
+        porkbun: { enabled: true },
+        namecom: { enabled: true, environment: "production" },
+      },
       whois: { enable: [] },
       cache: { enabled: true },
       previews: { mode: "local" },
@@ -71,5 +81,59 @@ describe("resolvePaths", () => {
         TITLESEARCH_DATA_DIR: "/d",
       }),
     ).toEqual({ configDir: "/c", cacheDir: "/k", dataDir: "/d" });
+  });
+});
+
+describe("price keys", () => {
+  it("needs every variable for a source, and trims them", () => {
+    expect(priceKeysFromEnv({ PORKBUN_API_KEY: "pk1_x" })).toEqual({});
+    expect(
+      priceKeysFromEnv({
+        PORKBUN_API_KEY: " pk1_x ",
+        PORKBUN_SECRET_API_KEY: "sk1_y",
+        NAMECOM_USERNAME: "me",
+        NAMECOM_TOKEN: "",
+      }),
+    ).toEqual({ porkbun: { apiKey: "pk1_x", secretApiKey: "sk1_y" } });
+  });
+
+  it("lists every secret for redaction, but not the Name.com username", () => {
+    const keys = priceKeysFromEnv({
+      PORKBUN_API_KEY: "pk1_x",
+      PORKBUN_SECRET_API_KEY: "sk1_y",
+      NAMECOM_USERNAME: "me",
+      NAMECOM_TOKEN: "tok",
+    });
+    expect(priceSecrets(keys)).toEqual(["pk1_x", "sk1_y", "tok"]);
+  });
+
+  it("defaults both price sources on, used only when keys exist", async () => {
+    const config = CliConfig.parse({ previews: { mode: "off" } });
+    expect(config.providers.porkbun.enabled).toBe(true);
+    expect(config.providers.namecom).toEqual({ enabled: true, environment: "production" });
+    const ids = async (priceKeys: Parameters<typeof priceSecrets>[0], c = config) => {
+      const rt = await createServices({
+        config: c,
+        cacheDir: "",
+        dataDir: "",
+        logger: silentLogger,
+        noCache: true,
+        command: "check",
+        priceKeys,
+      });
+      await rt.close();
+      return rt.services.providers.map((p) => p.id);
+    };
+    expect(await ids({})).toEqual(["rdap", "godaddy"]);
+    const both = {
+      porkbun: { apiKey: "pk1_x", secretApiKey: "sk1_y" },
+      namecom: { username: "me", token: "tok" },
+    };
+    expect(await ids(both)).toEqual(["rdap", "godaddy", "porkbun", "namecom"]);
+    const off = CliConfig.parse({
+      previews: { mode: "off" },
+      providers: { porkbun: { enabled: false } },
+    });
+    expect(await ids(both, off)).toEqual(["rdap", "godaddy", "namecom"]);
   });
 });

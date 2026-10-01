@@ -17,6 +17,8 @@ import {
   builtInMappings,
   createDefaultRateLimiter,
   GODADDY_MCP,
+  NamecomProvider,
+  PorkbunProvider,
   RdapProvider,
   UpstreamMcpProvider,
 } from "@titlesearch/providers";
@@ -44,6 +46,33 @@ export interface RuntimeOptions {
   command: "mcp" | "check";
   /** From ANTHROPIC_API_KEY. Never logged: it's registered with the redacting logger. */
   anthropicApiKey?: string;
+  /** Price-source credentials from the environment; also registered with the logger. */
+  priceKeys?: PriceKeys;
+}
+
+export interface PriceKeys {
+  porkbun?: { apiKey: string; secretApiKey: string };
+  namecom?: { username: string; token: string };
+}
+
+/** Reads price-source credentials. A source needs every one of its variables. */
+export function priceKeysFromEnv(env: Record<string, string | undefined>): PriceKeys {
+  const get = (name: string) => env[name]?.trim() || undefined;
+  const apiKey = get("PORKBUN_API_KEY");
+  const secretApiKey = get("PORKBUN_SECRET_API_KEY");
+  const username = get("NAMECOM_USERNAME");
+  const token = get("NAMECOM_TOKEN");
+  return {
+    ...(apiKey && secretApiKey ? { porkbun: { apiKey, secretApiKey } } : {}),
+    ...(username && token ? { namecom: { username, token } } : {}),
+  };
+}
+
+/** Every secret in PriceKeys, for the redacting logger. */
+export function priceSecrets(keys: PriceKeys): string[] {
+  return [keys.porkbun?.apiKey, keys.porkbun?.secretApiKey, keys.namecom?.token].filter(
+    (s): s is string => !!s,
+  );
 }
 
 /** Resolves the assessment mode from config, the command, and whether a key is set. */
@@ -108,6 +137,16 @@ export async function createServices(options: RuntimeOptions): Promise<Runtime> 
   ];
   if (config.providers.godaddy.enabled && !options.noGodaddy) {
     providers.push(new UpstreamMcpProvider(GODADDY_MCP, { mappings: builtInMappings() }));
+  }
+  // Price sources: Porkbun is the default; Name.com is the alternative or second opinion.
+  const keys = options.priceKeys ?? {};
+  if (keys.porkbun && config.providers.porkbun.enabled) {
+    providers.push(new PorkbunProvider(keys.porkbun));
+  }
+  if (keys.namecom && config.providers.namecom.enabled) {
+    providers.push(
+      new NamecomProvider({ ...keys.namecom, environment: config.providers.namecom.environment }),
+    );
   }
 
   const rateLimiter = createDefaultRateLimiter();

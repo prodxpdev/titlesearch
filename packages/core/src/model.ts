@@ -52,6 +52,12 @@ export const SourceResult = z.object({
   checkedAt: z.iso.datetime(),
   latencyMs: z.number().nonnegative(),
   error: SourceError.optional(),
+  /**
+   * True when this source confirms a name can be registered but can't tell a
+   * premium price from a standard one (GoDaddy's MCP). Its "available" then
+   * agrees with a price source's "premium".
+   */
+  availabilityOnly: z.boolean().optional(),
 });
 export type SourceResult = z.infer<typeof SourceResult>;
 

@@ -34,7 +34,11 @@ export type Settings = z.infer<typeof Settings>;
 export const SettingsPatch = z
   .object({
     providers: z
-      .object({ godaddy: z.object({ enabled: z.boolean() }).optional() })
+      .object({
+        godaddy: z.object({ enabled: z.boolean() }).strict().optional(),
+        porkbun: z.object({ enabled: z.boolean() }).strict().optional(),
+        namecom: z.object({ enabled: z.boolean() }).strict().optional(),
+      })
       .strict()
       .optional(),
     assessment: z
