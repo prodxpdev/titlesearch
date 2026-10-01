@@ -45,10 +45,16 @@ export const OidcAllowlist = z
     emailDomains: z.array(z.string().regex(/^[a-z0-9.-]+\.[a-z]{2,}$/i)).default([]),
     /** A scope the IdP grants only to people allowed to use this server. */
     scope: z.string().min(1).optional(),
+    /** An app role the IdP assigns only to permitted users, in the `roles` claim (Entra ID, for example). */
+    role: z.string().min(1).optional(),
   })
-  .refine((a) => a.subjects.length + a.emails.length + a.emailDomains.length > 0 || !!a.scope, {
-    message: "Give at least one allowlist rule: subjects, emails, email domains, or a scope.",
-  });
+  .refine(
+    (a) => a.subjects.length + a.emails.length + a.emailDomains.length > 0 || !!a.scope || !!a.role,
+    {
+      message:
+        "Give at least one allowlist rule: subjects, emails, email domains, a scope, or a role.",
+    },
+  );
 export type OidcAllowlist = z.infer<typeof OidcAllowlist>;
 
 export interface OidcAuthOptions {
@@ -221,14 +227,13 @@ export class OidcAuth implements ServerAuth {
       if (a.emailDomains.some((d) => d.toLowerCase() === domain)) return true;
     }
     if (a.scope) {
-      const scopes =
-        typeof claims.scope === "string"
-          ? claims.scope.split(" ")
-          : Array.isArray(claims.scp)
-            ? claims.scp
-            : [];
-      if (scopes.includes(a.scope)) return true;
+      // `scope` (RFC 9068, Auth0) is a space-separated string; `scp` is an array
+      // at Okta and a space-separated string at Entra ID.
+      const words = (v: unknown): unknown[] =>
+        typeof v === "string" ? v.split(" ") : Array.isArray(v) ? v : [];
+      if ([...words(claims.scope), ...words(claims.scp)].includes(a.scope)) return true;
     }
+    if (a.role && Array.isArray(claims.roles) && claims.roles.includes(a.role)) return true;
     return false;
   }
 

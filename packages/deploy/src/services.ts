@@ -133,6 +133,7 @@ export function createDeployedAuth(env: DeployEnv, transport?: Transport): OidcA
       emails: env.ALLOWED_EMAILS,
       emailDomains: env.ALLOWED_EMAIL_DOMAINS,
       ...(env.REQUIRED_SCOPE ? { scope: env.REQUIRED_SCOPE } : {}),
+      ...(env.REQUIRED_ROLE ? { role: env.REQUIRED_ROLE } : {}),
     },
     ...(transport ? { transport } : {}),
   });

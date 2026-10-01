@@ -56,9 +56,13 @@ RUN apt-get update \
       fonts-liberation fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --system --uid 10001 --home-dir /nonexistent --shell /usr/sbin/nologin renderer
+COPY --from=lambda-adapter /lambda-adapter /opt/extensions/lambda-adapter
 COPY --from=chromium /opt/chromium /opt/chromium
 COPY --from=build /out/titlesearch-renderer /app/titlesearch-renderer
-ENV PORT=8080 CHROMIUM_PATH=/opt/chromium/chrome-headless-shell
+ENV PORT=8080 \
+    CHROMIUM_PATH=/opt/chromium/chrome-headless-shell \
+    AWS_LWA_PORT=8080 \
+    AWS_LWA_READINESS_CHECK_PATH=/healthz
 USER renderer
 EXPOSE 8080
 ENTRYPOINT ["/app/titlesearch-renderer"]

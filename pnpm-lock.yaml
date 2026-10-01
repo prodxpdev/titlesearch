@@ -163,6 +163,9 @@ importers:
       '@titlesearch/server':
         specifier: workspace:*
         version: link:../../packages/server
+      aws4fetch:
+        specifier: 1.0.20
+        version: 1.0.20
       zod:
         specifier: 4.6.5
         version: 4.6.5

@@ -39,8 +39,13 @@ export const RendererEnv = z.object({
 });
 export type RendererEnv = z.infer<typeof RendererEnv>;
 
-/** Names of secrets that may be given as Secrets Manager ARNs on Lambda (NAME_ARN, such as SESSION_SECRET_ARN). */
+/**
+ * Settings that may be given as Secrets Manager ARNs on AWS (NAME_ARN, such as
+ * SESSION_SECRET_ARN). PUBLIC_URL is here so Terraform can store a Lambda
+ * function URL, which only exists after the function does.
+ */
 export const SECRET_NAMES = [
+  "PUBLIC_URL",
   "OIDC_CLIENT_SECRET",
   "SESSION_SECRET",
   "PORKBUN_API_KEY",

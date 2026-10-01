@@ -47,6 +47,7 @@ export const DeployEnv = z
     ALLOWED_EMAILS: list,
     ALLOWED_EMAIL_DOMAINS: list,
     REQUIRED_SCOPE: optional,
+    REQUIRED_ROLE: optional,
 
     // Sources.
     GODADDY_ENABLED: bool(true),
@@ -107,12 +108,12 @@ export const DeployEnv = z
       });
     const rules =
       e.ALLOWED_SUBJECTS.length + e.ALLOWED_EMAILS.length + e.ALLOWED_EMAIL_DOMAINS.length;
-    if (rules === 0 && !e.REQUIRED_SCOPE)
+    if (rules === 0 && !e.REQUIRED_SCOPE && !e.REQUIRED_ROLE)
       ctx.addIssue({
         code: "custom",
         path: ["ALLOWED_EMAILS"],
         message:
-          "Say who may use this server: ALLOWED_EMAILS, ALLOWED_EMAIL_DOMAINS, ALLOWED_SUBJECTS, or REQUIRED_SCOPE.",
+          "Say who may use this server: ALLOWED_EMAILS, ALLOWED_EMAIL_DOMAINS, ALLOWED_SUBJECTS, REQUIRED_SCOPE, or REQUIRED_ROLE.",
       });
   });
 export type DeployEnv = z.infer<typeof DeployEnv>;

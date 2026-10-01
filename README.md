@@ -80,6 +80,7 @@ Titlesearch only ever calls each registrar's availability check. Without a price
 
 Titlesearch is read-only. It never registers, renews, transfers, or modifies a domain or DNS record. It's also not a trademark search.
 
+- [Deploying to Cloud Run, AWS, or Cloudflare Workers](docs/setup/README.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Design decisions](docs/decisions/)

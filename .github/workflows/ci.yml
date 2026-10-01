@@ -123,6 +123,22 @@ jobs:
           pnpm --filter @titlesearch/workers embed-ui
           pnpm --filter @titlesearch/workers exec wrangler deploy --dry-run --outdir "$RUNNER_TEMP/worker"
 
+  terraform:
+    name: Terraform modules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Format check and validate
+        run: |
+          for m in cloud-run aws-lambda; do
+            docker run --rm -v "$PWD/deploy/terraform:/w" -w "/w/$m" \
+              hashicorp/terraform:1.16.4@sha256:985cdc6c1d9b0a65b83377f666efd2f740b47f02ac55be1ced3d18f7d3b0e829 \
+              fmt -check -diff
+            docker run --rm -v "$PWD/deploy/terraform:/w" -w "/w/$m" --entrypoint sh \
+              hashicorp/terraform:1.16.4@sha256:985cdc6c1d9b0a65b83377f666efd2f740b47f02ac55be1ced3d18f7d3b0e829 \
+              -c "terraform init -backend=false -input=false && terraform validate"
+          done
+
   container:
     name: Container images
     runs-on: ubuntu-latest

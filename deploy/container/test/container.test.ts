@@ -9,35 +9,49 @@ import { directoryUi } from "../src/ui.js";
 
 describe("resolveSecretArns", () => {
   const ARN = "arn:aws:secretsmanager:us-east-1:123456789012:secret:titlesearch/session-AbCdEf";
+  const creds = {
+    AWS_ACCESS_KEY_ID: "AKIDTEST",
+    AWS_SECRET_ACCESS_KEY: "secret",
+    AWS_SESSION_TOKEN: "sess",
+  };
 
-  it("reads NAME_ARN through the Lambda extension with the session token", async () => {
-    const calls: { url: string; token: string | null }[] = [];
+  it("reads NAME_ARN from Secrets Manager with a signed request", async () => {
+    const calls: { url: string; target: string | null; auth: string | null; body?: string }[] = [];
     const env = await resolveSecretArns(
-      { SESSION_SECRET_ARN: ARN, AWS_SESSION_TOKEN: "sess", PUBLIC_URL: "https://x.example" },
+      { ...creds, SESSION_SECRET_ARN: ARN },
       {
         pinsAddress: false,
         async request(url, init) {
-          calls.push({ url: url.href, token: init.headers.get("x-aws-parameters-secrets-token") });
+          calls.push({
+            url: url.href,
+            target: init.headers.get("x-amz-target"),
+            auth: init.headers.get("authorization"),
+            ...(init.body ? { body: init.body } : {}),
+          });
           return Response.json({ SecretString: "from-secrets-manager" });
         },
       },
     );
     expect(env.SESSION_SECRET).toBe("from-secrets-manager");
-    expect(calls).toEqual([
-      {
-        url: `http://localhost:2773/secretsmanager/get?secretId=${encodeURIComponent(ARN)}`,
-        token: "sess",
-      },
-    ]);
+    expect(calls[0]).toMatchObject({
+      url: "https://secretsmanager.us-east-1.amazonaws.com/",
+      target: "secretsmanager.GetSecretValue",
+    });
+    expect(calls[0]?.auth).toMatch(
+      /^AWS4-HMAC-SHA256 Credential=AKIDTEST\/\d{8}\/us-east-1\/secretsmanager\//,
+    );
+    expect(JSON.parse(calls[0]?.body ?? "{}")).toEqual({ SecretId: ARN });
   });
 
-  it("leaves a directly set value alone and needs no extension", async () => {
+  it("leaves a directly set value alone", async () => {
     const env = { SESSION_SECRET: "direct", SESSION_SECRET_ARN: ARN };
     expect(await resolveSecretArns(env)).toBe(env);
   });
 
-  it("fails without the Lambda session token", async () => {
-    await expect(resolveSecretArns({ SESSION_SECRET_ARN: ARN })).rejects.toThrow(/Lambda/);
+  it("refuses something that isn't a Secrets Manager ARN", async () => {
+    await expect(
+      resolveSecretArns({ ...creds, SESSION_SECRET_ARN: "https://evil.example/secret" }),
+    ).rejects.toThrow(/isn't a Secrets Manager ARN/);
   });
 });
 

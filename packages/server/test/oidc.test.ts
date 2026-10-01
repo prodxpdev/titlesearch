@@ -149,6 +149,32 @@ describe("OidcAuth: access tokens", () => {
     expect(await res.json()).toMatchObject({ authenticated: true });
   });
 
+  it.each([
+    ["Auth0's scope string", { scope: "openid titlesearch" }],
+    ["Okta's scp array", { scp: ["openid", "titlesearch"] }],
+    ["Entra ID's scp string", { scp: "User.Read titlesearch" }],
+  ])("reads the required scope from %s", async (_l, claims) => {
+    const { req } = setup({ scope: "titlesearch" });
+    const t = await token({ sub: "svc", ...claims });
+    expect(
+      await (await req("/api/session", { authorization: `Bearer ${t}` })).json(),
+    ).toMatchObject({
+      authenticated: true,
+    });
+  });
+
+  it("admits an assigned app role, and only that role", async () => {
+    const { req } = setup({ role: "Titlesearch.User" });
+    const check = async (roles: string[]) =>
+      (
+        (await (
+          await req("/api/session", { authorization: `Bearer ${await token({ sub: "u", roles })}` })
+        ).json()) as { authenticated: boolean }
+      ).authenticated;
+    expect(await check(["Titlesearch.User"])).toBe(true);
+    expect(await check(["Other.Role"])).toBe(false);
+  });
+
   it("refetches the JWKS once when the IdP rotates keys", async () => {
     const { req } = setup();
     await req("/api/session", { authorization: `Bearer ${await token({ sub: "user-1" })}` });

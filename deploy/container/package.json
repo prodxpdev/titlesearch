@@ -19,6 +19,7 @@
     "@titlesearch/providers": "workspace:*",
     "@titlesearch/render": "workspace:*",
     "@titlesearch/server": "workspace:*",
+    "aws4fetch": "1.0.20",
     "zod": "4.6.5"
   },
   "devDependencies": {

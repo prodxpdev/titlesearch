@@ -7,6 +7,7 @@ import { DohResolver } from "@titlesearch/core";
 import { createRenderService, LocalChromiumRenderer } from "@titlesearch/render";
 import { RendererEnv } from "./config.js";
 import { createJsonLogger } from "./log.js";
+import { resolveSecretArns } from "./secrets.js";
 
 declare const Bun: {
   serve(options: {
@@ -16,7 +17,8 @@ declare const Bun: {
   }): unknown;
 };
 
-const env = RendererEnv.safeParse(process.env);
+// On Lambda the token arrives as RENDERER_TOKEN_ARN; the role can read that one secret.
+const env = RendererEnv.safeParse(await resolveSecretArns(process.env));
 if (!env.success) {
   process.stderr.write(
     `${env.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("\n")}\n`,
@@ -28,7 +30,7 @@ const renderer = new LocalChromiumRenderer({
   executablePath: env.data.CHROMIUM_PATH,
   resolver: new DohResolver(),
   concurrency: env.data.RENDER_CONCURRENCY,
-  // The container (gVisor on Cloud Run, Firecracker on Lambda) is the sandbox here:
+  // The service (Cloud Run's instance sandbox, Firecracker on Lambda) is the sandbox here:
   // Chromium's own needs user namespaces these platforms don't offer.
   noSandbox: true,
   logger,
