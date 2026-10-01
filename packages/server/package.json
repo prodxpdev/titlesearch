@@ -20,6 +20,7 @@
     "@titlesearch/mcp": "workspace:*",
     "@titlesearch/render": "workspace:*",
     "hono": "4.13.12",
+    "jose": "6.2.12",
     "zod": "4.6.5"
   },
   "devDependencies": {

@@ -23,7 +23,38 @@ export interface LocalAuthOptions {
   now?: () => number;
 }
 
-export type Principal = { kind: "token" } | { kind: "session"; id: string };
+export type Principal =
+  | { kind: "token" }
+  | { kind: "session"; id: string }
+  /** A deployed server's signed-in user: an OAuth subject. */
+  | { kind: "user"; id: string };
+
+/**
+ * How a server authenticates requests. LocalAuth is the local server's
+ * (invariant 5); OidcAuth is a deployed server's (OAuth 2.1 resource server
+ * plus browser sign-in through the deployer's identity provider).
+ */
+export interface ServerAuth {
+  /** How the UI signs in: a one-time code from the terminal, or a redirect to an identity provider. */
+  readonly loginMethod: "code" | "oidc";
+  readonly sessionCookie: { name: string; secure: boolean };
+  hostAllowed(host: string | undefined): boolean;
+  /** An absent Origin is fine (curl, MCP clients); a present one must be ours. */
+  originAllowed(origin: string | undefined): boolean;
+  isAllowedOrigin(origin: string): boolean;
+  authenticate(request: Request, sessionCookie: string | undefined): Promise<Principal | undefined>;
+  /** Headers for a 401, such as WWW-Authenticate pointing at resource metadata. */
+  challenge?(): Record<string, string>;
+  exchangeLoginCode?(code: string): string | undefined;
+  endSession?(id: string): void;
+  setToken?(token: string): void;
+  /** Routes this auth needs, such as /auth/login. Registered before the API and UI routes. */
+  routes?(): {
+    method: "GET" | "POST";
+    path: string;
+    handler: (request: Request) => Promise<Response>;
+  }[];
+}
 
 /** Compares strings in time that depends only on their lengths. */
 export function timingSafeEqual(a: string, b: string): boolean {
@@ -40,7 +71,9 @@ function randomString(bytes: number, alphabet?: string): string {
   return Array.from(raw, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export class LocalAuth {
+export class LocalAuth implements ServerAuth {
+  readonly loginMethod = "code";
+  readonly sessionCookie = { name: SESSION_COOKIE, secure: false };
   #token: string;
   readonly #now: () => number;
   readonly #hosts: Set<string>;
@@ -107,7 +140,14 @@ export class LocalAuth {
   }
 
   /** Resolves who is calling from the Authorization header or session cookie. */
-  authenticate(
+  async authenticate(
+    request: Request,
+    sessionId: string | undefined,
+  ): Promise<Principal | undefined> {
+    return this.authenticateHeader(request.headers.get("authorization") ?? undefined, sessionId);
+  }
+
+  authenticateHeader(
     authorization: string | undefined,
     sessionId: string | undefined,
   ): Principal | undefined {

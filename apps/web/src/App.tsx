@@ -26,7 +26,7 @@ export function App() {
   useEffect(() => {
     api
       .session()
-      .then((r) => setState({ authenticated: r.authenticated }))
+      .then((r) => setState({ authenticated: r.authenticated, login: r.login ?? "code" }))
       .catch(() => setState({ authenticated: false }));
   }, []);
   useEffect(() => {

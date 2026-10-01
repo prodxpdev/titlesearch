@@ -59,7 +59,7 @@ export interface ProviderHealth {
 }
 
 export const api = {
-  session: () => request<{ authenticated: boolean }>("/api/session"),
+  session: () => request<{ authenticated: boolean; login?: "code" | "oidc" }>("/api/session"),
   signIn: (code: string) =>
     request<{ authenticated: boolean }>("/api/session", { method: "POST", body: { code } }),
   signOut: () => request<{ authenticated: boolean }>("/api/session", { method: "DELETE" }),

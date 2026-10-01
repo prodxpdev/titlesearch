@@ -1,9 +1,36 @@
 import { useState } from "react";
 import { ApiError, api } from "../api";
 import { Band } from "../components";
-import { setState } from "../store";
+import { setState, useStore } from "../store";
 
 export function Login() {
+  const login = useStore((s) => s.login);
+  return login === "oidc" ? <ProviderLogin /> : <CodeLogin />;
+}
+
+/** A deployed server: sign in through the deployer's identity provider. */
+function ProviderLogin() {
+  return (
+    <>
+      <Band
+        title="Sign in"
+        text="This Titlesearch server signs you in through your organization."
+      />
+      <main>
+        <div className="panel login">
+          <p className="hint">You'll come back here after signing in.</p>
+          <div className="row-actions">
+            <a className="btn primary" href="/auth/login">
+              Sign in
+            </a>
+          </div>
+        </div>
+      </main>
+    </>
+  );
+}
+
+function CodeLogin() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string>();
   return (

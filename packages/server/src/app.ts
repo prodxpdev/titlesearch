@@ -28,7 +28,7 @@ import { type Context, Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import * as z from "zod";
-import { type LocalAuth, type Principal, SESSION_COOKIE } from "./auth.js";
+import type { Principal, ServerAuth } from "./auth.js";
 import { createHealthCheck } from "./health.js";
 import { ConcurrencyLimit, PrincipalRateLimit } from "./limits.js";
 import { SettingsError, type SettingsHandler, SettingsPatch } from "./settings.js";
@@ -37,7 +37,7 @@ import { type UiAssets, uiResponse } from "./static/ui.js";
 export interface AppOptions {
   /** The current services. A function, because a settings change rebuilds them. */
   services: () => TitlesearchServices;
-  auth: LocalAuth;
+  auth: ServerAuth;
   version: string;
   ui?: UiAssets;
   settings?: SettingsHandler;
@@ -98,6 +98,7 @@ export function createApp(options: AppOptions): Hono<Env> {
     options.limits?.queued ?? 32,
   );
   const health = createHealthCheck();
+  const cookie = options.auth.sessionCookie;
 
   // Security headers on everything.
   app.use("*", async (c, next) => {
@@ -115,7 +116,12 @@ export function createApp(options: AppOptions): Hono<Env> {
     // HTTP/1.1 always sends Host; a Request built in-process can't, so fall back to the URL.
     const host = c.req.header("host") ?? new URL(c.req.url).host;
     if (!options.auth.hostAllowed(host)) {
-      return c.text("Forbidden: this server only answers to 127.0.0.1 and localhost.", 403);
+      return c.text(
+        options.auth.loginMethod === "code"
+          ? "Forbidden: this server only answers to 127.0.0.1 and localhost."
+          : "Forbidden: unexpected Host.",
+        403,
+      );
     }
     if (!options.auth.originAllowed(c.req.header("origin")))
       return c.text("Forbidden: cross-origin request.", 403);
@@ -130,27 +136,35 @@ export function createApp(options: AppOptions): Hono<Env> {
     }),
   );
 
+  // Routes the auth brings, such as OAuth resource metadata and browser sign-in.
+  for (const r of options.auth.routes?.() ?? []) {
+    app.on(r.method, r.path, (c) => r.handler(c.req.raw));
+  }
+
   // Auth and per-principal rate limits on the API and MCP.
   const requireAuth = async (c: Context<Env>, next: () => Promise<void>) => {
     if (PUBLIC_API.has(c.req.path)) return next();
-    const principal = options.auth.authenticate(
-      c.req.header("authorization"),
-      getCookie(c, SESSION_COOKIE),
-    );
-    if (!principal)
+    const principal = await options.auth.authenticate(c.req.raw, getCookie(c, cookie.name));
+    if (!principal) {
+      for (const [k, v] of Object.entries(options.auth.challenge?.() ?? {})) c.header(k, v);
       return apiError(
         c,
         401,
         "unauthenticated",
-        "Sign in with the code shown by `titlesearch serve`, or send the bearer token.",
+        options.auth.loginMethod === "code"
+          ? "Sign in with the code shown by `titlesearch serve`, or send the bearer token."
+          : "Sign in, or send an OAuth access token.",
       );
+    }
     // A cookie-authenticated change must come from our own page: Origin is required.
     if (principal.kind === "session" && c.req.method !== "GET" && c.req.method !== "HEAD") {
       const origin = c.req.header("origin");
       if (!origin || !options.auth.isAllowedOrigin(origin))
         return apiError(c, 403, "origin_required", "Missing Origin.");
     }
-    const wait = rate.take(principal.kind === "token" ? "token" : `session:${principal.id}`);
+    const wait = rate.take(
+      principal.kind === "token" ? "token" : `${principal.kind}:${principal.id}`,
+    );
     if (wait > 0) {
       c.header("retry-after", String(wait));
       return apiError(c, 429, "rate_limited", "Too many requests. Try again shortly.");
@@ -172,17 +186,17 @@ export function createApp(options: AppOptions): Hono<Env> {
   };
 
   // --- Session ---
-  app.get("/api/session", (c) => {
-    const principal = options.auth.authenticate(
-      c.req.header("authorization"),
-      getCookie(c, SESSION_COOKIE),
-    );
-    return c.json({ authenticated: !!principal });
+  app.get("/api/session", async (c) => {
+    const principal = await options.auth.authenticate(c.req.raw, getCookie(c, cookie.name));
+    return c.json({ authenticated: !!principal, login: options.auth.loginMethod });
   });
   app.post("/api/session", async (c) => {
+    const exchange = options.auth.exchangeLoginCode?.bind(options.auth);
+    if (!exchange)
+      return apiError(c, 404, "not_found", "Sign in through your identity provider instead.");
     const body = await parseBody(c, { code: z.string().min(1).max(64) });
     if (body.error) return body.error;
-    const id = options.auth.exchangeLoginCode(body.data.code);
+    const id = exchange(body.data.code);
     if (!id)
       return apiError(
         c,
@@ -190,8 +204,9 @@ export function createApp(options: AppOptions): Hono<Env> {
         "invalid_code",
         "That code didn't work. Codes expire after 5 minutes and work once.",
       );
-    setCookie(c, SESSION_COOKIE, id, {
+    setCookie(c, cookie.name, id, {
       httpOnly: true,
+      secure: cookie.secure,
       sameSite: "Strict",
       path: "/",
       maxAge: 12 * 60 * 60,
@@ -199,9 +214,9 @@ export function createApp(options: AppOptions): Hono<Env> {
     return c.json({ authenticated: true });
   });
   app.delete("/api/session", (c) => {
-    const id = getCookie(c, SESSION_COOKIE);
-    if (id) options.auth.endSession(id);
-    deleteCookie(c, SESSION_COOKIE, { path: "/" });
+    const id = getCookie(c, cookie.name);
+    if (id) options.auth.endSession?.(id);
+    deleteCookie(c, cookie.name, { path: "/", secure: cookie.secure });
     return c.json({ authenticated: false });
   });
 
@@ -338,7 +353,7 @@ export function createApp(options: AppOptions): Hono<Env> {
     }
   });
   app.post("/api/token/rotate", async (c) => {
-    if (!options.rotateToken)
+    if (!options.rotateToken || !options.auth.setToken)
       return apiError(c, 404, "not_found", "Token rotation isn't available here.");
     const token = await options.rotateToken();
     options.auth.setToken(token);

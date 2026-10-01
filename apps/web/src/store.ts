@@ -29,6 +29,8 @@ export interface State {
   blurPreviews: boolean;
   toast: string;
   authenticated: boolean | undefined;
+  /** How this server signs in: a terminal code (local) or the identity provider (deployed). */
+  login: "code" | "oidc";
 }
 
 export const TLD_CHOICES = ["com", "io", "ai", "app", "dev", "co", "xyz", "net", "so", "tech"];
@@ -65,6 +67,7 @@ let state: State = {
   blurPreviews: false,
   toast: "",
   authenticated: undefined,
+  login: "code",
   ...load(session, "ts.search", {}),
   ...load(local, "ts.prefs", {}),
 };

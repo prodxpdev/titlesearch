@@ -175,6 +175,18 @@ test.describe("mockup routes", () => {
   });
 });
 
+test.describe("deployed sign-in", () => {
+  test("offers the identity provider instead of a code", async ({ page }) => {
+    await page.route("**/api/session", (route) =>
+      route.fulfill({ json: { authenticated: false, login: "oidc" } }),
+    );
+    await page.goto("/");
+    const link = page.getByRole("link", { name: "Sign in" });
+    await expect(link).toHaveAttribute("href", "/auth/login");
+    await expect(page.getByLabel("Sign-in code")).toHaveCount(0);
+  });
+});
+
 test.describe("appearance", () => {
   test("follows dark mode", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "dark" });
