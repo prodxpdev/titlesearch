@@ -60,3 +60,41 @@
     order: 0;
   }
 }
+
+/* The hero's image is a product screenshot, not an illustration: framed like
+   a window, not floating on the default glow. */
+.VPHero .image-bg {
+  display: none;
+}
+.VPHero .image-container {
+  width: 100%;
+  height: auto;
+  max-width: 560px;
+  transform: none;
+}
+.VPHero .image-src {
+  position: static;
+  transform: none;
+  max-width: 100%;
+  max-height: none;
+  border-radius: 10px;
+  border: 1px solid var(--vp-c-divider);
+  box-shadow: 0 18px 50px rgba(10, 18, 32, 0.28);
+}
+@media (min-width: 960px) {
+  .VPHero.has-image .image {
+    display: flex;
+    align-items: center;
+  }
+  .VPHero .image-container {
+    max-width: none;
+    width: 100%;
+  }
+}
+@media (max-width: 959px) {
+  /* VitePress pulls the image up under the nav for its round illustrations. */
+  .VPHero .image {
+    margin: 0 auto 32px;
+    width: 100%;
+  }
+}

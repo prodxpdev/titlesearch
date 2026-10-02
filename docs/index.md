@@ -6,6 +6,9 @@ hero:
   name: Titlesearch
   text: Is the name free, and who lives next door?
   tagline: Check a product name across domain extensions, see what's already running on the taken ones, and whether it competes with what you're building. Free and open source.
+  image:
+    src: /screens/results.jpg
+    alt: "The results grid: five names across six extensions, each marked Available, Premium, Competitor, Parked, For sale, or No site, with previews of the taken sites. Sample data."
   actions:
     - theme: brand
       text: Download
