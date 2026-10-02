@@ -1,6 +1,6 @@
 # 23. Desktop: a Tauri shell around the sidecar
 
-- Status: accepted (signing, notarization, and update keys pending: see Open items)
+- Status: accepted (Windows signing and update keys pending: see Open items)
 - Date: 2026-10-01
 
 ## Context
@@ -41,4 +41,5 @@ On macOS (arm64), a debug `.app` built and launched:
 
 ## Open items
 
-- An Apple Developer ID certificate and notarization credentials, a Windows code-signing certificate, and the updater key pair (`tauri signer generate`). Only the owner should create these. The public key goes in `tauri.conf.json`, and the private keys go in repository secrets.
+- Done for macOS (from 0.2.2): the Developer ID Application certificate and App Store Connect API key shared with Datera sign and notarize the binaries, the app, and the disk image.
+- Still open: a Windows code-signing certificate and the updater key pair (`tauri signer generate`). Only the owner should create these. The public key goes in `tauri.conf.json`, and the private keys go in repository secrets.

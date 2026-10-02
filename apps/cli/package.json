@@ -1,6 +1,6 @@
 {
   "name": "titlesearch",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Check whether a name is free across domain extensions, and who occupies the taken ones.",
   "license": "Apache-2.0",
   "type": "module",
