@@ -44,10 +44,8 @@ features:
 
 ### Opening it the first time
 
-Early releases aren't signed with a developer certificate yet, so your system will ask before the first launch:
-
-- **macOS:** open the `.dmg` and drag Titlesearch to Applications. On first launch, macOS says it can't verify the developer. Open **System Settings → Privacy & Security**, scroll down, and choose **Open Anyway**.
-- **Windows:** if SmartScreen appears, choose **More info → Run anyway**.
+- **macOS:** open the `.dmg` and drag Titlesearch to Applications. It's signed and notarized by Apple, so it opens like any other app.
+- **Windows:** the Windows build isn't signed with a code-signing certificate yet. If SmartScreen appears, choose **More info → Run anyway**.
 - **Linux:** make the AppImage executable (`chmod +x Titlesearch-Linux-x64.AppImage`) and run it, or install the `.deb` with `sudo apt install ./Titlesearch-Linux-x64.deb`.
 
 Every file has a checksum in `SHA256SUMS` on the release page.

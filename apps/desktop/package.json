@@ -1,6 +1,6 @@
 {
   "name": "@titlesearch/desktop",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "The Tauri 2 desktop shell: runs the titlesearch binary as a sidecar in serve mode.",
   "license": "Apache-2.0",
   "type": "module",

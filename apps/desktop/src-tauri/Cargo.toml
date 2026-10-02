@@ -1,6 +1,6 @@
 [package]
 name = "titlesearch-desktop"
-version = "0.2.2"
+version = "0.2.3"
 description = "Titlesearch desktop: a thin Tauri shell around the titlesearch binary."
 authors = ["ProdXP LLC"]
 license = "Apache-2.0"
