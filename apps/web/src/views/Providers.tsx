@@ -195,6 +195,10 @@ function Switch({
 export function Providers() {
   const blur = useStore((s) => s.blurPreviews);
   const [settings, setSettings] = useState<Settings>();
+  // Choosing or removing a model changes whether New search can suggest names.
+  useEffect(() => {
+    if (settings) setState({ suggestionsAvailable: settings.suggestions.available });
+  }, [settings]);
   const [health, setHealth] = useState<ProviderHealth[]>();
   const [error, setError] = useState<string>();
 

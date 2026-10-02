@@ -11,14 +11,14 @@ export function Search() {
   const canRun =
     (names.trim().length > 0 || (suggesting && market.trim().length > 0)) &&
     Object.values(tlds).some(Boolean);
-  // Whether this server can suggest names: it needs a model.
+  // Whether this server can suggest names: it needs a model. Asked every time
+  // the page opens, since a model can be chosen or removed in the meantime.
   useEffect(() => {
-    if (suggestionsAvailable !== undefined) return;
     api.settings().then(
       (r) => setState({ suggestionsAvailable: r.settings.suggestions.available }),
-      () => setState({ suggestionsAvailable: false }),
+      () => setState((s) => ({ suggestionsAvailable: s.suggestionsAvailable ?? false })),
     );
-  }, [suggestionsAvailable]);
+  }, []);
   return (
     <>
       <Band

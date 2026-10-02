@@ -238,6 +238,28 @@ test.describe("names from the description", () => {
     await expect(page.getByText("Suggested").first()).toBeVisible();
   });
 
+  test("turns the option on after a model is chosen, without reloading", async ({ page }) => {
+    // The server has no model until the Ollama one is saved below.
+    let hasModel = false;
+    await page.route("**/api/settings", async (route) => {
+      const res = await route.fetch();
+      const body = await res.json();
+      if (route.request().method() === "PATCH") hasModel = true;
+      body.settings.suggestions.available = hasModel;
+      await route.fulfill({ response: res, json: body });
+    });
+    await signIn(page);
+    const option = page.getByLabel(/Names from your description/);
+    await expect(option).toBeDisabled();
+    await page.getByRole("navigation").getByRole("link", { name: "Providers" }).click();
+    await page.getByLabel("Model", { exact: true }).selectOption("ollama");
+    await page.getByLabel("Ollama model").selectOption("llama3.1:8b");
+    await page.getByRole("button", { name: "Use this model" }).click();
+    await expect(page.getByText("Now: Ollama · llama3.1:8b (this computer)")).toBeVisible();
+    await page.getByRole("navigation").getByRole("link", { name: "New search" }).click();
+    await expect(option).toBeEnabled();
+  });
+
   test("explains why the option is off when the server has no model", async ({ page }) => {
     await page.route("**/api/settings", async (route) => {
       const res = await route.fetch();
