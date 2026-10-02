@@ -1,3 +1,7 @@
+---
+description: "Titlesearch is read-only, fetches sites safely, treats site text as untrusted, and keeps local surfaces local. What leaves your computer, and where."
+---
+
 # Security and privacy
 
 - **Read-only.** Titlesearch can't register, renew, transfer, or change any domain or DNS record. Its upstream connections call only availability checks, from an explicit allowlist.

@@ -1,3 +1,7 @@
+---
+description: "The titlesearch command: check names from the terminal, run the MCP server for Claude, serve the web app, and manage the built-in model."
+---
+
 # CLI
 
 `titlesearch --help`:

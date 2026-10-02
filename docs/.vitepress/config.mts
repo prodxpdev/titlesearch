@@ -11,6 +11,40 @@ const decisions = readdirSync(join(__dirname, "../decisions"))
     return { text: title ?? f, link: `/decisions/${f.replace(/\.md$/, "")}` };
   });
 
+const SITE = "https://titlesearch.app";
+const OG_IMAGE_ALT =
+  "Titlesearch: Is the name free, and who lives next door? Beside it, the results grid marking each domain Available, Premium, Competitor, Parked, or For sale.";
+const HOME_DESCRIPTION =
+  "Check a product name across domain extensions, see what's already running on the taken ones, and whether it competes with what you're building. Free and open source.";
+
+/** A page's public URL, matching cleanUrls: "guide/prices.md" → "/guide/prices". */
+function pageUrl(relativePath: string): string {
+  const path = relativePath.replace(/(^|\/)index\.md$/, "$1").replace(/\.md$/, "");
+  return `${SITE}/${path}`;
+}
+
+/** A page's first paragraph as plain text, for its link preview. */
+function firstParagraph(filePath: string): string | undefined {
+  let text: string;
+  try {
+    text = readFileSync(join(__dirname, "..", filePath), "utf8");
+  } catch {
+    return undefined;
+  }
+  const body = text.replace(/^---\n[\s\S]*?\n---\n/, "");
+  const para = body
+    .split(/\n\s*\n/)
+    .map((b) => b.trim())
+    .find((b) => b && !/^(#|<|!\[|[-*|>]|```|:::|\d+\.)/.test(b));
+  if (!para) return undefined;
+  const plain = para
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[`*_]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return plain.length > 200 ? `${plain.slice(0, 197).replace(/\s+\S*$/, "")}…` : plain;
+}
+
 export default defineConfig({
   title: "Titlesearch",
   description:
@@ -26,17 +60,38 @@ export default defineConfig({
   srcExclude: ["design/**", "**/README.md.bak"],
   head: [
     ["link", { rel: "icon", href: "/favicon.svg" }],
-    ["meta", { property: "og:title", content: "Titlesearch" }],
-    [
-      "meta",
-      {
-        property: "og:description",
-        content: "Is the name free, and who lives next door? Free and open source.",
-      },
-    ],
-    ["meta", { property: "og:image", content: "https://titlesearch.app/screens/results.jpg" }],
-    ["meta", { property: "og:url", content: "https://titlesearch.app/" }],
+    // Link previews (OpenGraph, X): the same card on every page. Each page's
+    // own title, description, and URL are added in transformHead below.
+    ["meta", { property: "og:type", content: "website" }],
+    ["meta", { property: "og:site_name", content: "Titlesearch" }],
+    ["meta", { property: "og:locale", content: "en_US" }],
+    ["meta", { property: "og:image", content: `${SITE}/og.png` }],
+    ["meta", { property: "og:image:type", content: "image/png" }],
+    ["meta", { property: "og:image:width", content: "1200" }],
+    ["meta", { property: "og:image:height", content: "630" }],
+    ["meta", { property: "og:image:alt", content: OG_IMAGE_ALT }],
+    ["meta", { name: "twitter:card", content: "summary_large_image" }],
+    ["meta", { name: "twitter:image", content: `${SITE}/og.png` }],
+    ["meta", { name: "twitter:image:alt", content: OG_IMAGE_ALT }],
   ],
+  transformHead({ pageData }) {
+    const home = pageData.relativePath === "index.md";
+    const title = home
+      ? "Titlesearch: Is the name free, and who lives next door?"
+      : `${pageData.title} · Titlesearch`;
+    const description = home
+      ? HOME_DESCRIPTION
+      : pageData.description || firstParagraph(pageData.filePath) || HOME_DESCRIPTION;
+    const url = pageUrl(pageData.relativePath);
+    return [
+      ["link", { rel: "canonical", href: url }],
+      ["meta", { property: "og:title", content: title }],
+      ["meta", { property: "og:description", content: description }],
+      ["meta", { property: "og:url", content: url }],
+      ["meta", { name: "twitter:title", content: title }],
+      ["meta", { name: "twitter:description", content: description }],
+    ];
+  },
   themeConfig: {
     logo: "/favicon.svg",
     nav: [
