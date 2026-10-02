@@ -91,7 +91,8 @@ export function cacheConformance(name: string, factory: SubjectFactory): void {
         const keys = Array.from({ length: 200 }, (_, i) => `k${i}`);
         await Promise.all(keys.map((k, i) => store.set(k, i, 60)));
         expect(await Promise.all(keys.map((k) => store.get(k)))).toEqual(keys.map((_, i) => i));
-      });
+        // Correctness, not speed: emulators (DynamoDB Local) can be slow on shared CI runners.
+      }, 30_000);
     });
 
     describe("expiry", () => {
