@@ -187,21 +187,21 @@ select {
 .band-in {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 40px 24px 36px;
+  padding: 28px 24px 26px;
 }
 .band h1 {
   margin: 0;
-  font-size: clamp(30px, 4.4vw, 48px);
+  font-size: clamp(28px, 3.8vw, 42px);
   line-height: 1.05;
   letter-spacing: -0.03em;
   font-weight: 800;
-  max-width: 22ch;
+  max-width: 32ch;
 }
 .band p {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: var(--on-band-muted);
-  max-width: 62ch;
-  font-size: 17px;
+  max-width: 90ch;
+  font-size: 16px;
 }
 .band .crumb {
   font-size: 14px;
@@ -222,7 +222,7 @@ select {
 main {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 28px 24px 64px;
+  padding: 20px 24px 64px;
 }
 .panel {
   background: var(--paper);
@@ -232,6 +232,11 @@ main {
 }
 .panel + .panel {
   margin-top: 16px;
+}
+/* Side by side, panels line up at the top; the grid's gap spaces them. */
+.grid2 > .panel + .panel,
+.grid3 > .panel + .panel {
+  margin-top: 0;
 }
 .panel h2 {
   margin: 0 0 4px;
@@ -298,7 +303,8 @@ main {
 }
 
 /* Forms */
-label.f {
+label.f,
+span.f {
   display: block;
   font-weight: 600;
   margin: 0 0 6px;
@@ -320,13 +326,13 @@ select {
   padding: 10px 12px;
 }
 textarea {
-  min-height: 140px;
+  min-height: 96px;
   resize: vertical;
   font-family: var(--mono);
   font-size: 15px;
 }
 .field + .field {
-  margin-top: 20px;
+  margin-top: 16px;
 }
 .chips {
   display: flex;
