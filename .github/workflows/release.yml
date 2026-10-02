@@ -282,7 +282,7 @@ jobs:
           if [ -n "$APPLE_API_KEY_P8" ]; then
             printf '%s' "$APPLE_API_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
             echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
-            APPLE_API_KEY="$APPLE_API_KEY_ID"
+            export APPLE_API_KEY="$APPLE_API_KEY_ID"
             unset APPLE_ID APPLE_PASSWORD
           fi
           for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID \
@@ -324,8 +324,10 @@ jobs:
           security unlock-keychain -p "$password" "$keychain"
           security import "$RUNNER_TEMP/dmg-cert.p12" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
           rm -f "$RUNNER_TEMP/dmg-cert.p12"
-          security list-keychain -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
-          for dmg in apps/desktop/src-tauri/target/$TAURI_TARGET_TRIPLE/release/bundle/dmg/*.dmg; do
+          existing=()
+          while IFS= read -r k; do existing+=("$k"); done < <(security list-keychains -d user | tr -d '" ')
+          security list-keychain -d user -s "$keychain" "${existing[@]}"
+          for dmg in "apps/desktop/src-tauri/target/$TAURI_TARGET_TRIPLE"/release/bundle/dmg/*.dmg; do
             codesign --force --timestamp --sign "$APPLE_SIGNING_IDENTITY" "$dmg"
             xcrun notarytool submit "$dmg" --key "$APPLE_API_KEY_PATH" \
               --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait
