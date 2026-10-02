@@ -3,7 +3,7 @@
   "name": "io.github.prodxpdev/titlesearch",
   "title": "Titlesearch",
   "description": "Checks if a product name is free across domain extensions, and who holds the taken ones.",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "websiteUrl": "https://titlesearch.app",
   "repository": {
     "url": "https://github.com/prodxpdev/titlesearch",
@@ -14,7 +14,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "titlesearch",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
