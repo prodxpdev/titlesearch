@@ -434,7 +434,11 @@ pub fn run() {
         // Keep running in the tray when the last window closes.
         RunEvent::ExitRequested { api, code, .. } if code.is_none() => api.prevent_exit(),
         RunEvent::Exit => {
-            if let Some(child) = app.state::<Sidecar>().child.lock().unwrap().take() {
+            if let Some(mut child) = app.state::<Sidecar>().child.lock().unwrap().take() {
+                // Ask first, so the sidecar stops the built-in model's server
+                // (its own child) instead of leaving it running; then make sure.
+                let _ = child.write(b"quit\n");
+                std::thread::sleep(std::time::Duration::from_millis(500));
                 let _ = child.kill();
             }
         }

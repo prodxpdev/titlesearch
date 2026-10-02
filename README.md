@@ -63,7 +63,7 @@ None are needed to start.
 | Variable | Adds |
 |---|---|
 | `ANTHROPIC_API_KEY` | Market-overlap judgment and name suggestions with Claude. Without a model, Claude does both in chat. |
-| `TITLESEARCH_MODEL` | An open model instead: `ollama:llama3.1:8b` runs on your machine with no key, or use any OpenAI-compatible server. In the desktop app, pick it on the Providers page. |
+| `TITLESEARCH_MODEL` | An open model instead, with no key: `builtin:qwen3-4b-instruct-2507` after `titlesearch models install` (a one-time 2.5 GB download that runs on your computer), `ollama:llama3.1:8b` if you use Ollama, or any OpenAI-compatible server. In the desktop app, pick it on the Providers page. |
 | `PORKBUN_API_KEY`, `PORKBUN_SECRET_API_KEY` | Prices and premium status from Porkbun, the default price source. |
 | `NAMECOM_USERNAME`, `NAMECOM_TOKEN` | Prices from Name.com. |
 

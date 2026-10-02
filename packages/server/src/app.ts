@@ -37,6 +37,7 @@ import type { Principal, ServerAuth } from "./auth.js";
 import { createHealthCheck } from "./health.js";
 import { ConcurrencyLimit, PrincipalRateLimit } from "./limits.js";
 import {
+  type BuiltinHandler,
   KEY_NAMES,
   type KeyName,
   KeyValue,
@@ -447,6 +448,37 @@ export function createApp(options: AppOptions): Hono<Env> {
       return apiError(c, 404, "not_found", "Local model detection isn't available here.");
     return c.json({ runtimes: await options.settings.detectModels() });
   });
+
+  // The built-in models: download once, run on this computer. Only local
+  // servers offer this; it touches nothing but files in the data directory.
+  const builtinRoute =
+    (act: (b: BuiltinHandler, id: string) => void | Promise<void>) => async (c: Context) => {
+      const builtin = options.settings?.builtin;
+      if (!builtin)
+        return apiError(c, 404, "not_found", "The built-in model isn't available here.");
+      const id = c.req.param("id") ?? "";
+      if (!builtin.status().models.some((m) => m.id === id))
+        return apiError(c, 404, "not_found", "There's no built-in model by that name.");
+      await act(builtin, id);
+      return c.json(builtin.status());
+    };
+  app.get("/api/models/builtin", (c) => {
+    const builtin = options.settings?.builtin;
+    if (!builtin) return apiError(c, 404, "not_found", "The built-in model isn't available here.");
+    return c.json(builtin.status());
+  });
+  app.post(
+    "/api/models/builtin/:id/install",
+    builtinRoute((b, id) => b.install(id)),
+  );
+  app.post(
+    "/api/models/builtin/:id/cancel",
+    builtinRoute((b, id) => b.cancel(id)),
+  );
+  app.delete(
+    "/api/models/builtin/:id",
+    builtinRoute((b, id) => b.remove(id)),
+  );
 
   app.post("/api/token/rotate", async (c) => {
     if (!options.rotateToken || !options.auth.setToken)

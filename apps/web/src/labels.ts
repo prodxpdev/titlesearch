@@ -162,6 +162,8 @@ export function judgeLabel(assessedBy: string): string {
   switch (provider) {
     case "anthropic":
       return `Claude through the Anthropic API (${id})`;
+    case "builtin":
+      return `The built-in model · ${id}, on this computer`;
     case "ollama":
       return `Ollama · ${id}, on this computer`;
     case "lmstudio":

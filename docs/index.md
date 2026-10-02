@@ -22,7 +22,7 @@ features:
   - title: Who's already there
     details: For taken names, Titlesearch reads the site, spots parked and for-sale pages, and shows you a preview, captured in an isolated browser.
   - title: Does it compete?
-    details: Describe what you're building, and each site on a taken domain is judged against it, with plain reasons. Use Claude, or an open model in Ollama or LM Studio that never leaves your machine. Not a trademark search, and it says so.
+    details: Describe what you're building, and each site on a taken domain is judged against it, with plain reasons. Use Claude, or the built-in open model (a one-time download) that never leaves your machine. Not a trademark search, and it says so.
   - title: Names from your description
     details: Stuck for ideas? Get new names suggested from what you're building, each with its reason, checked in the same search.
 ---

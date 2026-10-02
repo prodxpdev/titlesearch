@@ -11,6 +11,8 @@ export { createHealthCheck, HEALTH_DOMAIN, type ProviderHealth } from "./health.
 export { ConcurrencyLimit, PrincipalRateLimit } from "./limits.js";
 export { OidcAllowlist, OidcAuth, type OidcAuthOptions } from "./oidc.js";
 export {
+  type BuiltinHandler,
+  BuiltinStatus,
   KEY_NAMES,
   type KeyName,
   KeyValue,

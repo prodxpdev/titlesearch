@@ -2,13 +2,21 @@
 // it. Modeled on Datera's provider tiers: the user's own key for Anthropic,
 // a local runtime they already run (Ollama, LM Studio), or any server that
 // speaks the OpenAI chat-completions API (OpenRouter, Groq, Together, vLLM,
-// llama.cpp's server, ...). Everything above the model is provider-independent:
+// llama.cpp's server, ...), or the built-in model Titlesearch downloads and
+// runs itself (ADR 26). Everything above the model is provider-independent:
 // the prompts, the untrusted-data framing, and the strict validation are the
 // same whichever model answers. See docs/decisions/0025-open-models.md.
 
 import * as z from "zod";
+import { builtinModel } from "./builtin-catalog.js";
 
-export const MODEL_PROVIDERS = ["anthropic", "ollama", "lmstudio", "openai-compatible"] as const;
+export const MODEL_PROVIDERS = [
+  "anthropic",
+  "builtin",
+  "ollama",
+  "lmstudio",
+  "openai-compatible",
+] as const;
 export type ModelProvider = (typeof MODEL_PROVIDERS)[number];
 
 /** Where the local runtimes listen by default. */
@@ -33,6 +41,10 @@ export const ModelChoice = z
     message: "An OpenAI-compatible server needs its base URL.",
     path: ["baseUrl"],
   })
+  .refine((m) => m.provider !== "builtin" || (!!builtinModel(m.id) && !m.baseUrl), {
+    message: "That isn't one of the built-in models.",
+    path: ["id"],
+  })
   .refine((m) => !m.baseUrl || /^https?:$/.test(new URL(m.baseUrl).protocol), {
     message: "The base URL must be http:// or https://.",
     path: ["baseUrl"],
@@ -53,6 +65,8 @@ export function providerLabel(provider: string): string {
   switch (provider) {
     case "anthropic":
       return "Anthropic";
+    case "builtin":
+      return "Built-in model";
     case "ollama":
       return "Ollama";
     case "lmstudio":
@@ -78,6 +92,8 @@ export function isLoopbackUrl(url: string): boolean {
 export function describeChoice(choice: ModelChoice): ModelDescriptor {
   if (choice.provider === "anthropic")
     return { provider: "anthropic", id: choice.id, locality: "remote" };
+  if (choice.provider === "builtin")
+    return { provider: "builtin", id: choice.id, locality: "local" };
   const endpoint =
     choice.baseUrl ??
     (choice.provider === "openai-compatible" ? "" : LOCAL_RUNTIME_URLS[choice.provider]);
@@ -102,5 +118,6 @@ export function describeModel(d: ModelDescriptor): string {
       : d.endpoint
         ? new URL(d.endpoint).host
         : "Anthropic API";
-  return `${providerLabel(d.provider)} · ${d.id} (${where})`;
+  const name = d.provider === "builtin" ? (builtinModel(d.id)?.label ?? d.id) : d.id;
+  return `${providerLabel(d.provider)} · ${name} (${where})`;
 }

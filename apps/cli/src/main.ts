@@ -5,6 +5,7 @@ import { parseArgs } from "node:util";
 import type { NameSuggestion } from "@titlesearch/assess";
 import { KEY_NAMES } from "@titlesearch/server";
 import pkg from "../package.json" with { type: "json" };
+import { BuiltinManager } from "./builtin/manager.js";
 import { runAssess } from "./commands/assess.js";
 import { runBrowser } from "./commands/browser.js";
 import { runCheck, UsageError } from "./commands/check.js";
@@ -26,7 +27,7 @@ Usage:
   titlesearch check [names...] --market <text> --suggest [--count 10]
   titlesearch mcp
   titlesearch serve [--port 4717]
-  titlesearch models
+  titlesearch models [install [id] | remove <id>]
   titlesearch browser install | status
   titlesearch --version
 
@@ -37,8 +38,10 @@ Commands:
   mcp     Run the MCP server over stdio, for Claude Desktop and Claude Code.
   serve   Run the web UI and API at http://127.0.0.1:4717, for this computer
           only. Sign in with the one-time code it prints.
-  models  Show the model that judges overlap and suggests names, and any local
-          runtimes (Ollama, LM Studio) running on this computer.
+  models  Show the model that judges overlap and suggests names, the built-in
+          models, and any local runtimes (Ollama, LM Studio) running here.
+          \`models install\` downloads a built-in model (2.5 GB by default) to
+          run on this computer, verified against its pinned checksum.
   browser Site previews need Chrome or Edge. Without one, \`browser install\`
           downloads a pinned, checksum-verified build (about 100 MB) once.
 
@@ -56,8 +59,9 @@ Options:
 
 Environment:
   ANTHROPIC_API_KEY        Enables market-overlap judgment and --suggest with Claude
-  TITLESEARCH_MODEL        Use another model: ollama:<model>, lmstudio:<model>,
-                           or openai-compatible:<model> (with TITLESEARCH_MODEL_URL)
+  TITLESEARCH_MODEL        Use another model: builtin:<id>, ollama:<model>,
+                           lmstudio:<model>, or openai-compatible:<model>
+                           (with TITLESEARCH_MODEL_URL)
   TITLESEARCH_MODEL_URL    The server's base URL, for openai-compatible or a moved runtime
   OPENAI_COMPATIBLE_API_KEY  Key for an OpenAI-compatible server, if it needs one
   PORKBUN_API_KEY          With PORKBUN_SECRET_API_KEY, adds Porkbun prices
@@ -101,13 +105,37 @@ async function main(argv: string[]): Promise<number> {
     ...(openaiCompatibleApiKey ? [openaiCompatibleApiKey] : []),
     ...priceSecrets(priceKeys),
   ]);
+  // One for the whole process: a running model survives settings changes.
+  const builtin = new BuiltinManager({ dataDir: paths.dataDir, logger });
+  try {
+    return await withBuiltin(command, rest, values, paths, priceKeys, logger, builtin, {
+      ...(anthropicApiKey ? { anthropicApiKey } : {}),
+      ...(openaiCompatibleApiKey ? { openaiCompatibleApiKey } : {}),
+    });
+  } finally {
+    await builtin.close();
+  }
+}
+
+async function withBuiltin(
+  command: string,
+  rest: string[],
+  values: ReturnType<typeof parse>["values"],
+  paths: ReturnType<typeof resolvePaths>,
+  priceKeys: ReturnType<typeof priceKeysFromEnv>,
+  logger: ReturnType<typeof createLogger>,
+  builtin: BuiltinManager,
+  modelKeys: { anthropicApiKey?: string; openaiCompatibleApiKey?: string },
+): Promise<number> {
+  const { anthropicApiKey, openaiCompatibleApiKey } = modelKeys;
   let runtime: Awaited<ReturnType<typeof createServices>>;
   try {
     const config = await loadConfig(paths.configDir);
     // TITLESEARCH_MODEL picks the model for this run without editing config.json.
     const envModel = modelFromEnv(process.env);
     if (envModel) config.assessment.model = envModel;
-    if (command === "models") return await runModels(config.assessment.model);
+    if (command === "models")
+      return await runModels(rest[0], rest[1], config.assessment.model, builtin);
     if (command === "serve") {
       const ui = await loadUiAssets();
       const desktopToken = process.env.TITLESEARCH_TOKEN?.trim();
@@ -139,6 +167,7 @@ async function main(argv: string[]): Promise<number> {
           logger,
           command: "check",
           priceKeys,
+          builtin,
           ...(anthropicApiKey ? { anthropicApiKey } : {}),
           ...(openaiCompatibleApiKey ? { openaiCompatibleApiKey } : {}),
         },
@@ -148,6 +177,7 @@ async function main(argv: string[]): Promise<number> {
             return v ? [[n, v]] : [];
           }),
         ),
+        builtin,
         ...(ui ? { ui } : {}),
         ...(desktop ? { desktop } : {}),
       });
@@ -162,6 +192,7 @@ async function main(argv: string[]): Promise<number> {
       noGodaddy: values["no-godaddy"] ?? false,
       command: command === "mcp" ? "mcp" : "check",
       priceKeys,
+      builtin,
       ...(anthropicApiKey ? { anthropicApiKey } : {}),
       ...(openaiCompatibleApiKey ? { openaiCompatibleApiKey } : {}),
     });

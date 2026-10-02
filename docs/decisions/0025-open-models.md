@@ -13,9 +13,9 @@ Market-overlap judgment and name suggestions needed an Anthropic API key, or Cla
 
 ## Decision
 
-- **The same tiers, minus bundling.**
+- **The same tiers, with the local model downloaded rather than bundled** (ADR 26).
   - The server's model can be Claude (Anthropic API), a model in Ollama or LM Studio on this computer, or any server that speaks the OpenAI chat-completions API: OpenRouter, Groq, Together, vLLM, llama.cpp's server.
-  - Datera's bundled tier ships `node-llama-cpp` native binaries inside an Electron app. Titlesearch's engine is a `bun build --compile` binary, which can't load those native addons reliably on every platform, so bundling isn't adopted. Ollama gives the same "no key, nothing leaves the machine" outcome for anyone who installs it.
+  - Datera's bundled tier ships `node-llama-cpp` native binaries inside an Electron app. Titlesearch's engine is a `bun build --compile` binary, which can't load those native addons reliably on every platform, so the weights aren't bundled. ADR 26 adds the same outcome as a download after install, run by a pinned llama.cpp server.
 - **One interface.** `JsonModel.generate(system, user, schema)`.
   - The classifier (`ModelClassifier`) and the suggester (`ModelSuggester`) run on any implementation. The prompts, the untrusted-data framing of site text, and the strict Zod validation are identical whichever model answers.
   - A model can only make answers worse. It can't make Titlesearch report something unchecked: anything that doesn't validate leaves sites unassessed and suggestions unoffered.

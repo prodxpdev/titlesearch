@@ -26,10 +26,12 @@ export {
 export { JsonMessagesError, parseEventStream, readJsonMessages } from "./json-messages.js";
 export {
   createOriginFetch,
+  createOriginStream,
   type OriginFetch,
   OriginFetchError,
   type OriginFetchInit,
   type OriginFetchOptions,
+  type OriginStreamOptions,
 } from "./origin-fetch.js";
 export type { Resolver } from "./resolver.js";
 // readSafeFetchBody is deliberately not exported: only core/extract reads bodies.

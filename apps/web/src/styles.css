@@ -1247,7 +1247,7 @@ dialog.pv::backdrop {
 }
 /* The model picker under Market overlap. */
 .model-picker select,
-.model-picker input:not([type="password"]) {
+.model-picker input:not([type="password"]):not([type="radio"]) {
   width: 100%;
 }
 .model-picker .row-actions {
@@ -1255,4 +1255,52 @@ dialog.pv::backdrop {
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+}
+/* The built-in models, each with its download state. */
+.builtin fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.builtin-model {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+.builtin-model.on {
+  border-color: var(--survey);
+}
+.builtin-model label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 220px;
+  cursor: pointer;
+}
+.builtin-model input[type="radio"] {
+  margin-top: 4px;
+  flex: none;
+}
+.builtin-model label .hint {
+  display: block;
+  margin: 2px 0 0;
+}
+.builtin-action {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.builtin-action .progress {
+  width: 120px;
+  margin: 0;
+}
+.builtin-action .err {
+  margin: 0;
 }

@@ -14,6 +14,14 @@ export {
   type MarketAssessment,
 } from "./assess.js";
 export {
+  BUILTIN_MODELS,
+  BuiltinJsonModel,
+  type BuiltinModel,
+  type BuiltinRuntime,
+  builtinModel,
+  DEFAULT_BUILTIN_MODEL,
+} from "./builtin.js";
+export {
   ASSESSMENT_MODES,
   type AssessmentMode,
   type ConflictClassifier,

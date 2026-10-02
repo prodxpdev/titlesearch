@@ -3,7 +3,7 @@
 // session cookie authenticates; it's HttpOnly, so scripts never see it.
 
 import type { DomainResult } from "@titlesearch/core";
-import type { KeyName, Settings } from "@titlesearch/server";
+import type { BuiltinStatus, KeyName, Settings } from "@titlesearch/server";
 
 export class AuthError extends Error {
   override readonly name = "AuthError";
@@ -88,6 +88,18 @@ export const api = {
     request<{ runtimes: { provider: "ollama" | "lmstudio"; baseUrl: string; models: string[] }[] }>(
       "/api/models/local",
     ),
+  /** The built-in models and their downloads. */
+  builtinModels: () => request<BuiltinStatus>("/api/models/builtin"),
+  installBuiltin: (id: string) =>
+    request<BuiltinStatus>(`/api/models/builtin/${encodeURIComponent(id)}/install`, {
+      method: "POST",
+    }),
+  cancelBuiltin: (id: string) =>
+    request<BuiltinStatus>(`/api/models/builtin/${encodeURIComponent(id)}/cancel`, {
+      method: "POST",
+    }),
+  removeBuiltin: (id: string) =>
+    request<BuiltinStatus>(`/api/models/builtin/${encodeURIComponent(id)}`, { method: "DELETE" }),
   /** Saves a key to the keychain (desktop app). The value is never sent back. */
   setKey: (name: KeyName, value: string) =>
     request<{ settings: Settings }>(`/api/keys/${name}`, { method: "PUT", body: { value } }),

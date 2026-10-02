@@ -71,8 +71,11 @@ export const DeployEnv = z
       .enum(["server", "client", "off", "anthropic"])
       .transform((m) => (m === "anthropic" ? "server" : m))
       .optional(),
-    /** Which model judges and suggests: anthropic, or any OpenAI-compatible server (vLLM, OpenRouter, ...). */
-    ASSESSMENT_PROVIDER: z.enum(MODEL_PROVIDERS).default("anthropic"),
+    /**
+     * Which model judges and suggests: anthropic, or any OpenAI-compatible server (vLLM,
+     * OpenRouter, ...). Not "builtin": that runs on the user's own computer, never a deployment.
+     */
+    ASSESSMENT_PROVIDER: z.enum(MODEL_PROVIDERS).exclude(["builtin"]).default("anthropic"),
     ASSESSMENT_MODEL: z.string().min(1).default(DEFAULT_ANTHROPIC_MODEL),
     ASSESSMENT_BASE_URL: optional,
     OPENAI_COMPATIBLE_API_KEY: optional,

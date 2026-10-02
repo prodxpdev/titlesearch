@@ -95,6 +95,34 @@ export const SettingsPatch = z
   .strict();
 export type SettingsPatch = z.infer<typeof SettingsPatch>;
 
+/** The built-in models, and whether each is downloaded. Local servers only. */
+export const BuiltinStatus = z.object({
+  supported: z.boolean(),
+  models: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      summary: z.string(),
+      size: z.number(),
+      memoryGb: z.number(),
+      license: z.string(),
+      state: z.enum(["not_installed", "downloading", "installed", "failed"]),
+      received: z.number().optional(),
+      total: z.number().optional(),
+      error: z.string().optional(),
+    }),
+  ),
+});
+export type BuiltinStatus = z.infer<typeof BuiltinStatus>;
+
+export interface BuiltinHandler {
+  status(): BuiltinStatus;
+  /** Starts a download in the background; poll status() for progress. */
+  install(id: string): void;
+  cancel(id: string): void;
+  remove(id: string): Promise<void>;
+}
+
 export interface SettingsHandler {
   get(): Settings;
   /** Applies a patch, rebuilds whatever depends on it, and returns the new settings. */
@@ -105,6 +133,8 @@ export interface SettingsHandler {
   detectModels?(): Promise<
     { provider: "ollama" | "lmstudio"; baseUrl: string; models: string[] }[]
   >;
+  /** Downloads and removes the built-in models. Local servers only. */
+  builtin?: BuiltinHandler;
 }
 
 /** What a key may look like: printable ASCII, no spaces, of a sensible length. */

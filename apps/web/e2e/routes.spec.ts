@@ -197,6 +197,23 @@ test.describe("open models", () => {
     await expect(page.getByLabel(/An open model, on this computer/)).toBeEnabled();
   });
 
+  test("downloads the built-in model, then uses it", async ({ page }) => {
+    await signIn(page);
+    await page.getByRole("navigation").getByRole("link", { name: "Providers" }).click();
+    await page.getByLabel("Model", { exact: true }).selectOption("builtin");
+    const recommended = page.locator(".builtin-model").filter({ hasText: "Qwen3 4B Instruct" });
+    await expect(page.getByRole("radio", { name: /Qwen3 4B Instruct/ })).toBeChecked();
+    await expect(recommended).toContainText("2.5 GB download");
+    await expect(page.getByRole("button", { name: "Use this model" })).toBeDisabled();
+    await recommended.getByRole("button", { name: "Download" }).click();
+    await expect(recommended.getByRole("progressbar")).toBeVisible();
+    await expect(recommended).toContainText("Downloaded");
+    await page.getByRole("button", { name: "Use this model" }).click();
+    await expect(
+      page.getByText("Now: Built-in model · Qwen3 4B Instruct (this computer)"),
+    ).toBeVisible();
+  });
+
   test("says when a local runtime isn't running", async ({ page }) => {
     await page.route("**/api/models/local", (route) => route.fulfill({ json: { runtimes: [] } }));
     await signIn(page);

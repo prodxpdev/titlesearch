@@ -4,6 +4,7 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import {
   type AssessmentMode,
+  type BuiltinRuntime,
   createJsonModel,
   describeModel,
   MODEL_PROVIDERS,
@@ -60,6 +61,8 @@ export interface RuntimeOptions {
   openaiCompatibleApiKey?: string;
   /** Price-source credentials from the environment; also registered with the logger. */
   priceKeys?: PriceKeys;
+  /** Runs the built-in model. Outlives rebuilds, so a running model isn't restarted. */
+  builtin?: BuiltinRuntime;
 }
 
 export interface PriceKeys {
@@ -223,11 +226,12 @@ export async function createServices(options: RuntimeOptions): Promise<Runtime> 
   };
   const choice = config.assessment.model;
   const model = createJsonModel(choice, modelKeys, {
+    builtin: options.builtin,
     effort: config.assessment.effort,
     refusalFallback: config.assessment.refusalFallback,
     logger,
   });
-  const unavailable = modelUnavailable(choice, modelKeys);
+  const unavailable = modelUnavailable(choice, modelKeys, options.builtin);
   const mode = resolveAssessmentMode(config.assessment.mode, options.command, !!model);
   if (mode === "server" && !model) {
     throw new ConfigError(

@@ -13,7 +13,8 @@ import {
   type SettingsHandler,
   type UiAssets,
 } from "@titlesearch/server";
-import { type CliConfig, saveConfig } from "../config.js";
+import type { BuiltinManager } from "../builtin/manager.js";
+import { type CliConfig, ConfigError, saveConfig } from "../config.js";
 import { type PriceKeys, priceKeysFromEnv, type Runtime, type RuntimeOptions } from "../runtime.js";
 import { loadOrCreateToken, rotateToken, tokenPath } from "../token.js";
 
@@ -64,6 +65,8 @@ export interface ServeOptions {
   /** Key values at startup, from the environment (the keychain, in the desktop app). */
   keys: Partial<Record<KeyName, string>>;
   desktop?: DesktopMode;
+  /** Downloads and runs the built-in model; shared across rebuilds. */
+  builtin?: BuiltinManager;
 }
 
 function toSettings(
@@ -71,7 +74,14 @@ function toSettings(
   runtime: Runtime,
   values: Partial<Record<KeyName, string>>,
   desktop: boolean,
+  builtin: BuiltinManager | undefined,
 ): Settings {
+  // Live, not from the last build: a built-in model may have finished downloading since.
+  const unavailable = modelUnavailable(
+    runtime.model.choice,
+    { anthropic: values.ANTHROPIC_API_KEY, openaiCompatible: values.OPENAI_COMPATIBLE_API_KEY },
+    builtin,
+  );
   const hasKey = !!values.ANTHROPIC_API_KEY;
   const keys: PriceKeys = priceKeysFromEnv(values);
   return {
@@ -96,8 +106,8 @@ function toSettings(
         label: runtime.model.label,
         local: runtime.model.descriptor.locality === "local",
       },
-      ready: !runtime.model.unavailable,
-      ...(runtime.model.unavailable ? { unavailableReason: runtime.model.unavailable } : {}),
+      ready: !unavailable,
+      ...(unavailable ? { unavailableReason: unavailable } : {}),
       keyConfigured: hasKey,
     },
     suggestions: { available: !!runtime.services.suggester },
@@ -131,7 +141,20 @@ export async function runServe(options: ServeOptions): Promise<void> {
         ? { openaiCompatibleApiKey: values.OPENAI_COMPATIBLE_API_KEY }
         : {}),
     });
-  let runtime = await build(config);
+  let runtime: Runtime;
+  try {
+    runtime = await build(config);
+  } catch (err) {
+    // The chosen model can't be used now (a key removed, a model deleted):
+    // start anyway, letting the client judge, and say why on the Providers page.
+    if (!(err instanceof ConfigError) || config.assessment.mode !== "server") throw err;
+    options.logger.warn("The chosen model can't be used; starting in client mode", {
+      error: err.message,
+    });
+    config = structuredClone(config);
+    config.assessment.mode = "client";
+    runtime = await build(config);
+  }
   const desktop = options.desktop;
   const token = desktop ? desktop.token : await loadOrCreateToken(options.configDir);
   // The desktop app is one person's, on their own computer: its webview stays signed in.
@@ -141,7 +164,8 @@ export async function runServe(options: ServeOptions): Promise<void> {
     ...(desktop ? { sessionTtlMs: 30 * 24 * 60 * 60 * 1000 } : {}),
   });
 
-  const current = () => toSettings(config, runtime, values, !!desktop);
+  const builtin = options.builtin;
+  const current = () => toSettings(config, runtime, values, !!desktop, builtin);
   const apply = async (next: CliConfig) => {
     const rebuilt = await build(next);
     await saveConfig(options.configDir, next);
@@ -174,13 +198,44 @@ export async function runServe(options: ServeOptions): Promise<void> {
       if (patch.assessment?.model) next.assessment.model = patch.assessment.model;
       if (patch.assessment?.mode) next.assessment.mode = patch.assessment.mode;
       // "server" needs a model that can be used now; say what's missing instead of failing later.
-      const missing = modelUnavailable(next.assessment.model, modelKeys());
+      const missing = modelUnavailable(next.assessment.model, modelKeys(), builtin);
       if (next.assessment.mode === "server" && missing) {
         if (patch.assessment?.mode === "server") throw new SettingsError(missing);
         next.assessment.mode = "client";
       }
       return apply(next);
     },
+    ...(builtin
+      ? {
+          builtin: {
+            status: () => builtin.status(),
+            install(id: string) {
+              builtin.install(id).then(
+                // The chosen model just became usable: rebuild so it judges and suggests.
+                async () => {
+                  const m = config.assessment.model;
+                  if (m.provider === "builtin" && m.id === id) await apply(config);
+                },
+                (err: unknown) =>
+                  options.logger.warn("Built-in model download failed", {
+                    model: id,
+                    error: err instanceof Error ? err.message : String(err),
+                  }),
+              );
+            },
+            cancel: (id: string) => builtin.cancel(id),
+            async remove(id: string) {
+              await builtin.remove(id);
+              const m = config.assessment.model;
+              if (m.provider === "builtin" && m.id === id) {
+                const next: CliConfig = structuredClone(config);
+                if (next.assessment.mode === "server") next.assessment.mode = "client";
+                await apply(next);
+              }
+            },
+          },
+        }
+      : {}),
     // Only the desktop app keeps keys for you (in the OS keychain). The value
     // goes to the app over this process's private stdout pipe, and is
     // redacted from every log line from now on.
@@ -197,7 +252,7 @@ export async function runServe(options: ServeOptions): Promise<void> {
             // Without the key its model needs, "server" can't stay selected.
             if (
               next.assessment.mode === "server" &&
-              modelUnavailable(next.assessment.model, modelKeys())
+              modelUnavailable(next.assessment.model, modelKeys(), builtin)
             )
               next.assessment.mode = "client";
             const result = await apply(next);
@@ -224,6 +279,15 @@ export async function runServe(options: ServeOptions): Promise<void> {
     ...(options.ui ? { ui: options.ui } : {}),
   });
 
+  let stop = () => {};
+  const stopped = new Promise<void>((resolve) => {
+    stop = () => {
+      server.stop();
+      resolve();
+    };
+  });
+  process.once("SIGINT", () => stop());
+  process.once("SIGTERM", () => stop());
   const server = Bun.serve({
     hostname: HOSTNAME,
     port: options.port,
@@ -233,9 +297,12 @@ export async function runServe(options: ServeOptions): Promise<void> {
   const url = `http://${HOSTNAME}:${server.port}`;
   if (desktop) {
     emit({ event: "ready", url, loginCode: auth.issueLoginCode() });
-    createInterface({ input: process.stdin }).on("line", () =>
-      emit({ event: "code", loginCode: auth.issueLoginCode() }),
-    );
+    // "quit" from the app on its way out: stop cleanly, so the built-in
+    // model's server stops too. Any other line asks for a new login code.
+    createInterface({ input: process.stdin }).on("line", (line) => {
+      if (line.trim() === "quit") stop();
+      else emit({ event: "code", loginCode: auth.issueLoginCode() });
+    });
   } else {
     const showCode = () => {
       process.stdout.write(`\nOpen ${url} and enter this code: ${auth.issueLoginCode()}\n`);
@@ -251,13 +318,6 @@ export async function runServe(options: ServeOptions): Promise<void> {
     showCode();
     if (process.stdin.isTTY) createInterface({ input: process.stdin }).on("line", showCode);
   }
-  await new Promise<void>((resolve) => {
-    const stop = () => {
-      server.stop();
-      resolve();
-    };
-    process.once("SIGINT", stop);
-    process.once("SIGTERM", stop);
-  });
+  await stopped;
   await runtime.close();
 }

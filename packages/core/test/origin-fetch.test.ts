@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { createOriginFetch, OriginFetchError } from "../src/net/origin-fetch.js";
+import {
+  createOriginFetch,
+  createOriginStream,
+  OriginFetchError,
+} from "../src/net/origin-fetch.js";
 import { fakeTransport, hangingTransport, json, redirect, refusingTransport } from "./stubs.js";
 
 const RDAP = "https://rdap.verisign.com";
@@ -105,5 +109,52 @@ describe("createOriginFetch", () => {
     const res = await f(`${RDAP}/com/v1/domain/nope.com`);
     expect(res.status).toBe(404);
     expect(res.headers.get("content-type")).toBe("application/rdap+json");
+  });
+});
+
+describe("createOriginStream", () => {
+  const GITHUB = "https://github.com";
+
+  it("follows redirects to an allowed CDN host and leaves the body unread", async () => {
+    const transport = fakeTransport((url) =>
+      url.origin === GITHUB
+        ? redirect("https://release-assets.githubusercontent.com/x?sig=1")
+        : new Response("archive bytes"),
+    );
+    const open = createOriginStream({
+      origins: [GITHUB],
+      hostSuffixes: [".githubusercontent.com"],
+      transport,
+    });
+    const res = await open(`${GITHUB}/o/r/releases/download/b1/a.tar.gz`);
+    expect(await res.text()).toBe("archive bytes");
+  });
+
+  it.each([
+    "https://githubusercontent.com.evil.example/",
+    "http://release-assets.githubusercontent.com/",
+    "https://release-assets.githubusercontent.com:8443/",
+    "https://evilgithubusercontent.com/",
+  ])("refuses a redirect to %s", async (target) => {
+    const transport = fakeTransport(() => redirect(target));
+    const open = createOriginStream({
+      origins: [GITHUB],
+      hostSuffixes: [".githubusercontent.com"],
+      transport,
+    });
+    await expect(open(`${GITHUB}/a`)).rejects.toMatchObject({ code: "origin_not_allowed" });
+  });
+
+  it("rejects a malformed suffix", () => {
+    expect(() => createOriginStream({ origins: [], hostSuffixes: ["com"] })).toThrow();
+  });
+
+  it("times out waiting for headers", async () => {
+    const open = createOriginStream({
+      origins: [GITHUB],
+      transport: hangingTransport(),
+      headersTimeoutMs: 20,
+    });
+    await expect(open(`${GITHUB}/a`)).rejects.toMatchObject({ code: "timeout" });
   });
 });

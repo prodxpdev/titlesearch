@@ -5,7 +5,7 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ConflictClassifier } from "@titlesearch/assess";
+import { BUILTIN_MODELS, builtinModel, type ConflictClassifier } from "@titlesearch/assess";
 import { MemoryStore } from "@titlesearch/cache";
 import {
   type Availability,
@@ -254,6 +254,37 @@ let settings: Settings = {
   previews: { mode: "local", browser: "system" },
   siteChecks: { timeoutSeconds: 5, maxRedirects: 3, pageKilobytes: 512, cacheHours: 6 },
 };
+// A pretend built-in model download that finishes after a few polls.
+const downloads = new Map<string, number>();
+const installed = new Set<string>();
+const builtinStatus = () => ({
+  supported: true,
+  models: BUILTIN_MODELS.map((m) => {
+    const step = downloads.get(m.id);
+    if (step !== undefined) {
+      if (step >= 3) {
+        downloads.delete(m.id);
+        installed.add(m.id);
+      } else downloads.set(m.id, step + 1);
+    }
+    const downloading = downloads.has(m.id);
+    return {
+      id: m.id,
+      label: m.label,
+      summary: m.summary,
+      size: m.size,
+      memoryGb: m.memoryGb,
+      license: m.license,
+      state: downloading
+        ? ("downloading" as const)
+        : installed.has(m.id)
+          ? ("installed" as const)
+          : ("not_installed" as const),
+      ...(downloading ? { received: ((step ?? 0) * m.size) / 3, total: m.size } : {}),
+    };
+  }),
+});
+
 const settingsHandler: SettingsHandler = {
   get: () => settings,
   update: async (patch) => {
@@ -265,10 +296,16 @@ const settingsHandler: SettingsHandler = {
     if (patch.assessment?.mode) settings.assessment.mode = patch.assessment.mode;
     if (patch.assessment?.model) {
       const m = patch.assessment.model;
-      const local = m.provider === "ollama" || m.provider === "lmstudio";
+      const local =
+        m.provider === "ollama" || m.provider === "lmstudio" || m.provider === "builtin";
       settings.assessment.model = {
         ...m,
-        label: local ? `Ollama · ${m.id} (this computer)` : `${m.provider} · ${m.id}`,
+        label:
+          m.provider === "builtin"
+            ? `Built-in model · ${builtinModel(m.id)?.label} (this computer)`
+            : local
+              ? `Ollama · ${m.id} (this computer)`
+              : `${m.provider} · ${m.id}`,
         local,
       };
       settings.assessment.ready = local || settings.keys.set.ANTHROPIC_API_KEY;
@@ -284,6 +321,18 @@ const settingsHandler: SettingsHandler = {
       models: ["llama3.1:8b", "mistral-small3.2:24b"],
     },
   ],
+  builtin: {
+    status: builtinStatus,
+    install: (id) => {
+      if (!installed.has(id)) downloads.set(id, 0);
+    },
+    cancel: (id) => {
+      downloads.delete(id);
+    },
+    remove: async (id) => {
+      installed.delete(id);
+    },
+  },
   // Like the desktop app, minus the keychain: only whether each key is set.
   setKey: async (name, value) => {
     settings = structuredClone(settings);

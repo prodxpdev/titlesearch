@@ -18,6 +18,7 @@ import {
   type Transport,
 } from "@titlesearch/core";
 import * as z from "zod";
+import { BuiltinJsonModel, type BuiltinRuntime } from "./builtin.js";
 import { createAnthropicClient } from "./client.js";
 import {
   describeChoice,
@@ -124,7 +125,7 @@ export class AnthropicJsonModel implements JsonModel {
 // --- OpenAI-compatible --------------------------------------------------------
 
 export interface OpenAICompatibleJsonModelOptions {
-  provider: "ollama" | "lmstudio" | "openai-compatible";
+  provider: "builtin" | "ollama" | "lmstudio" | "openai-compatible";
   /** The server's base URL, with or without a trailing /v1. */
   baseUrl: string;
   model: string;
@@ -241,8 +242,8 @@ export class OpenAICompatibleJsonModel implements JsonModel {
           ok: false,
           reason:
             this.descriptor.locality === "local"
-              ? `Couldn't reach ${name} at ${this.descriptor.endpoint}. Is it running?`
-              : `Couldn't reach ${name} at ${this.descriptor.endpoint}.`,
+              ? `Couldn't reach ${name} at ${this.#options.baseUrl}. Is it running?`
+              : `Couldn't reach ${name} at ${this.#options.baseUrl}.`,
         };
       }
       // A server that doesn't understand this response_format: try the next one.
@@ -281,6 +282,8 @@ export interface ModelKeys {
 }
 
 export interface CreateModelOptions {
+  /** Runs the built-in model. Only where it can run: the CLI and the desktop app. */
+  builtin?: BuiltinRuntime | undefined;
   effort?: AnthropicJsonModelOptions["effort"];
   refusalFallback?: boolean;
   transport?: Transport;
@@ -288,8 +291,16 @@ export interface CreateModelOptions {
 }
 
 /** Why a choice can't be used yet, or undefined when it can. */
-export function modelUnavailable(choice: ModelChoice, keys: ModelKeys): string | undefined {
+export function modelUnavailable(
+  choice: ModelChoice,
+  keys: ModelKeys,
+  builtin?: BuiltinRuntime,
+): string | undefined {
   if (choice.provider === "anthropic" && !keys.anthropic) return "Add an Anthropic API key.";
+  if (choice.provider === "builtin")
+    return builtin
+      ? builtin.unavailable(choice.id)
+      : "The built-in model runs in the desktop app and the titlesearch command, not here.";
   if (choice.provider === "openai-compatible" && !choice.baseUrl)
     return "Give the server's base URL.";
   return undefined;
@@ -301,7 +312,12 @@ export function createJsonModel(
   keys: ModelKeys,
   options: CreateModelOptions = {},
 ): JsonModel | undefined {
-  if (modelUnavailable(choice, keys)) return undefined;
+  if (modelUnavailable(choice, keys, options.builtin)) return undefined;
+  if (choice.provider === "builtin" && options.builtin)
+    return new BuiltinJsonModel(choice.id, options.builtin, {
+      logger: options.logger,
+      transport: options.transport,
+    });
   const common = {
     ...(options.transport ? { transport: options.transport } : {}),
     ...(options.logger ? { logger: options.logger } : {}),
@@ -316,6 +332,7 @@ export function createJsonModel(
         : {}),
       ...common,
     });
+  if (choice.provider === "builtin") return undefined;
   const baseUrl =
     choice.baseUrl ??
     (choice.provider === "openai-compatible" ? "" : LOCAL_RUNTIME_URLS[choice.provider]);

@@ -5,11 +5,19 @@ import type { Transport, TransportRequest } from "@titlesearch/core";
 import { describe, expect, it } from "vitest";
 import * as z from "zod";
 import { ModelClassifier } from "../src/anthropic.js";
+import {
+  BUILTIN_MODELS,
+  BuiltinJsonModel,
+  type BuiltinRuntime,
+  builtinModel,
+  DEFAULT_BUILTIN_MODEL,
+} from "../src/builtin.js";
 import { detectLocalRuntimes } from "../src/detect.js";
 import {
   chatCompletionsUrl,
   createJsonModel,
   extractJson,
+  modelUnavailable,
   OpenAICompatibleJsonModel,
 } from "../src/json-model.js";
 import { describeModel, ModelChoice } from "../src/models.js";
@@ -295,5 +303,93 @@ describe("the classifier and suggester on an open model", () => {
     );
     const names = await new ModelSuggester(ollama(t)).suggest("Dispatch for crews", { count: 5 });
     expect(names.map((n) => n.name)).toEqual(["crewly"]);
+  });
+});
+
+describe("the built-in model", () => {
+  const runtime = (installed: boolean): BuiltinRuntime & { starts: number } => ({
+    starts: 0,
+    unavailable: (id) => (installed ? undefined : `Download ${builtinModel(id)?.label} first.`),
+    async start() {
+      this.starts++;
+      return { baseUrl: "http://127.0.0.1:50123", apiKey: "k".repeat(64) };
+    },
+  });
+
+  it("pins every model by commit, size, and SHA-256, and recommends one", () => {
+    for (const m of BUILTIN_MODELS) {
+      expect(m.url).toMatch(/^https:\/\/huggingface\.co\/[^/]+\/[^/]+\/resolve\/[0-9a-f]{40}\//);
+      expect(m.url.endsWith(`/${m.file}`)).toBe(true);
+      expect(m.sha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(m.size).toBeGreaterThan(500_000_000);
+      expect(m.license).toBe("Apache-2.0");
+    }
+    expect(builtinModel(DEFAULT_BUILTIN_MODEL)).toBeDefined();
+  });
+
+  it("accepts only catalog models, with no URL", () => {
+    expect(ModelChoice.safeParse({ provider: "builtin", id: DEFAULT_BUILTIN_MODEL }).success).toBe(
+      true,
+    );
+    expect(ModelChoice.safeParse({ provider: "builtin", id: "llama3.1:8b" }).success).toBe(false);
+    expect(
+      ModelChoice.safeParse({
+        provider: "builtin",
+        id: DEFAULT_BUILTIN_MODEL,
+        baseUrl: "http://127.0.0.1:1",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("says what's missing: a runtime, or the download", () => {
+    const choice = { provider: "builtin" as const, id: DEFAULT_BUILTIN_MODEL };
+    expect(modelUnavailable(choice, {})).toMatch(/desktop app/);
+    expect(modelUnavailable(choice, {}, runtime(false))).toBe("Download Qwen3 4B Instruct first.");
+    expect(createJsonModel(choice, {}, { builtin: runtime(false) })).toBeUndefined();
+    expect(createJsonModel(choice, {})).toBeUndefined();
+  });
+
+  it("starts on first use and talks to it with its key, as a local model", async () => {
+    const t = server(() => completion('{"answer":"hi"}'));
+    const r = runtime(true);
+    const model = createJsonModel(
+      { provider: "builtin", id: DEFAULT_BUILTIN_MODEL },
+      {},
+      { builtin: r, transport: t },
+    );
+    expect(model?.id).toBe(`builtin:${DEFAULT_BUILTIN_MODEL}`);
+    expect(
+      describeModel(model?.descriptor ?? { provider: "builtin", id: "", locality: "local" }),
+    ).toBe("Built-in model · Qwen3 4B Instruct (this computer)");
+    expect(r.starts).toBe(0);
+    const answer = await model?.generate({
+      system: "s",
+      user: "u",
+      schema: Answer,
+      schemaName: "answer",
+      maxTokens: 10,
+    });
+    expect(answer).toEqual({ ok: true, value: { answer: "hi" } });
+    expect(r.starts).toBe(1);
+    expect(t.seen[0]?.url).toBe("http://127.0.0.1:50123/v1/chat/completions");
+    expect(t.seen[0]?.headers.get("authorization")).toBe(`Bearer ${"k".repeat(64)}`);
+  });
+
+  it("reports a server that won't start, never a guess", async () => {
+    const model = new BuiltinJsonModel(DEFAULT_BUILTIN_MODEL, {
+      unavailable: () => undefined,
+      start: async () => {
+        throw new Error("llama-server exited (1)");
+      },
+    });
+    expect(
+      await model.generate({
+        system: "s",
+        user: "u",
+        schema: Answer,
+        schemaName: "a",
+        maxTokens: 1,
+      }),
+    ).toEqual({ ok: false, reason: "The built-in model didn't start: llama-server exited (1)" });
   });
 });
